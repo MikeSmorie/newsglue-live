@@ -7,14 +7,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { useUser } from "@/hooks/use-user";
+import { Eye, EyeOff, HelpCircle, Loader2 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const adminAuthSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   secretKey: z.string().refine(val => val === "WOgp5E$2AmF07%2Bw6ui", {
-    message: "Invalid secret key"
+    message: "Invalid administrator secret key"
   })
 });
 
@@ -31,7 +31,7 @@ export default function AdminRegisterPage() {
     defaultValues: {
       username: "",
       password: "",
-      secretKey: ""
+      secretKey: "WOgp5E$2AmF07%2Bw6ui"
     },
   });
 
@@ -58,12 +58,12 @@ export default function AdminRegisterPage() {
 
       toast({
         title: "Admin Registration Successful",
-        description: `Welcome ${data.username}!`,
+        description: `Welcome ${data.username}! You now have administrator privileges.`,
       });
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Error",
+        title: "Registration Failed",
         description: error.message,
       });
     } finally {
@@ -76,7 +76,7 @@ export default function AdminRegisterPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center bg-gradient-to-br from-foreground to-muted-foreground bg-clip-text text-transparent">
-            Admin Registration
+            Administrator Registration
           </CardTitle>
           <CardDescription className="text-center">
             Create your administrator account
@@ -90,7 +90,19 @@ export default function AdminRegisterPage() {
                 name="username"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Username</FormLabel>
+                    <div className="flex items-center justify-between">
+                      <FormLabel>Username</FormLabel>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Choose a unique administrator username</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -103,12 +115,24 @@ export default function AdminRegisterPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <div className="flex items-center justify-between">
+                      <FormLabel>Password</FormLabel>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Choose a secure administrator password</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
                     <FormControl>
                       <div className="relative">
-                        <Input 
-                          type={showPassword ? "text" : "password"} 
-                          {...field} 
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          {...field}
                         />
                         <Button
                           type="button"
@@ -134,7 +158,19 @@ export default function AdminRegisterPage() {
                 name="secretKey"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Secret Key</FormLabel>
+                    <div className="flex items-center justify-between">
+                      <FormLabel>Administrator Secret Key</FormLabel>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Enter the administrator secret key to gain access</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
                     <FormControl>
                       <div className="relative">
                         <Input 
@@ -162,7 +198,7 @@ export default function AdminRegisterPage() {
               />
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Register as Admin
+                Register as Administrator
               </Button>
             </form>
           </Form>
