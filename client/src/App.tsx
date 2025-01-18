@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import AdminRegisterPage from "@/pages/admin-register";
+import AdminDashboard from "@/pages/admin-dashboard"; // Added import
 import { useUser } from "@/hooks/use-user";
 import { Loader2 } from "lucide-react";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -18,26 +19,19 @@ function MainContent() {
   const { user } = useUser();
   const { godMode } = useAdmin();
 
+  // If user is admin and god mode is on, show admin dashboard
+  if (user?.role === "admin" && godMode) {
+    return <AdminDashboard />;
+  }
+
   return (
     <div className="container flex min-h-[calc(100vh-4rem)] items-center justify-center">
-      {godMode ? (
-        <div className="space-y-4 text-center">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-            God Mode Activated
-          </h1>
-          <p className="text-muted-foreground">
-            Welcome Administrator {user?.username}
-          </p>
-          {/* Add more admin features here */}
-        </div>
-      ) : (
-        <div className="space-y-4 text-center">
-          <h1 className="text-4xl font-bold">Welcome {user?.username}!</h1>
-          <p className="text-muted-foreground">
-            You're in regular user mode
-          </p>
-        </div>
-      )}
+      <div className="space-y-4 text-center">
+        <h1 className="text-4xl font-bold">Welcome {user?.username}!</h1>
+        <p className="text-muted-foreground">
+          {user?.role === "admin" ? "Admin mode is currently inactive" : "You're in regular user mode"}
+        </p>
+      </div>
     </div>
   );
 }
