@@ -1,5 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LayoutDashboard } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { LayoutDashboard, Clock, CheckCircle2 } from "lucide-react";
+
+const mockData = [
+  { id: 1, name: "Feature A", status: "Pending" },
+  { id: 2, name: "Feature B", status: "In Progress" }
+];
 
 export default function MockDashboard() {
   return (
@@ -12,9 +18,35 @@ export default function MockDashboard() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">
-            This is a mock dashboard page. It will be replaced with actual functionality in the future.
+          <p className="text-muted-foreground mb-6">
+            This page will be replaced with the actual dashboard for future apps.
           </p>
+
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[100px]">ID</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {mockData.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell>{item.id}</TableCell>
+                  <TableCell>{item.name}</TableCell>
+                  <TableCell className="flex items-center gap-2">
+                    {item.status === "Pending" ? (
+                      <Clock className="h-4 w-4 text-yellow-500" />
+                    ) : (
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    )}
+                    {item.status}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>
