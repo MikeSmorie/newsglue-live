@@ -11,12 +11,14 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   role: text("role").notNull().default("user"),
   email: text("email").unique(),
-  createdAt: timestamp("created_at").defaultNow()
+  createdAt: timestamp("created_at").defaultNow(),
+  lastLogin: timestamp("last_login") 
 });
 
 export const insertUserSchema = createInsertSchema(users, {
   role: userRoleEnum.default("user"),
-  email: z.string().email("Invalid email address").optional()
+  email: z.string().email("Invalid email address").optional(),
+  lastLogin: z.date().optional() 
 });
 export const selectUserSchema = createSelectSchema(users);
 export type InsertUser = typeof users.$inferInsert;

@@ -74,6 +74,13 @@ export function setupAuth(app: Express) {
         if (!isMatch) {
           return done(null, false, { message: "Incorrect password." });
         }
+
+        // Update last login timestamp
+        await db
+          .update(users)
+          .set({ lastLogin: new Date() })
+          .where(eq(users.id, user.id));
+
         return done(null, user);
       } catch (err) {
         return done(err);
@@ -95,60 +102,6 @@ export function setupAuth(app: Express) {
       done(null, user);
     } catch (err) {
       done(err);
-    }
-  });
-
-  app.post("/api/register-admin", async (req, res) => {
-    try {
-      const result = insertUserSchema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({
-          message: "Invalid input: " + result.error.issues.map(i => i.message).join(", ")
-        });
-      }
-
-      const { username, password } = result.data;
-
-      // Check only for username uniqueness
-      const [existingUser] = await db
-        .select()
-        .from(users)
-        .where(eq(users.username, username))
-        .limit(1);
-
-      if (existingUser) {
-        return res.status(400).json({
-          message: "Username is already in use"
-        });
-      }
-
-      // Hash the password and create admin user
-      const hashedPassword = await crypto.hash(password);
-      const [newUser] = await db
-        .insert(users)
-        .values({
-          username,
-          password: hashedPassword,
-          role: "admin",
-        })
-        .returning();
-
-      req.login(newUser, (err) => {
-        if (err) {
-          return res.status(500).json({
-            message: "Error during login after registration"
-          });
-        }
-        return res.json({
-          message: `Admin user '${username}' registered successfully`,
-          user: { id: newUser.id, username: newUser.username, role: newUser.role },
-        });
-      });
-    } catch (error: any) {
-      return res.status(500).json({
-        message: "Internal server error",
-        error: error.message
-      });
     }
   });
 
@@ -179,13 +132,14 @@ export function setupAuth(app: Express) {
       // Hash the password
       const hashedPassword = await crypto.hash(password);
 
-      // Create the new user
+      // Create the new user with initial login timestamp
       const [newUser] = await db
         .insert(users)
         .values({
           username,
           password: hashedPassword,
           role: "user", // Explicitly set role as user
+          lastLogin: new Date() // Set initial login time
         })
         .returning();
 
@@ -216,7 +170,7 @@ export function setupAuth(app: Express) {
       });
     }
 
-    const cb = (err: any, user: Express.User, info: IVerifyOptions) => {
+    const cb = async (err: any, user: Express.User, info: IVerifyOptions) => {
       if (err) {
         return res.status(500).json({
           message: "Internal server error",
