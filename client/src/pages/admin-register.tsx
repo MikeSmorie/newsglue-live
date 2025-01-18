@@ -23,8 +23,8 @@ type AdminAuthFormData = z.infer<typeof adminAuthSchema>;
 export default function AdminRegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showSecretKey, setShowSecretKey] = useState(false);
   const { toast } = useToast();
-  const { register } = useUser();
 
   const form = useForm<AdminAuthFormData>({
     resolver: zodResolver(adminAuthSchema),
@@ -48,12 +48,14 @@ export default function AdminRegisterPage() {
           password: data.password
         }),
         credentials: 'include'
-      }).then(r => r.json());
+      });
+
+      const response = await result.json();
 
       if (!result.ok) {
-        throw new Error(result.message);
+        throw new Error(response.message || "Registration failed");
       }
-      
+
       toast({
         title: "Admin Registration Successful",
         description: `Welcome ${data.username}!`,
@@ -134,7 +136,25 @@ export default function AdminRegisterPage() {
                   <FormItem>
                     <FormLabel>Secret Key</FormLabel>
                     <FormControl>
-                      <Input type="password" {...field} />
+                      <div className="relative">
+                        <Input 
+                          type={showSecretKey ? "text" : "password"}
+                          {...field} 
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowSecretKey(!showSecretKey)}
+                        >
+                          {showSecretKey ? (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
