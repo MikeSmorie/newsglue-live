@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import AdminRegisterPage from "@/pages/admin-register";
-import AdminDashboard from "@/pages/admin-dashboard"; // Added import
+import AdminDashboard from "@/pages/admin-dashboard";
 import { useUser } from "@/hooks/use-user";
 import { Loader2 } from "lucide-react";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -13,27 +13,25 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { FontSizeControls } from "@/components/font-size-controls";
 import { NavigationControls } from "@/components/navigation-controls";
 import { AdminToggle } from "@/components/admin-toggle";
-import { AdminProvider, useAdmin } from "@/contexts/admin-context";
+import { AdminProvider } from "@/contexts/admin-context";
 
-function MainContent() {
-  const { user } = useUser();
-  const { godMode } = useAdmin();
+// Protected Route Component
+function ProtectedAdminRoute({ component: Component }: { component: React.ComponentType }) {
+  const { user, isLoading } = useUser();
 
-  // If user is admin and god mode is on, show admin dashboard
-  if (user?.role === "admin" && godMode) {
-    return <AdminDashboard />;
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-border" />
+      </div>
+    );
   }
 
-  return (
-    <div className="container flex min-h-[calc(100vh-4rem)] items-center justify-center">
-      <div className="space-y-4 text-center">
-        <h1 className="text-4xl font-bold">Welcome {user?.username}!</h1>
-        <p className="text-muted-foreground">
-          {user?.role === "admin" ? "Admin mode is currently inactive" : "You're in regular user mode"}
-        </p>
-      </div>
-    </div>
-  );
+  if (!user || user.role !== "admin") {
+    return <AuthPage />;
+  }
+
+  return <Component />;
 }
 
 function Router() {
@@ -69,7 +67,17 @@ function Router() {
       </nav>
 
       <Switch>
-        <Route path="/" component={MainContent} />
+        <Route path="/admin" component={() => <ProtectedAdminRoute component={AdminDashboard} />} />
+        <Route path="/">
+          <div className="container flex min-h-[calc(100vh-4rem)] items-center justify-center">
+            <div className="space-y-4 text-center">
+              <h1 className="text-4xl font-bold">Welcome {user?.username}!</h1>
+              <p className="text-muted-foreground">
+                {user?.role === "admin" ? "Admin mode is currently inactive" : "You're in regular user mode"}
+              </p>
+            </div>
+          </div>
+        </Route>
         <Route component={NotFound} />
       </Switch>
 
