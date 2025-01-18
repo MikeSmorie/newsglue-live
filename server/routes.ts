@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { requestLogger, errorLogger } from "./middleware/logger";
 import { db } from "@db";
-import { activityLogs, errorLogs } from "@db/schema";
+import { activityLogs, errorLogs, users } from "@db/schema";
 import { eq } from "drizzle-orm";
 
 // Middleware to check if user is authenticated
@@ -29,6 +29,83 @@ export function registerRoutes(app: Express): Server {
 
   // Set up authentication routes
   setupAuth(app);
+
+  // Health Check Endpoints
+  app.get("/api/health", async (req, res) => {
+    try {
+      // Check database connection
+      await db.select().from(users).limit(1);
+
+      const healthStatus = {
+        status: "healthy",
+        timestamp: new Date().toISOString(),
+        components: {
+          server: "operational",
+          database: "operational",
+          auth: "operational",
+        },
+        version: process.env.npm_package_version || "1.0.0"
+      };
+
+      res.json(healthStatus);
+    } catch (error) {
+      const unhealthyStatus = {
+        status: "unhealthy",
+        timestamp: new Date().toISOString(),
+        error: error instanceof Error ? error.message : "Unknown error",
+        components: {
+          server: "operational",
+          database: "failed",
+          auth: "operational"
+        }
+      };
+      res.status(500).json(unhealthyStatus);
+    }
+  });
+
+  // Detailed System Status (Admin Only)
+  app.get("/api/health/detailed", requireAdmin, async (req, res) => {
+    try {
+      // Check database tables
+      const [userCount] = await db.select({ count: users.id }).from(users);
+      const [activityLogCount] = await db.select({ count: activityLogs.id }).from(activityLogs);
+      const [errorLogCount] = await db.select({ count: errorLogs.id }).from(errorLogs);
+
+      const detailedStatus = {
+        status: "operational",
+        timestamp: new Date().toISOString(),
+        components: {
+          server: {
+            status: "operational",
+            uptime: process.uptime(),
+            memory: process.memoryUsage(),
+          },
+          database: {
+            status: "operational",
+            tables: {
+              users: userCount,
+              activityLogs: activityLogCount,
+              errorLogs: errorLogCount,
+            },
+          },
+          auth: {
+            status: "operational",
+            provider: "passport-local",
+          },
+        },
+        environment: process.env.NODE_ENV,
+        version: process.env.npm_package_version || "1.0.0"
+      };
+
+      res.json(detailedStatus);
+    } catch (error) {
+      res.status(500).json({
+        status: "error",
+        timestamp: new Date().toISOString(),
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
 
   // Admin routes for viewing logs
   app.get("/api/admin/activity-logs", requireAdmin, async (req, res) => {
