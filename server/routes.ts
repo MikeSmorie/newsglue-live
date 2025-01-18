@@ -7,6 +7,9 @@ import { activityLogs, errorLogs, users } from "@db/schema";
 import { eq } from "drizzle-orm";
 import cors from "cors";
 
+// Plugin registry
+const plugins: Record<string, { status: string; loadedAt?: Date }> = {};
+
 // Middleware to check if user is authenticated
 const requireAuth = (req: any, res: any, next: any) => {
   if (req.isAuthenticated()) {
@@ -37,6 +40,30 @@ export function registerRoutes(app: Express): Server {
   // Set up authentication routes
   setupAuth(app);
 
+  // Plugin Management Endpoints
+  app.post("/api/plugins/load", requireAdmin, (req, res) => {
+    const { pluginName } = req.body;
+
+    if (!pluginName) {
+      return res.status(400).json({ message: "Plugin name is required" });
+    }
+
+    if (plugins[pluginName]) {
+      return res.status(400).json({ message: "Plugin already loaded" });
+    }
+
+    plugins[pluginName] = {
+      status: "active",
+      loadedAt: new Date()
+    };
+
+    res.json({ message: `Plugin '${pluginName}' loaded successfully` });
+  });
+
+  app.get("/api/plugins", requireAdmin, (req, res) => {
+    res.json({ plugins });
+  });
+
   // Health Check Endpoints
   app.get("/api/health", async (req, res) => {
     try {
@@ -51,7 +78,11 @@ export function registerRoutes(app: Express): Server {
           database: "operational",
           auth: "operational",
           cors: "enabled",
-          logging: "configured"
+          logging: "configured",
+          plugins: {
+            status: "operational",
+            count: Object.keys(plugins).length
+          }
         },
         version: process.env.npm_package_version || "1.0.0"
       };
@@ -67,7 +98,11 @@ export function registerRoutes(app: Express): Server {
           database: "failed",
           auth: "operational",
           cors: "enabled",
-          logging: "configured"
+          logging: "configured",
+          plugins: {
+            status: "operational",
+            count: Object.keys(plugins).length
+          }
         }
       };
       res.status(500).json(unhealthyStatus);
@@ -111,6 +146,13 @@ export function registerRoutes(app: Express): Server {
           logging: {
             status: "configured",
             providers: ["activity", "error"]
+          },
+          plugins: {
+            status: "operational",
+            loaded: Object.entries(plugins).map(([name, data]) => ({
+              name,
+              ...data
+            }))
           }
         },
         version: process.env.npm_package_version || "1.0.0"
@@ -150,7 +192,7 @@ export function registerRoutes(app: Express): Server {
     try {
       const { action, details } = req.body;
       await db.insert(activityLogs).values({
-        userId: req.user.id,
+        userId: req.user!.id,
         action,
         details,
         timestamp: new Date()

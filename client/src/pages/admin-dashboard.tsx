@@ -3,7 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@/hooks/use-user";
 import { useAdmin } from "@/contexts/admin-context";
-import { Activity, Cpu, Database, Shield } from "lucide-react";
+import { Activity, Cpu, Database, Shield, Puzzle } from "lucide-react";
 import { useLocation } from "wouter";
 import { SelectActivityLog } from "@db/schema";
 import { Loader2 } from "lucide-react";
@@ -37,6 +37,14 @@ interface HealthStatus {
     logging: {
       status: string;
       providers: string[];
+    };
+    plugins: {
+      status: string;
+      loaded: Array<{
+        name: string;
+        status: string;
+        loadedAt?: string;
+      }>;
     };
   };
   version: string;
@@ -84,7 +92,7 @@ export default function AdminDashboard() {
       </div>
 
       {healthStatus && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Server Status</CardTitle>
@@ -136,7 +144,48 @@ export default function AdminDashboard() {
               <p className="text-xs text-muted-foreground">Total Activities Logged</p>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Plugins</CardTitle>
+              <Puzzle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{healthStatus.components.plugins.loaded.length}</div>
+              <p className="text-xs text-muted-foreground">Active Plugins</p>
+            </CardContent>
+          </Card>
         </div>
+      )}
+
+      {healthStatus?.components.plugins.loaded.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Loaded Plugins</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Loaded At</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {healthStatus.components.plugins.loaded.map((plugin) => (
+                  <TableRow key={plugin.name}>
+                    <TableCell>{plugin.name}</TableCell>
+                    <TableCell>{plugin.status}</TableCell>
+                    <TableCell>
+                      {plugin.loadedAt ? new Date(plugin.loadedAt).toLocaleString() : 'N/A'}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       )}
 
       {activityLogs && activityLogs.length > 0 && (
