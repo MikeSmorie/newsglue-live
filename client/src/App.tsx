@@ -11,6 +11,35 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { FontSizeControls } from "@/components/font-size-controls";
 import { NavigationControls } from "@/components/navigation-controls";
 import { AdminToggle } from "@/components/admin-toggle";
+import { AdminProvider, useAdmin } from "@/contexts/admin-context";
+
+function MainContent() {
+  const { user } = useUser();
+  const { godMode } = useAdmin();
+
+  return (
+    <div className="container flex min-h-[calc(100vh-4rem)] items-center justify-center">
+      {godMode ? (
+        <div className="space-y-4 text-center">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+            God Mode Activated
+          </h1>
+          <p className="text-muted-foreground">
+            Welcome Administrator {user?.username}
+          </p>
+          {/* Add more admin features here */}
+        </div>
+      ) : (
+        <div className="space-y-4 text-center">
+          <h1 className="text-4xl font-bold">Welcome {user?.username}!</h1>
+          <p className="text-muted-foreground">
+            You're in regular user mode
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function Router() {
   const { user, isLoading } = useUser();
@@ -40,11 +69,7 @@ function Router() {
       </nav>
 
       <Switch>
-        <Route path="/" component={() => (
-          <div className="container flex min-h-[calc(100vh-4rem)] items-center justify-center">
-            <h1 className="text-4xl font-bold">Welcome {user.username}!</h1>
-          </div>
-        )} />
+        <Route path="/" component={MainContent} />
         <Route component={NotFound} />
       </Switch>
 
@@ -56,10 +81,12 @@ function Router() {
 function App() {
   return (
     <ThemeProvider defaultTheme="system">
-      <QueryClientProvider client={queryClient}>
-        <Router />
-        <Toaster />
-      </QueryClientProvider>
+      <AdminProvider>
+        <QueryClientProvider client={queryClient}>
+          <Router />
+          <Toaster />
+        </QueryClientProvider>
+      </AdminProvider>
     </ThemeProvider>
   );
 }

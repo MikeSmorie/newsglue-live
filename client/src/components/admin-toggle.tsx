@@ -1,12 +1,12 @@
-import { useState } from "react";
 import { useUser } from "@/hooks/use-user";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useAdmin } from "@/contexts/admin-context";
 
 export function AdminToggle() {
   const { user, isLoading } = useUser();
-  const [godMode, setGodMode] = useState(false);
+  const { godMode, setGodMode } = useAdmin();
 
   if (isLoading) {
     return <Loader2 className="h-4 w-4 animate-spin" />;
@@ -23,7 +23,7 @@ export function AdminToggle() {
           <Button
             onClick={() => setGodMode(!godMode)}
             className="fixed bottom-4 right-4"
-            variant="default"
+            variant={godMode ? "destructive" : "default"}
             size="lg"
           >
             {godMode ? "Exit God Mode" : "Enter God Mode"}
