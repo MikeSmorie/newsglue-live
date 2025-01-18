@@ -6,6 +6,8 @@ import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import { useUser } from "@/hooks/use-user";
 import { Loader2 } from "lucide-react";
+import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 function Router() {
   const { user, isLoading } = useUser();
@@ -23,23 +25,35 @@ function Router() {
   }
 
   return (
-    <Switch>
-      <Route path="/" component={() => (
-        <div className="min-h-screen flex items-center justify-center">
-          <h1>Welcome {user.username}!</h1>
+    <div className="min-h-screen">
+      <nav className="border-b">
+        <div className="container flex h-16 items-center px-4">
+          <div className="ml-auto">
+            <ThemeToggle />
+          </div>
         </div>
-      )} />
-      <Route component={NotFound} />
-    </Switch>
+      </nav>
+
+      <Switch>
+        <Route path="/" component={() => (
+          <div className="container flex min-h-[calc(100vh-4rem)] items-center justify-center">
+            <h1 className="text-4xl font-bold">Welcome {user.username}!</h1>
+          </div>
+        )} />
+        <Route component={NotFound} />
+      </Switch>
+    </div>
   );
 }
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <Router />
-      <Toaster />
-    </QueryClientProvider>
+    <ThemeProvider defaultTheme="system">
+      <QueryClientProvider client={queryClient}>
+        <Router />
+        <Toaster />
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 
