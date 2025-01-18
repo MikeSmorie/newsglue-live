@@ -98,13 +98,13 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/register-admin", async (req, res, next) => {
+  app.post("/api/register-admin", async (req, res) => {
     try {
       const result = insertUserSchema.safeParse(req.body);
       if (!result.success) {
-        return res
-          .status(400)
-          .send("Invalid input: " + result.error.issues.map(i => i.message).join(", "));
+        return res.status(400).json({
+          message: "Invalid input: " + result.error.issues.map(i => i.message).join(", ")
+        });
       }
 
       // Check if admin already exists
@@ -115,7 +115,9 @@ export function setupAuth(app: Express) {
         .limit(1);
 
       if (existingAdmin) {
-        return res.status(400).send("An admin user already exists");
+        return res.status(400).json({
+          message: "An admin user already exists"
+        });
       }
 
       const { username, password } = result.data;
@@ -128,7 +130,9 @@ export function setupAuth(app: Express) {
         .limit(1);
 
       if (existingUser) {
-        return res.status(400).send("Username already exists");
+        return res.status(400).json({
+          message: "Username already exists"
+        });
       }
 
       // Hash the password and create admin user
@@ -142,28 +146,32 @@ export function setupAuth(app: Express) {
         })
         .returning();
 
-      // Log the admin in after registration
       req.login(newUser, (err) => {
         if (err) {
-          return next(err);
+          return res.status(500).json({
+            message: "Error during login after registration"
+          });
         }
         return res.json({
           message: "Admin registration successful",
           user: { id: newUser.id, username: newUser.username, role: newUser.role },
         });
       });
-    } catch (error) {
-      next(error);
+    } catch (error: any) {
+      return res.status(500).json({
+        message: "Internal server error",
+        error: error.message
+      });
     }
   });
 
-  app.post("/api/register", async (req, res, next) => {
+  app.post("/api/register", async (req, res) => {
     try {
       const result = insertUserSchema.safeParse(req.body);
       if (!result.success) {
-        return res
-          .status(400)
-          .send("Invalid input: " + result.error.issues.map(i => i.message).join(", "));
+        return res.status(400).json({
+          message: "Invalid input: " + result.error.issues.map(i => i.message).join(", ")
+        });
       }
 
       const { username, password } = result.data;
@@ -176,7 +184,9 @@ export function setupAuth(app: Express) {
         .limit(1);
 
       if (existingUser) {
-        return res.status(400).send("Username already exists");
+        return res.status(400).json({
+          message: "Username already exists"
+        });
       }
 
       // Hash the password
@@ -192,41 +202,53 @@ export function setupAuth(app: Express) {
         })
         .returning();
 
-      // Log the user in after registration
       req.login(newUser, (err) => {
         if (err) {
-          return next(err);
+          return res.status(500).json({
+            message: "Error during login after registration"
+          });
         }
         return res.json({
           message: "Registration successful",
           user: { id: newUser.id, username: newUser.username, role: newUser.role },
         });
       });
-    } catch (error) {
-      next(error);
+    } catch (error: any) {
+      return res.status(500).json({
+        message: "Internal server error",
+        error: error.message
+      });
     }
   });
 
   app.post("/api/login", (req, res, next) => {
     const result = insertUserSchema.safeParse(req.body);
     if (!result.success) {
-      return res
-        .status(400)
-        .send("Invalid input: " + result.error.issues.map(i => i.message).join(", "));
+      return res.status(400).json({
+        message: "Invalid input: " + result.error.issues.map(i => i.message).join(", ")
+      });
     }
 
     const cb = (err: any, user: Express.User, info: IVerifyOptions) => {
       if (err) {
-        return next(err);
+        return res.status(500).json({
+          message: "Internal server error",
+          error: err.message
+        });
       }
 
       if (!user) {
-        return res.status(400).send(info.message ?? "Login failed");
+        return res.status(400).json({
+          message: info.message ?? "Login failed"
+        });
       }
 
       req.logIn(user, (err) => {
         if (err) {
-          return next(err);
+          return res.status(500).json({
+            message: "Error during login",
+            error: err.message
+          });
         }
 
         return res.json({
@@ -241,7 +263,10 @@ export function setupAuth(app: Express) {
   app.post("/api/logout", (req, res) => {
     req.logout((err) => {
       if (err) {
-        return res.status(500).send("Logout failed");
+        return res.status(500).json({
+          message: "Logout failed",
+          error: err.message
+        });
       }
 
       res.json({ message: "Logout successful" });
@@ -253,6 +278,6 @@ export function setupAuth(app: Express) {
       return res.json(req.user);
     }
 
-    res.status(401).send("Not logged in");
+    res.status(401).json({ message: "Not logged in" });
   });
 }
