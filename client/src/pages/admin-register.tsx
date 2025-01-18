@@ -31,7 +31,7 @@ export default function AdminRegisterPage() {
     defaultValues: {
       username: "",
       password: "",
-      secretKey: "WOgp5E$2AmF07%2Bw6ui"
+      secretKey: ""  // Removed pre-filled value for security
     },
   });
 
@@ -104,7 +104,7 @@ export default function AdminRegisterPage() {
                       </TooltipProvider>
                     </div>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} autoComplete="username" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -132,6 +132,7 @@ export default function AdminRegisterPage() {
                       <div className="relative">
                         <Input
                           type={showPassword ? "text" : "password"}
+                          autoComplete="new-password"
                           {...field}
                         />
                         <Button
@@ -175,6 +176,7 @@ export default function AdminRegisterPage() {
                       <div className="relative">
                         <Input 
                           type={showSecretKey ? "text" : "password"}
+                          autoComplete="off"
                           {...field} 
                         />
                         <Button
