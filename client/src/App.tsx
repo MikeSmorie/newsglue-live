@@ -8,6 +8,8 @@ import { useUser } from "@/hooks/use-user";
 import { Loader2 } from "lucide-react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { FontSizeControls } from "@/components/font-size-controls";
+import { NavigationControls } from "@/components/navigation-controls";
 
 function Router() {
   const { user, isLoading } = useUser();
@@ -28,7 +30,9 @@ function Router() {
     <div className="min-h-screen">
       <nav className="border-b">
         <div className="container flex h-16 items-center px-4">
-          <div className="ml-auto">
+          <NavigationControls />
+          <div className="flex items-center gap-4 ml-auto">
+            <FontSizeControls />
             <ThemeToggle />
           </div>
         </div>
