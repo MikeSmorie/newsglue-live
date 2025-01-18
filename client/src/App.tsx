@@ -7,13 +7,16 @@ import AuthPage from "@/pages/auth-page";
 import AdminRegisterPage from "@/pages/admin-register";
 import AdminDashboard from "@/pages/admin-dashboard";
 import { useUser } from "@/hooks/use-user";
-import { Loader2 } from "lucide-react";
+import { Loader2, LogOut } from "lucide-react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { FontSizeControls } from "@/components/font-size-controls";
 import { NavigationControls } from "@/components/navigation-controls";
 import { AdminToggle } from "@/components/admin-toggle";
 import { AdminProvider } from "@/contexts/admin-context";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 
 // Protected Route Component
 function ProtectedAdminRoute({ component: Component }: { component: React.ComponentType }) {
@@ -35,7 +38,9 @@ function ProtectedAdminRoute({ component: Component }: { component: React.Compon
 }
 
 function Router() {
-  const { user, isLoading } = useUser();
+  const { user, isLoading, logout } = useUser();
+  const { toast } = useToast();
+  const [, navigate] = useLocation();
 
   if (isLoading) {
     return (
@@ -44,6 +49,26 @@ function Router() {
       </div>
     );
   }
+
+  const handleLogout = async () => {
+    try {
+      const result = await logout();
+      if (!result.ok) {
+        throw new Error(result.message);
+      }
+      toast({
+        title: "Logged out successfully",
+        description: "See you next time!",
+      });
+      navigate("/");
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    }
+  };
 
   if (!user) {
     return (
@@ -60,8 +85,19 @@ function Router() {
         <div className="container flex h-16 items-center px-4">
           <NavigationControls />
           <div className="flex items-center gap-4 ml-auto">
+            <span className="text-sm text-muted-foreground">
+              {user.username}
+            </span>
             <FontSizeControls />
             <ThemeToggle />
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={handleLogout}
+              className="h-8 w-8"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </nav>
