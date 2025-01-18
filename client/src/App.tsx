@@ -10,6 +10,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { FontSizeControls } from "@/components/font-size-controls";
 import { NavigationControls } from "@/components/navigation-controls";
+import { AdminToggle } from "@/components/admin-toggle";
 
 function Router() {
   const { user, isLoading } = useUser();
@@ -46,6 +47,8 @@ function Router() {
         )} />
         <Route component={NotFound} />
       </Switch>
+
+      <AdminToggle />
     </div>
   );
 }
