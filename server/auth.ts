@@ -98,6 +98,65 @@ export function setupAuth(app: Express) {
     }
   });
 
+  app.post("/api/register-admin", async (req, res, next) => {
+    try {
+      const result = insertUserSchema.safeParse(req.body);
+      if (!result.success) {
+        return res
+          .status(400)
+          .send("Invalid input: " + result.error.issues.map(i => i.message).join(", "));
+      }
+
+      // Check if admin already exists
+      const [existingAdmin] = await db
+        .select()
+        .from(users)
+        .where(eq(users.role, "admin"))
+        .limit(1);
+
+      if (existingAdmin) {
+        return res.status(400).send("An admin user already exists");
+      }
+
+      const { username, password } = result.data;
+
+      // Check if username already exists
+      const [existingUser] = await db
+        .select()
+        .from(users)
+        .where(eq(users.username, username))
+        .limit(1);
+
+      if (existingUser) {
+        return res.status(400).send("Username already exists");
+      }
+
+      // Hash the password and create admin user
+      const hashedPassword = await crypto.hash(password);
+      const [newUser] = await db
+        .insert(users)
+        .values({
+          username,
+          password: hashedPassword,
+          role: "admin",
+        })
+        .returning();
+
+      // Log the admin in after registration
+      req.login(newUser, (err) => {
+        if (err) {
+          return next(err);
+        }
+        return res.json({
+          message: "Admin registration successful",
+          user: { id: newUser.id, username: newUser.username, role: newUser.role },
+        });
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.post("/api/register", async (req, res, next) => {
     try {
       const result = insertUserSchema.safeParse(req.body);
@@ -127,8 +186,9 @@ export function setupAuth(app: Express) {
       const [newUser] = await db
         .insert(users)
         .values({
-          ...result.data,
+          username,
           password: hashedPassword,
+          role: "user", // Explicitly set role as user
         })
         .returning();
 
@@ -139,7 +199,7 @@ export function setupAuth(app: Express) {
         }
         return res.json({
           message: "Registration successful",
-          user: { id: newUser.id, username: newUser.username },
+          user: { id: newUser.id, username: newUser.username, role: newUser.role },
         });
       });
     } catch (error) {
@@ -171,7 +231,7 @@ export function setupAuth(app: Express) {
 
         return res.json({
           message: "Login successful",
-          user: { id: user.id, username: user.username },
+          user: { id: user.id, username: user.username, role: user.role },
         });
       });
     };
