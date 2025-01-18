@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +14,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 const adminAuthSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  secretKey: z.string().refine(val => val === "WOgp5E$2AmF07%2Bw6ui", {
+  secretKey: z.string().min(1, "Administrator secret key is required").refine(val => val === "WOgp5E$2AmF07%2Bw6ui", {
     message: "Invalid administrator secret key"
   })
 });
@@ -25,20 +26,21 @@ export default function AdminRegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showSecretKey, setShowSecretKey] = useState(false);
   const { toast } = useToast();
+  const [, navigate] = useLocation();
 
   const form = useForm<AdminAuthFormData>({
     resolver: zodResolver(adminAuthSchema),
     defaultValues: {
       username: "",
       password: "",
-      secretKey: ""  // Removed pre-filled value for security
+      secretKey: "" // Removed pre-filled value for security
     },
   });
 
   const onSubmit = async (data: AdminAuthFormData) => {
     setIsLoading(true);
     try {
-      const result = await fetch('/api/register-admin', {
+      const response = await fetch('/api/register-admin', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -50,16 +52,16 @@ export default function AdminRegisterPage() {
         credentials: 'include'
       });
 
-      const response = await result.json();
-
-      if (!result.ok) {
-        throw new Error(response.message || "Registration failed");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Registration failed");
       }
 
       toast({
         title: "Admin Registration Successful",
         description: `Welcome ${data.username}! You now have administrator privileges.`,
       });
+      navigate("/admin");
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -132,8 +134,8 @@ export default function AdminRegisterPage() {
                       <div className="relative">
                         <Input
                           type={showPassword ? "text" : "password"}
-                          autoComplete="new-password"
                           {...field}
+                          autoComplete="new-password"
                         />
                         <Button
                           type="button"
@@ -174,10 +176,13 @@ export default function AdminRegisterPage() {
                     </div>
                     <FormControl>
                       <div className="relative">
-                        <Input 
+                        <Input
                           type={showSecretKey ? "text" : "password"}
+                          {...field}
                           autoComplete="off"
-                          {...field} 
+                          autoCapitalize="off"
+                          autoCorrect="off"
+                          spellCheck="false"
                         />
                         <Button
                           type="button"
