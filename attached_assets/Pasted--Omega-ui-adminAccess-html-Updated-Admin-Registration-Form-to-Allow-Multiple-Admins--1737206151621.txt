@@ -1,0 +1,117 @@
+<!-- Omega/ui/adminAccess.html -->
+<!-- Updated Admin Registration Form to Allow Multiple Admins -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Access</title>
+</head>
+<body>
+    <h2>Admin Access Panel</h2>
+
+    <!-- Toggle between Register and Login Forms -->
+    <button onclick="showRegisterForm()">Register as Admin</button>
+    <button onclick="showLoginForm()">Login as Admin</button>
+
+    <!-- Admin Registration Form -->
+    <div id="register-form" style="display: none;">
+        <h3>Register Admin</h3>
+        <form id="admin-register-form">
+            <label for="reg-name">Name:</label>
+            <input type="text" id="reg-name" required><br><br>
+
+            <label for="reg-email">Email:</label>
+            <input type="email" id="reg-email" required><br><br>
+
+            <label for="reg-password">Password:</label>
+            <input type="password" id="reg-password" required>
+            <button type="button" onclick="togglePassword('reg-password')">Reveal</button><br><br>
+
+            <label for="reg-secret-key">Secret Key:</label>
+            <input type="password" id="reg-secret-key" required placeholder="Enter Secret Key"><br><br>
+
+            <button type="submit">Register</button>
+        </form>
+    </div>
+
+    <!-- Admin Login Form -->
+    <div id="login-form" style="display: none;">
+        <h3>Login Admin</h3>
+        <form id="admin-login-form">
+            <label for="login-email">Email:</label>
+            <input type="email" id="login-email" required><br><br>
+
+            <label for="login-password">Password:</label>
+            <input type="password" id="login-password" required>
+            <button type="button" onclick="togglePassword('login-password')">Reveal</button><br><br>
+
+            <button type="submit">Login</button>
+        </form>
+    </div>
+
+    <script>
+        // Show Register Form
+        function showRegisterForm() {
+            document.getElementById('register-form').style.display = 'block';
+            document.getElementById('login-form').style.display = 'none';
+        }
+
+        // Show Login Form
+        function showLoginForm() {
+            document.getElementById('register-form').style.display = 'none';
+            document.getElementById('login-form').style.display = 'block';
+        }
+
+        // Toggle Password Visibility
+        function togglePassword(fieldId) {
+            const passwordField = document.getElementById(fieldId);
+            passwordField.type = passwordField.type === 'password' ? 'text' : 'password';
+        }
+
+        // Admin Registration Submission (Multiple Admins)
+        document.getElementById('admin-register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('reg-name').value;
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            const secretKey = document.getElementById('reg-secret-key').value;
+
+            const response = await fetch('/register-admin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, password, secret_key: secretKey })
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                alert(result.message);
+                window.location.href = '/admin-dashboard';
+            } else {
+                alert(result.detail);
+            }
+        });
+
+        // Admin Login Submission
+        document.getElementById('admin-login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            const response = await fetch('/admin-login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                alert("Login successful!");
+                window.location.href = '/admin-dashboard';
+            } else {
+                alert("Invalid credentials.");
+            }
+        });
+    </script>
+</body>
+</html>

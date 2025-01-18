@@ -107,22 +107,9 @@ export function setupAuth(app: Express) {
         });
       }
 
-      // Check if admin already exists
-      const [existingAdmin] = await db
-        .select()
-        .from(users)
-        .where(eq(users.role, "admin"))
-        .limit(1);
-
-      if (existingAdmin) {
-        return res.status(400).json({
-          message: "An admin user already exists"
-        });
-      }
-
       const { username, password } = result.data;
 
-      // Check if username already exists
+      // Check only for username uniqueness
       const [existingUser] = await db
         .select()
         .from(users)
