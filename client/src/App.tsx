@@ -6,6 +6,9 @@ import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import AdminRegisterPage from "@/pages/admin-register";
 import AdminDashboard from "@/pages/admin-dashboard";
+import PlaceholderApp from "@/pages/placeholder-app";
+import MockDashboard from "@/pages/mock-dashboard";
+import MockSettings from "@/pages/mock-settings";
 import { useUser } from "@/hooks/use-user";
 import { Loader2, LogOut } from "lucide-react";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -104,16 +107,9 @@ function Router() {
 
       <Switch>
         <Route path="/admin" component={() => <ProtectedAdminRoute component={AdminDashboard} />} />
-        <Route path="/">
-          <div className="container flex min-h-[calc(100vh-4rem)] items-center justify-center">
-            <div className="space-y-4 text-center">
-              <h1 className="text-4xl font-bold">Welcome {user?.username}!</h1>
-              <p className="text-muted-foreground">
-                {user?.role === "admin" ? "Admin mode is currently inactive" : "You're in regular user mode"}
-              </p>
-            </div>
-          </div>
-        </Route>
+        <Route path="/" component={PlaceholderApp} />
+        <Route path="/mock-dashboard" component={MockDashboard} />
+        <Route path="/mock-settings" component={MockSettings} />
         <Route component={NotFound} />
       </Switch>
 
