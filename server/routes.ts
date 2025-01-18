@@ -5,6 +5,7 @@ import { requestLogger, errorLogger } from "./middleware/logger";
 import { db } from "@db";
 import { activityLogs, errorLogs, users } from "@db/schema";
 import { eq } from "drizzle-orm";
+import cors from "cors";
 
 // Middleware to check if user is authenticated
 const requireAuth = (req: any, res: any, next: any) => {
@@ -23,6 +24,12 @@ const requireAdmin = (req: any, res: any, next: any) => {
 };
 
 export function registerRoutes(app: Express): Server {
+  // Add CORS middleware
+  app.use(cors({
+    origin: process.env.NODE_ENV === 'production' ? false : '*',
+    credentials: true
+  }));
+
   // Add logging middleware
   app.use(requestLogger);
   app.use(errorLogger);
@@ -43,6 +50,8 @@ export function registerRoutes(app: Express): Server {
           server: "operational",
           database: "operational",
           auth: "operational",
+          cors: "enabled",
+          logging: "configured"
         },
         version: process.env.npm_package_version || "1.0.0"
       };
@@ -56,7 +65,9 @@ export function registerRoutes(app: Express): Server {
         components: {
           server: "operational",
           database: "failed",
-          auth: "operational"
+          auth: "operational",
+          cors: "enabled",
+          logging: "configured"
         }
       };
       res.status(500).json(unhealthyStatus);
@@ -79,6 +90,7 @@ export function registerRoutes(app: Express): Server {
             status: "operational",
             uptime: process.uptime(),
             memory: process.memoryUsage(),
+            environment: process.env.NODE_ENV,
           },
           database: {
             status: "operational",
@@ -92,8 +104,15 @@ export function registerRoutes(app: Express): Server {
             status: "operational",
             provider: "passport-local",
           },
+          cors: {
+            status: "enabled",
+            origin: process.env.NODE_ENV === 'production' ? 'restricted' : '*'
+          },
+          logging: {
+            status: "configured",
+            providers: ["activity", "error"]
+          }
         },
-        environment: process.env.NODE_ENV,
         version: process.env.npm_package_version || "1.0.0"
       };
 
