@@ -118,7 +118,7 @@ export function setupAuth(app: Express) {
 
       if (existingUser) {
         return res.status(400).json({
-          message: "Username already exists"
+          message: "Username is already in use"
         });
       }
 
@@ -140,7 +140,7 @@ export function setupAuth(app: Express) {
           });
         }
         return res.json({
-          message: "Admin registration successful",
+          message: `Admin user '${username}' registered successfully`,
           user: { id: newUser.id, username: newUser.username, role: newUser.role },
         });
       });
