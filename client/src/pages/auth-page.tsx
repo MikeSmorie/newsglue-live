@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Eye, EyeOff, HelpCircle, Loader2 } from "lucide-react";
+import { Eye, EyeOff, HelpCircle, Loader2, Shield } from "lucide-react";
 import { Link } from "wouter";
 
 const authSchema = z.object({
@@ -57,12 +57,7 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4 relative">
-      <Link href="/admin-register">
-        <a className="fixed bottom-1 left-1 w-4 h-4 opacity-0 hover:opacity-100 transition-opacity duration-200" aria-hidden="true">
-          ⚡
-        </a>
-      </Link>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center bg-gradient-to-br from-foreground to-muted-foreground bg-clip-text text-transparent">
@@ -237,6 +232,15 @@ export default function AuthPage() {
               </Form>
             </TabsContent>
           </Tabs>
+
+          <div className="mt-6 text-center">
+            <Link href="/admin-register">
+              <Button variant="outline" className="w-full">
+                <Shield className="mr-2 h-4 w-4" />
+                Register as Administrator
+              </Button>
+            </Link>
+          </div>
         </CardContent>
       </Card>
     </div>
