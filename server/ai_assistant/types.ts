@@ -17,4 +17,27 @@ export interface AIResponse {
   suggestions?: string[];
   relatedDocs?: string[];
   confidence: number;
+  metrics?: {
+    errorRate?: string;
+    activeUsers?: number;
+    systemHealth?: {
+      status: string;
+      details: Record<string, unknown>;
+    };
+  };
+  actions?: Array<{
+    type: string;
+    label: string;
+    endpoint: string;
+  }>;
 }
+
+export const AIFeedbackSchema = z.object({
+  responseId: z.string(),
+  userId: z.number(),
+  rating: z.number().min(1).max(5),
+  comment: z.string().optional(),
+  helpful: z.boolean(),
+});
+
+export type AIFeedback = z.infer<typeof AIFeedbackSchema>;

@@ -1,8 +1,9 @@
 import express from "express";
 import { aiAssistant } from "../ai_assistant/service";
-import { AIQuerySchema } from "../ai_assistant/types";
+import { AIQuerySchema, AIFeedbackSchema } from "../ai_assistant/types";
 import { db } from "@db";
-import { errorLogs } from "@db/schema";
+import { errorLogs, activityLogs } from "@db/schema";
+import { sql } from "drizzle-orm";
 
 const router = express.Router();
 
@@ -46,14 +47,30 @@ router.post("/query", async (req, res) => {
   }
 });
 
+// Record feedback for AI responses
+router.post("/feedback", async (req, res) => {
+  try {
+    const feedback = AIFeedbackSchema.parse(req.body);
+
+    await aiAssistant.recordFeedback(feedback);
+
+    res.json({ message: "Feedback recorded successfully" });
+  } catch (error) {
+    res.status(400).json({ 
+      message: "Error recording feedback",
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
 // Get AI interaction history (admin only)
 router.get("/history", canAccessAdminAI, async (req, res) => {
   try {
-    const interactions = await db.query.activityLogs.findMany({
-      where: (logs) => logs.action.like("ai_%"),
-      orderBy: (logs) => logs.timestamp,
-      limit: 50
-    });
+    const interactions = await db.select()
+      .from(activityLogs)
+      .where(sql`${activityLogs.action} ILIKE 'ai_%'`)
+      .orderBy(activityLogs.timestamp)
+      .limit(50);
 
     res.json(interactions);
   } catch (error) {
