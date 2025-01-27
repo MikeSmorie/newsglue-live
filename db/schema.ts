@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, boolean, decimal } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -33,15 +33,86 @@ export const errorLogs = pgTable("error_logs", {
   stackTrace: text("stack_trace")
 });
 
-// Define relations
+// Payment and Subscription Related Schema
+export const subscriptionStatusEnum = z.enum(["active", "cancelled", "expired", "pending"]);
+export type SubscriptionStatus = z.infer<typeof subscriptionStatusEnum>;
+
+export const paymentStatusEnum = z.enum(["pending", "completed", "failed", "refunded"]);
+export type PaymentStatus = z.infer<typeof paymentStatusEnum>;
+
+export const subscriptionPlans = pgTable("subscription_plans", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  interval: text("interval").notNull(), // monthly, yearly, etc.
+  features: text("features"), // JSON string of features
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+export const userSubscriptions = pgTable("user_subscriptions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  planId: integer("plan_id").notNull().references(() => subscriptionPlans.id),
+  status: text("status").notNull().default("pending"),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date"),
+  cancelledAt: timestamp("cancelled_at"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+export const payments = pgTable("payments", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  subscriptionId: integer("subscription_id").references(() => userSubscriptions.id),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: text("currency").notNull().default("USD"),
+  status: text("status").notNull().default("pending"),
+  paymentMethod: text("payment_method").notNull(),
+  paymentIntentId: text("payment_intent_id"), // For Stripe integration
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at")
+});
+
+// Define all relations
 export const usersRelations = relations(users, ({ many }) => ({
-  activityLogs: many(activityLogs)
+  activityLogs: many(activityLogs),
+  subscriptions: many(userSubscriptions),
+  payments: many(payments)
 }));
 
 export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
   user: one(users, {
     fields: [activityLogs.userId],
     references: [users.id]
+  })
+}));
+
+export const subscriptionPlansRelations = relations(subscriptionPlans, ({ many }) => ({
+  subscriptions: many(userSubscriptions)
+}));
+
+export const userSubscriptionsRelations = relations(userSubscriptions, ({ one, many }) => ({
+  user: one(users, {
+    fields: [userSubscriptions.userId],
+    references: [users.id]
+  }),
+  plan: one(subscriptionPlans, {
+    fields: [userSubscriptions.planId],
+    references: [subscriptionPlans.id]
+  }),
+  payments: many(payments)
+}));
+
+export const paymentsRelations = relations(payments, ({ one }) => ({
+  user: one(users, {
+    fields: [payments.userId],
+    references: [users.id]
+  }),
+  subscription: one(userSubscriptions, {
+    fields: [payments.subscriptionId],
+    references: [userSubscriptions.id]
   })
 }));
 
@@ -60,9 +131,29 @@ export const selectActivityLogSchema = createSelectSchema(activityLogs);
 export const insertErrorLogSchema = createInsertSchema(errorLogs);
 export const selectErrorLogSchema = createSelectSchema(errorLogs);
 
+export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans);
+export const selectSubscriptionPlanSchema = createSelectSchema(subscriptionPlans);
+
+export const insertUserSubscriptionSchema = createInsertSchema(userSubscriptions, {
+  status: subscriptionStatusEnum,
+});
+export const selectUserSubscriptionSchema = createSelectSchema(userSubscriptions);
+
+export const insertPaymentSchema = createInsertSchema(payments, {
+  status: paymentStatusEnum,
+});
+export const selectPaymentSchema = createSelectSchema(payments);
+
+// Types
 export type InsertUser = typeof users.$inferInsert;
 export type SelectUser = typeof users.$inferSelect;
 export type InsertActivityLog = typeof activityLogs.$inferInsert;
 export type SelectActivityLog = typeof activityLogs.$inferSelect;
 export type InsertErrorLog = typeof errorLogs.$inferInsert;
 export type SelectErrorLog = typeof errorLogs.$inferSelect;
+export type InsertSubscriptionPlan = typeof subscriptionPlans.$inferInsert;
+export type SelectSubscriptionPlan = typeof subscriptionPlans.$inferSelect;
+export type InsertUserSubscription = typeof userSubscriptions.$inferInsert;
+export type SelectUserSubscription = typeof userSubscriptions.$inferSelect;
+export type InsertPayment = typeof payments.$inferInsert;
+export type SelectPayment = typeof payments.$inferSelect;
