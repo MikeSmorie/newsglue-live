@@ -40,6 +40,12 @@ export type SubscriptionStatus = z.infer<typeof subscriptionStatusEnum>;
 export const paymentStatusEnum = z.enum(["pending", "completed", "failed", "refunded"]);
 export type PaymentStatus = z.infer<typeof paymentStatusEnum>;
 
+export const gatewayProviderEnum = z.enum(["PayPal", "Stripe"]);
+export type GatewayProvider = z.infer<typeof gatewayProviderEnum>;
+
+export const gatewayStatusEnum = z.enum(["active", "inactive"]);
+export type GatewayStatus = z.infer<typeof gatewayStatusEnum>;
+
 export const subscriptionPlans = pgTable("subscription_plans", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -75,11 +81,23 @@ export const payments = pgTable("payments", {
   updatedAt: timestamp("updated_at")
 });
 
+export const clientPaymentGateways = pgTable("client_payment_gateways", {
+  id: serial("id").primaryKey(),
+  clientId: integer("client_id").notNull().references(() => users.id),
+  gatewayProvider: text("gateway_provider").notNull(),
+  apiKey: text("api_key").notNull(),
+  secretKey: text("secret_key").notNull(),
+  status: text("status").notNull().default("inactive"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at")
+});
+
 // Define all relations
 export const usersRelations = relations(users, ({ many }) => ({
   activityLogs: many(activityLogs),
   subscriptions: many(userSubscriptions),
-  payments: many(payments)
+  payments: many(payments),
+  paymentGateways: many(clientPaymentGateways)
 }));
 
 export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
@@ -116,6 +134,13 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
   })
 }));
 
+export const clientPaymentGatewaysRelations = relations(clientPaymentGateways, ({ one }) => ({
+  client: one(users, {
+    fields: [clientPaymentGateways.clientId],
+    references: [users.id]
+  })
+}));
+
 // Schemas for validation
 export const insertUserSchema = createInsertSchema(users, {
   role: userRoleEnum.default("user"),
@@ -144,6 +169,12 @@ export const insertPaymentSchema = createInsertSchema(payments, {
 });
 export const selectPaymentSchema = createSelectSchema(payments);
 
+export const insertClientPaymentGatewaySchema = createInsertSchema(clientPaymentGateways, {
+  gatewayProvider: gatewayProviderEnum,
+  status: gatewayStatusEnum.default("inactive")
+});
+export const selectClientPaymentGatewaySchema = createSelectSchema(clientPaymentGateways);
+
 // Types
 export type InsertUser = typeof users.$inferInsert;
 export type SelectUser = typeof users.$inferSelect;
@@ -157,3 +188,5 @@ export type InsertUserSubscription = typeof userSubscriptions.$inferInsert;
 export type SelectUserSubscription = typeof userSubscriptions.$inferSelect;
 export type InsertPayment = typeof payments.$inferInsert;
 export type SelectPayment = typeof payments.$inferSelect;
+export type InsertClientPaymentGateway = typeof clientPaymentGateways.$inferInsert;
+export type SelectClientPaymentGateway = typeof clientPaymentGateways.$inferSelect;

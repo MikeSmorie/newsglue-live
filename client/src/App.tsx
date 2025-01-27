@@ -9,6 +9,7 @@ import AdminDashboard from "@/pages/admin-dashboard";
 import PlaceholderApp from "@/pages/placeholder-app";
 import MockDashboard from "@/pages/mock-dashboard";
 import MockSettings from "@/pages/mock-settings";
+import SubscriptionPage from "@/pages/subscriptions";
 import { useUser } from "@/hooks/use-user";
 import { Loader2, LogOut } from "lucide-react";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -110,6 +111,7 @@ function Router() {
         <Route path="/" component={PlaceholderApp} />
         <Route path="/mock-dashboard" component={MockDashboard} />
         <Route path="/mock-settings" component={MockSettings} />
+        <Route path="/subscriptions" component={SubscriptionPage} />
         <Route component={NotFound} />
       </Switch>
 

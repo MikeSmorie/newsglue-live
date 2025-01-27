@@ -8,6 +8,7 @@ import { eq } from "drizzle-orm";
 import cors from "cors";
 import subscriptionRoutes from "./routes/subscription";
 import webhookRoutes from "./routes/webhook";
+import aiRoutes from "./routes/ai";
 
 // Plugin registry
 const plugins: Record<string, { status: string; loadedAt?: Date }> = {};
@@ -42,9 +43,10 @@ export function registerRoutes(app: Express): Server {
   // Set up authentication routes
   setupAuth(app);
 
-  // Register subscription and webhook routes
+  // Register routes
   app.use("/api/subscription", subscriptionRoutes);
   app.use("/api/webhook", webhookRoutes);
+  app.use("/api/ai", aiRoutes);
 
   // Plugin Management Endpoints
   app.post("/api/plugins/load", requireAdmin, (req, res) => {
