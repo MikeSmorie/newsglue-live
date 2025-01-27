@@ -17,6 +17,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { FontSizeControls } from "@/components/font-size-controls";
 import { NavigationControls } from "@/components/navigation-controls";
 import { AdminToggle } from "@/components/admin-toggle";
+import { AIAssistant } from "@/components/ai-assistant";
 import { AdminProvider } from "@/contexts/admin-context";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -89,6 +90,7 @@ function Router() {
         <div className="container flex h-16 items-center px-4">
           <NavigationControls />
           <div className="flex items-center gap-4 ml-auto">
+            <AIAssistant />
             <span className="text-sm text-muted-foreground">
               {user.username}
             </span>
