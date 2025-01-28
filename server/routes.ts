@@ -9,6 +9,7 @@ import cors from "cors";
 import subscriptionRoutes from "./routes/subscription";
 import webhookRoutes from "./routes/webhook";
 import aiRoutes from "./routes/ai";
+import featureRoutes from "./routes/features";
 
 // Plugin registry
 const plugins: Record<string, { status: string; loadedAt?: Date }> = {};
@@ -47,6 +48,7 @@ export function registerRoutes(app: Express): Server {
   app.use("/api/subscription", subscriptionRoutes);
   app.use("/api/webhook", webhookRoutes);
   app.use("/api/ai", aiRoutes);
+  app.use("/api/features", requireAdmin, featureRoutes); // New feature routes, admin only
 
   // Plugin Management Endpoints
   app.post("/api/plugins/load", requireAdmin, (req, res) => {

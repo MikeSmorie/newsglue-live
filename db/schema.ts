@@ -96,6 +96,24 @@ export const clientPaymentGateways = pgTable("client_payment_gateways", {
   updatedAt: timestamp("updated_at")
 });
 
+// New Feature Management Tables
+export const features = pgTable("features", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  category: text("category").notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at")
+});
+
+export const planFeatures = pgTable("plan_features", {
+  id: serial("id").primaryKey(),
+  planId: integer("plan_id").notNull().references(() => subscriptionPlans.id),
+  featureId: integer("feature_id").notNull().references(() => features.id),
+  enabled: boolean("enabled").default(true),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
 // Define all relations
 export const usersRelations = relations(users, ({ many }) => ({
   activityLogs: many(activityLogs),
@@ -112,7 +130,8 @@ export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
 }));
 
 export const subscriptionPlansRelations = relations(subscriptionPlans, ({ many }) => ({
-  subscriptions: many(userSubscriptions)
+  subscriptions: many(userSubscriptions),
+  planFeatures: many(planFeatures)
 }));
 
 export const userSubscriptionsRelations = relations(userSubscriptions, ({ one, many }) => ({
@@ -144,6 +163,22 @@ export const clientPaymentGatewaysRelations = relations(clientPaymentGateways, (
     references: [users.id]
   })
 }));
+
+export const featuresRelations = relations(features, ({ many }) => ({
+  planFeatures: many(planFeatures)
+}));
+
+export const planFeaturesRelations = relations(planFeatures, ({ one }) => ({
+  feature: one(features, {
+    fields: [planFeatures.featureId],
+    references: [features.id]
+  }),
+  plan: one(subscriptionPlans, {
+    fields: [planFeatures.planId],
+    references: [subscriptionPlans.id]
+  })
+}));
+
 
 // Schemas for validation
 export const insertUserSchema = createInsertSchema(users, {
@@ -179,6 +214,13 @@ export const insertClientPaymentGatewaySchema = createInsertSchema(clientPayment
 });
 export const selectClientPaymentGatewaySchema = createSelectSchema(clientPaymentGateways);
 
+// Add new schemas
+export const insertFeatureSchema = createInsertSchema(features);
+export const selectFeatureSchema = createSelectSchema(features);
+
+export const insertPlanFeatureSchema = createInsertSchema(planFeatures);
+export const selectPlanFeatureSchema = createSelectSchema(planFeatures);
+
 // Types
 export type InsertUser = typeof users.$inferInsert;
 export type SelectUser = typeof users.$inferSelect;
@@ -194,3 +236,9 @@ export type InsertPayment = typeof payments.$inferInsert;
 export type SelectPayment = typeof payments.$inferSelect;
 export type InsertClientPaymentGateway = typeof clientPaymentGateways.$inferInsert;
 export type SelectClientPaymentGateway = typeof clientPaymentGateways.$inferSelect;
+
+// Add new types
+export type InsertFeature = typeof features.$inferInsert;
+export type SelectFeature = typeof features.$inferSelect;
+export type InsertPlanFeature = typeof planFeatures.$inferInsert;
+export type SelectPlanFeature = typeof planFeatures.$inferSelect;
