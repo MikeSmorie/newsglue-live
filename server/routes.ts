@@ -145,13 +145,13 @@ export function registerRoutes(app: Express): Server {
   // Security middleware
   app.use(hpp());
   app.use(csrfProtection);
-  
+
   // Add CSRF token to all responses
   app.use((req, res, next) => {
     res.cookie("XSRF-TOKEN", req.csrfToken());
     next();
   });
-  
+
   // Add CORS middleware
   app.use(cors({
     origin: process.env.NODE_ENV === 'production' ? false : '*',
@@ -337,6 +337,25 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       res.status(500).json({ message: "Failed to log activity" });
     }
+  });
+
+  app.use(requestLogger);
+  app.use(errorLogger);
+
+  // Logging metrics endpoint (admin only)
+  app.get("/api/admin/metrics/logging", async (req, res) => {
+    if (!req.user?.isAdmin) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    const metrics = {
+      activityQueueSize: activityQueue.length,
+      errorQueueSize: errorQueue.length,
+      batchSize: BATCH_SIZE,
+      flushInterval: FLUSH_INTERVAL
+    };
+
+    res.json(metrics);
   });
 
   const httpServer = createServer(app);

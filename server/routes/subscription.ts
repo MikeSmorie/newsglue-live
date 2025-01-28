@@ -12,7 +12,29 @@ import { eq } from "drizzle-orm";
 import NodeCache from "node-cache";
 
 const router = express.Router();
-const cache = new NodeCache({ stdTTL: 300 }); // 5 minute cache
+const cache = new NodeCache({ 
+  stdTTL: 300,
+  checkperiod: 60,
+  useClones: false
+}); 
+
+// Cache metrics
+const cacheStats = {
+  hits: 0,
+  misses: 0
+};
+
+function trackCacheMetrics() {
+  const stats = cache.getStats();
+  logActivity(0, 'CACHE_METRICS', JSON.stringify({
+    hits: cacheStats.hits,
+    misses: cacheStats.misses,
+    keys: cache.keys().length,
+    ...stats
+  }));
+}
+
+setInterval(trackCacheMetrics, 300000); // Log every 5 minutes
 
 // Get all subscription plans with caching
 router.get("/plans", async (_req, res) => {

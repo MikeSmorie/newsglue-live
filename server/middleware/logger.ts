@@ -103,3 +103,19 @@ export function errorLogger(err: Error, req: Request, res: Response, next: NextF
   logError(err, `${req.method} ${req.path}`);
   next(err);
 }
+
+// Monitor database connection pool health
+let lastPoolCheck = Date.now();
+export async function monitorConnectionPool() {
+  const now = Date.now();
+  // Check every 5 minutes
+  if (now - lastPoolCheck > 300000) {
+    try {
+      const poolStats = await db.execute(sql`SELECT COUNT(*) FROM pg_stat_activity`);
+      logActivity(0, 'POOL_HEALTH_CHECK', JSON.stringify(poolStats));
+      lastPoolCheck = now;
+    } catch (error) {
+      logError(error as Error, 'Connection Pool Monitor');
+    }
+  }
+}
