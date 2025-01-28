@@ -5,6 +5,7 @@ import { useUser } from "@/hooks/use-user";
 import { Lock, Check, X, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAdmin } from "@/contexts/admin-context";
+import { SubscriptionComparison } from "@/components/subscription-comparison";
 
 interface Feature {
   id: number;
@@ -149,6 +150,9 @@ export default function UserDashboard() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Plan Comparison */}
+        <SubscriptionComparison />
       </div>
     </div>
   );
