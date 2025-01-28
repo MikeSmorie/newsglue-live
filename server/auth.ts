@@ -105,7 +105,10 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/register", async (req, res) => {
+  // Apply security middleware
+app.use(hpp()); // Prevent parameter pollution
+
+app.post("/api/register", validateRegisterInput, handleValidationErrors, async (req, res) => {
     try {
       const result = insertUserSchema.safeParse(req.body);
       if (!result.success) {
@@ -219,7 +222,7 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/login", (req, res, next) => {
+  app.post("/api/login", authLimiter, validateLoginInput, handleValidationErrors, (req, res, next) => {
     const result = insertUserSchema.safeParse(req.body);
     if (!result.success) {
       return res.status(400).json({

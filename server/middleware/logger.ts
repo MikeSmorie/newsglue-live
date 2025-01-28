@@ -16,6 +16,19 @@ export async function logActivity(userId: number, action: string, details?: stri
   }
 }
 
+export async function logSecurityEvent(event: string, details: string, severity: 'low' | 'medium' | 'high' = 'low') {
+  try {
+    await db.insert(errorLogs).values({
+      errorMessage: event,
+      location: 'Security',
+      stackTrace: details,
+      timestamp: new Date()
+    });
+  } catch (err) {
+    console.error("Failed to log security event:", err);
+  }
+}
+
 export async function logError(error: Error, location: string) {
   try {
     await db.insert(errorLogs).values({

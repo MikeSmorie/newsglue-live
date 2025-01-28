@@ -142,6 +142,16 @@ const validateAnnouncementPayload = (req: any, res: any, next: any) => {
 };
 
 export function registerRoutes(app: Express): Server {
+  // Security middleware
+  app.use(hpp());
+  app.use(csrfProtection);
+  
+  // Add CSRF token to all responses
+  app.use((req, res, next) => {
+    res.cookie("XSRF-TOKEN", req.csrfToken());
+    next();
+  });
+  
   // Add CORS middleware
   app.use(cors({
     origin: process.env.NODE_ENV === 'production' ? false : '*',
