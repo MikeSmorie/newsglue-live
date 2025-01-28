@@ -21,7 +21,7 @@ interface Plan {
   name: string;
   price: number;
   description: string | null;
-  features: string[];
+  features?: string[];
   isPopular?: boolean;
   trialDays?: number;
 }
@@ -130,7 +130,7 @@ export default function SubscriptionPlans() {
             </CardHeader>
             <CardContent className="space-y-6">
               <ul className="space-y-2">
-                {plan.features.map((feature, index) => (
+                {plan.features?.map((feature, index) => (
                   <li key={index} className="flex items-start gap-2">
                     <Check className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
                     <span className="text-sm">{feature}</span>
