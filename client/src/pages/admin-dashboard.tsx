@@ -3,12 +3,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@/hooks/use-user";
 import { useAdmin } from "@/contexts/admin-context";
-import { Activity, Cpu, Database, Shield, Puzzle, Users, MessageSquare } from "lucide-react";
+import { Activity, Cpu, Database, Shield, Puzzle, Users, MessageSquare, ArrowLeft } from "lucide-react";
 import { useLocation } from "wouter";
 import { SelectActivityLog } from "@db/schema";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface HealthStatus {
   status: string;
@@ -99,14 +104,27 @@ export default function AdminDashboard() {
   return (
     <div className="container py-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+        <div className="flex items-center gap-4">
+          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+          {godMode && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/")}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Exit God Mode
+            </Button>
+          )}
+        </div>
         <div className="flex items-center gap-4">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button 
                   variant="default"
-                  onClick={handleNavigateToSubscriptionManager}
+                  onClick={() => navigate("/admin/subscription-manager")}
                   className="flex items-center gap-2"
                 >
                   <Users className="h-4 w-4" />
@@ -135,12 +153,6 @@ export default function AdminDashboard() {
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">God Mode:</span>
-            <span className={`font-bold ${godMode ? "text-destructive" : "text-muted-foreground"}`}>
-              {godMode ? "ACTIVE" : "INACTIVE"}
-            </span>
-          </div>
         </div>
       </div>
 
