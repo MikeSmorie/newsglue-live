@@ -6,6 +6,7 @@ import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import AdminRegisterPage from "@/pages/admin-register";
 import AdminDashboard from "@/pages/admin-dashboard";
+import AdminCommunications from "@/pages/admin-communications";
 import PlaceholderApp from "@/pages/placeholder-app";
 import MockDashboard from "@/pages/mock-dashboard";
 import MockSettings from "@/pages/mock-settings";
@@ -115,6 +116,7 @@ function Router() {
       <Switch>
         <Route path="/admin" component={() => <ProtectedAdminRoute component={AdminDashboard} />} />
         <Route path="/admin/subscription-manager" component={() => <ProtectedAdminRoute component={SubscriptionManager} />} />
+        <Route path="/admin/communications" component={() => <ProtectedAdminRoute component={AdminCommunications} />} />
         <Route path="/" component={UserDashboard} />
         <Route path="/mock-dashboard" component={MockDashboard} />
         <Route path="/mock-settings" component={MockSettings} />

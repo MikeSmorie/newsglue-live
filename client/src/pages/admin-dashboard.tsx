@@ -3,7 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@/hooks/use-user";
 import { useAdmin } from "@/contexts/admin-context";
-import { Activity, Cpu, Database, Shield, Puzzle, Users } from "lucide-react";
+import { Activity, Cpu, Database, Shield, Puzzle, Users, MessageSquare } from "lucide-react";
 import { useLocation } from "wouter";
 import { SelectActivityLog } from "@db/schema";
 import { Loader2 } from "lucide-react";
@@ -115,6 +115,23 @@ export default function AdminDashboard() {
               </TooltipTrigger>
               <TooltipContent side="left">
                 <p>Manage subscription plans, features, and user access levels</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="outline"
+                  onClick={() => navigate("/admin/communications")}
+                  className="flex items-center gap-2"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  Communications
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="left">
+                <p>Manage announcements and user communications</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
