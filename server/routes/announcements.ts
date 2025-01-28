@@ -6,69 +6,73 @@ import {
   announcementResponses,
   userSubscriptions,
   users,
-  errorLogs
+  errorLogs 
 } from "@db/schema";
 import { eq, and, inArray } from "drizzle-orm";
+import { z } from "zod";
 
 const router = express.Router();
+
+// Zod schema for announcement validation
+const announcementSchema = z.object({
+  title: z.string().min(1, "Title is required").max(255, "Title is too long"),
+  content: z.string().min(1, "Content is required").max(10000, "Content is too long"),
+  importance: z.enum(["normal", "important", "urgent"], {
+    required_error: "Importance must be one of: normal, important, urgent",
+  }),
+  targetAudience: z.object({
+    type: z.enum(["all", "subscription", "user"], {
+      required_error: "Target audience type must be one of: all, subscription, user",
+    }),
+    targetIds: z.array(z.number()).optional(),
+  }),
+  startDate: z.string().transform((str) => new Date(str)),
+  endDate: z.string().optional().transform((str) => str ? new Date(str) : null),
+  requiresResponse: z.boolean().optional().default(false),
+});
 
 // Create a new announcement
 router.post("/admin/announcements", async (req, res) => {
   const requestId = Date.now().toString();
-  console.log(`[${requestId}] New announcement request received:`, {
-    headers: req.headers,
-    body: JSON.stringify(req.body, null, 2)
-  });
 
   try {
-    const { title, content, importance, startDate, endDate, requiresResponse, targetAudience } = req.body;
-    const senderId = req.user?.id;
-
-    // Log parsed request data
-    console.log(`[${requestId}] Parsed announcement data:`, {
-      title,
-      importance,
-      targetAudience,
-      startDate,
-      endDate,
-      senderId
+    // Log raw request
+    console.log(`[${requestId}] Raw announcement request:`, {
+      headers: req.headers,
+      body: JSON.stringify(req.body, null, 2)
     });
+
+    // Validate request body against schema
+    const validationResult = announcementSchema.safeParse(req.body);
+
+    if (!validationResult.success) {
+      throw new Error(validationResult.error.errors.map(e => e.message).join(", "));
+    }
+
+    const validatedData = validationResult.data;
+    const senderId = req.user?.id;
 
     if (!senderId) {
       throw new Error("Unauthorized - No sender ID found");
     }
 
-    // Validate data types and required fields
-    const validationErrors = [];
-    if (typeof title !== 'string' || !title.trim()) validationErrors.push("Invalid title");
-    if (typeof content !== 'string' || !content.trim()) validationErrors.push("Invalid content");
-    if (!['normal', 'important', 'urgent'].includes(importance)) validationErrors.push("Invalid importance level");
-    if (!targetAudience?.type || !['all', 'subscription', 'user'].includes(targetAudience.type)) {
-      validationErrors.push("Invalid target audience type");
-    }
-
-    if (validationErrors.length > 0) {
-      throw new Error(`Validation failed: ${validationErrors.join(", ")}`);
-    }
-
-    // Log pre-database operation
-    console.log(`[${requestId}] Creating announcement record:`, {
-      title,
-      importance,
-      targetAudience
+    // Log validated data
+    console.log(`[${requestId}] Validated announcement data:`, {
+      ...validatedData,
+      senderId
     });
 
     // Create the announcement
     const [announcement] = await db.insert(adminAnnouncements)
       .values({
-        title,
-        content,
-        importance,
+        title: validatedData.title,
+        content: validatedData.content,
+        importance: validatedData.importance,
         senderId,
-        startDate: startDate ? new Date(startDate) : new Date(),
-        endDate: endDate ? new Date(endDate) : null,
-        requiresResponse: requiresResponse || false,
-        targetAudience
+        startDate: validatedData.startDate,
+        endDate: validatedData.endDate,
+        requiresResponse: validatedData.requiresResponse,
+        targetAudience: validatedData.targetAudience
       })
       .returning();
 
@@ -77,21 +81,21 @@ router.post("/admin/announcements", async (req, res) => {
     // Get target recipients based on audience type
     let recipientUserIds: number[] = [];
 
-    if (targetAudience.type === "all") {
+    if (validatedData.targetAudience.type === "all") {
       const allUsers = await db.query.users.findMany({
         columns: { id: true }
       });
       recipientUserIds = allUsers.map(user => user.id);
       console.log(`[${requestId}] Targeting all users:`, recipientUserIds.length);
-    } else if (targetAudience.type === "subscription" && targetAudience.targetIds) {
+    } else if (validatedData.targetAudience.type === "subscription" && validatedData.targetAudience.targetIds) {
       const subscriptionUsers = await db.query.userSubscriptions.findMany({
-        where: inArray(userSubscriptions.planId, targetAudience.targetIds),
+        where: inArray(userSubscriptions.planId, validatedData.targetAudience.targetIds),
         columns: { userId: true }
       });
       recipientUserIds = subscriptionUsers.map(sub => sub.userId);
       console.log(`[${requestId}] Targeting subscription users:`, recipientUserIds.length);
-    } else if (targetAudience.type === "user" && targetAudience.targetIds) {
-      recipientUserIds = targetAudience.targetIds;
+    } else if (validatedData.targetAudience.type === "user" && validatedData.targetAudience.targetIds) {
+      recipientUserIds = validatedData.targetAudience.targetIds;
       console.log(`[${requestId}] Targeting specific users:`, recipientUserIds.length);
     }
 
@@ -109,7 +113,11 @@ router.post("/admin/announcements", async (req, res) => {
       console.warn(`[${requestId}] No recipients found for announcement`);
     }
 
-    res.json(announcement);
+    res.json({
+      status: 'success',
+      data: announcement,
+      requestId
+    });
   } catch (error) {
     // Log the error with full context
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -121,24 +129,18 @@ router.post("/admin/announcements", async (req, res) => {
 
     // Log error to database
     await db.insert(errorLogs).values({
+      errorMessage,
+      location: 'announcement_creation',
       timestamp: new Date(),
-      type: 'ANNOUNCEMENT_CREATION_ERROR',
-      message: errorMessage,
-      details: JSON.stringify({
-        requestId,
-        requestBody: req.body,
-        error: error instanceof Error ? {
-          message: error.message,
-          stack: error.stack
-        } : String(error)
-      })
+      stackTrace: error instanceof Error ? error.stack : undefined
     });
 
     res.status(400).json({ 
       status: 'error',
-      message: "Error creating announcement",
+      message: "Failed to create announcement",
       details: errorMessage,
-      requestId
+      requestId,
+      timestamp: new Date().toISOString()
     });
   }
 });
