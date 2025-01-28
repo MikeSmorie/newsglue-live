@@ -3,10 +3,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@/hooks/use-user";
 import { useAdmin } from "@/contexts/admin-context";
-import { Activity, Cpu, Database, Shield, Puzzle } from "lucide-react";
+import { Activity, Cpu, Database, Shield, Puzzle, Users } from "lucide-react";
 import { useLocation } from "wouter";
 import { SelectActivityLog } from "@db/schema";
 import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface HealthStatus {
   status: string;
@@ -79,15 +80,30 @@ export default function AdminDashboard() {
     );
   }
 
+  // Add navigation handler
+  const handleNavigateToSubscriptionManager = () => {
+    navigate("/admin/subscription-manager");
+  };
+
   return (
     <div className="container py-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">God Mode:</span>
-          <span className={`font-bold ${godMode ? "text-destructive" : "text-muted-foreground"}`}>
-            {godMode ? "ACTIVE" : "INACTIVE"}
-          </span>
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="outline"
+            onClick={handleNavigateToSubscriptionManager}
+            className="flex items-center gap-2"
+          >
+            <Users className="h-4 w-4" />
+            Subscription Manager
+          </Button>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">God Mode:</span>
+            <span className={`font-bold ${godMode ? "text-destructive" : "text-muted-foreground"}`}>
+              {godMode ? "ACTIVE" : "INACTIVE"}
+            </span>
+          </div>
         </div>
       </div>
 
