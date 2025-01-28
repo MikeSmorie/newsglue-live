@@ -31,21 +31,53 @@ const requireAdmin = (req: any, res: any, next: any) => {
   res.status(403).json({ message: "Not authorized" });
 };
 
-// JSON validation middleware
+// Update the JSON validation middleware
 const validateJSON = (req: any, res: any, next: any) => {
   if (req.is('application/json')) {
     try {
       // Log incoming request for debugging
       console.log('Incoming announcement payload:', JSON.stringify(req.body, null, 2));
 
-      // If parsing fails, it will throw an error
-      JSON.parse(JSON.stringify(req.body));
+      // Validate JSON structure
+      const payload = JSON.parse(JSON.stringify(req.body));
+
+      // Additional validation for announcement-specific payloads
+      if (req.path.includes('/announcements') && req.method === 'POST') {
+        const { title, content, importance, targetAudience } = payload;
+
+        // Log validation attempt
+        console.log('Validating announcement payload:', { title, content, importance, targetAudience });
+
+        // Basic structure validation
+        if (!title || typeof title !== 'string' || !content || typeof content !== 'string') {
+          throw new Error('Invalid title or content format');
+        }
+
+        if (!importance || !['normal', 'important', 'urgent'].includes(importance)) {
+          throw new Error('Invalid importance level');
+        }
+
+        if (!targetAudience || typeof targetAudience !== 'object') {
+          throw new Error('Invalid target audience format');
+        }
+      }
+
       next();
     } catch (error) {
-      console.error('Invalid JSON payload:', error);
+      // Log the validation error for debugging
+      console.error('JSON Validation Error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        path: req.path,
+        method: req.method,
+        body: req.body
+      });
+
+      // Return a structured error response
       res.status(400).json({ 
-        message: "Invalid JSON format", 
-        details: error instanceof Error ? error.message : "Unknown parsing error" 
+        status: 'error',
+        message: "Invalid JSON format or missing required fields", 
+        details: error instanceof Error ? error.message : "Unknown validation error",
+        timestamp: new Date().toISOString()
       });
     }
   } else {
@@ -53,12 +85,14 @@ const validateJSON = (req: any, res: any, next: any) => {
   }
 };
 
-// Date validation middleware for announcements
+// Update announcement dates validation
 const validateAnnouncementDates = (req: any, res: any, next: any) => {
   if (req.path.includes('/announcements') && req.method === 'POST') {
     const { startDate, endDate } = req.body;
 
     try {
+      console.log('Validating announcement dates:', { startDate, endDate });
+
       // Validate start date
       const parsedStartDate = new Date(startDate);
       if (isNaN(parsedStartDate.getTime())) {
@@ -89,10 +123,19 @@ const validateAnnouncementDates = (req: any, res: any, next: any) => {
 
       next();
     } catch (error) {
-      console.error('Date validation error:', error);
+      // Log the validation error
+      console.error('Date Validation Error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        startDate,
+        endDate,
+        path: req.path
+      });
+
       res.status(400).json({ 
+        status: 'error',
         message: "Date validation failed", 
-        details: error instanceof Error ? error.message : "Invalid date format" 
+        details: error instanceof Error ? error.message : "Invalid date format",
+        timestamp: new Date().toISOString()
       });
     }
   } else {
@@ -100,40 +143,62 @@ const validateAnnouncementDates = (req: any, res: any, next: any) => {
   }
 };
 
-// Announcement payload validation middleware
+// Update announcement payload validation
 const validateAnnouncementPayload = (req: any, res: any, next: any) => {
   if (req.path.includes('/announcements') && req.method === 'POST') {
-    const { title, content, importance, targetAudience, startDate, endDate } = req.body;
+    const { title, content, importance, targetAudience, startDate } = req.body;
 
     try {
-      // Validate required fields
+      console.log('Validating announcement payload structure:', {
+        hasTitle: !!title,
+        hasContent: !!content,
+        importance,
+        targetAudienceType: targetAudience?.type
+      });
+
+      // Validate required fields with detailed error messages
+      const validationErrors = [];
+
       if (!title?.trim()) {
-        throw new Error('Title is required');
+        validationErrors.push('Title is required and cannot be empty');
       }
       if (!content?.trim()) {
-        throw new Error('Content is required');
+        validationErrors.push('Content is required and cannot be empty');
       }
       if (!importance || !['normal', 'important', 'urgent'].includes(importance)) {
-        throw new Error('Valid importance level is required');
+        validationErrors.push('Valid importance level (normal, important, urgent) is required');
       }
       if (!targetAudience?.type || !['all', 'subscription', 'user'].includes(targetAudience.type)) {
-        throw new Error('Valid target audience type is required');
+        validationErrors.push('Valid target audience type (all, subscription, user) is required');
       }
       if (!startDate) {
-        throw new Error('Start date is required');
+        validationErrors.push('Start date is required');
       }
 
       // Validate target IDs if needed
-      if (targetAudience.type !== 'all' && (!Array.isArray(targetAudience.targetIds) || targetAudience.targetIds.length === 0)) {
-        throw new Error('At least one target recipient is required for non-global announcements');
+      if (targetAudience?.type !== 'all' && (!Array.isArray(targetAudience.targetIds) || targetAudience.targetIds.length === 0)) {
+        validationErrors.push('At least one target recipient is required for non-global announcements');
+      }
+
+      if (validationErrors.length > 0) {
+        throw new Error(validationErrors.join('; '));
       }
 
       next();
     } catch (error) {
-      console.error('Announcement payload validation error:', error);
+      // Log the validation error with detailed context
+      console.error('Announcement Payload Validation Error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        payload: req.body,
+        path: req.path,
+        timestamp: new Date().toISOString()
+      });
+
       res.status(400).json({
+        status: 'error',
         message: "Invalid announcement data",
-        details: error instanceof Error ? error.message : "Unknown validation error"
+        details: error instanceof Error ? error.message : "Unknown validation error",
+        timestamp: new Date().toISOString()
       });
     }
   } else {
