@@ -8,6 +8,7 @@ import { useLocation } from "wouter";
 import { SelectActivityLog } from "@db/schema";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface HealthStatus {
   status: string;
@@ -25,6 +26,16 @@ interface HealthStatus {
         users: { count: number };
         activityLogs: { count: number };
         errorLogs: { count: number };
+      };
+    };
+    subscriptions: {
+      status: string;
+      stats: {
+        totalSubscriptions: number;
+        activeSubscriptions: number;
+        planDistribution: {
+          [key: string]: number;
+        };
       };
     };
     auth: {
@@ -90,14 +101,23 @@ export default function AdminDashboard() {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
         <div className="flex items-center gap-4">
-          <Button 
-            variant="outline"
-            onClick={handleNavigateToSubscriptionManager}
-            className="flex items-center gap-2"
-          >
-            <Users className="h-4 w-4" />
-            Subscription Manager
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="default"
+                  onClick={handleNavigateToSubscriptionManager}
+                  className="flex items-center gap-2"
+                >
+                  <Users className="h-4 w-4" />
+                  Subscription Manager
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="left">
+                <p>Manage subscription plans, features, and user access levels</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">God Mode:</span>
             <span className={`font-bold ${godMode ? "text-destructive" : "text-muted-foreground"}`}>
@@ -108,7 +128,7 @@ export default function AdminDashboard() {
       </div>
 
       {healthStatus && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Server Status</CardTitle>
@@ -171,7 +191,52 @@ export default function AdminDashboard() {
               <p className="text-xs text-muted-foreground">Active Plugins</p>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Subscriptions</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {healthStatus.components.subscriptions?.stats.activeSubscriptions || 0}
+              </div>
+              <p className="text-xs text-muted-foreground">Active Subscriptions</p>
+            </CardContent>
+          </Card>
         </div>
+      )}
+
+      {/* Subscription Distribution */}
+      {healthStatus?.components.subscriptions?.stats.planDistribution && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Subscription Distribution</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Plan</TableHead>
+                  <TableHead>Active Users</TableHead>
+                  <TableHead>Percentage</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {Object.entries(healthStatus.components.subscriptions.stats.planDistribution).map(([plan, count]) => {
+                  const percentage = ((count / healthStatus.components.subscriptions.stats.totalSubscriptions) * 100).toFixed(1);
+                  return (
+                    <TableRow key={plan}>
+                      <TableCell className="font-medium">{plan}</TableCell>
+                      <TableCell>{count}</TableCell>
+                      <TableCell>{percentage}%</TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       )}
 
       {healthStatus?.components.plugins.loaded.length > 0 && (
