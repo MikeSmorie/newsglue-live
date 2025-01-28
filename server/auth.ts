@@ -73,19 +73,21 @@ export function setupAuth(app: Express) {
     secret: process.env.REPL_ID || "porygon-supremacy",
     resave: false,
     saveUninitialized: false,
+    proxy: true, // Trust the reverse proxy
     cookie: {
       sameSite: 'none',
       secure: true,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      path: '/',
+      // Remove domain restriction to allow all Replit domains
     },
     store: new MemoryStore({
       checkPeriod: 86400000, // prune expired entries every 24h
     }),
   };
 
-  if (app.get("env") === "production") {
-    app.set("trust proxy", 1);
-  }
+  // Trust proxy in all environments for Replit
+  app.set("trust proxy", 1);
 
   app.use(hpp()); // Prevent parameter pollution
   app.use(session(sessionSettings));

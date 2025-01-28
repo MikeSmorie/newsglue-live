@@ -10,6 +10,7 @@ import {
 } from "@db/schema";
 import { eq } from "drizzle-orm";
 import NodeCache from "node-cache";
+import { logActivity } from "../middleware/logger";
 
 const router = express.Router();
 const cache = new NodeCache({ 

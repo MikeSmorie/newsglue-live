@@ -34,30 +34,55 @@ const requireAdmin = (req: any, res: any, next: any) => {
 };
 
 export function registerRoutes(app: Express): Server {
-  // Set up CORS first, before other middleware
+  // Set up CORS first
   app.use(cors({
-    origin: true, // Allow any origin in development
-    credentials: true, // Allow cookies
+    origin: function(origin, callback) {
+      // Allow requests with no origin
+      if(!origin) return callback(null, true);
+
+      // Allow all Replit domains
+      if(origin.match(/\.replit\.(dev|co)$/)) {
+        return callback(null, true);
+      }
+
+      // Allow local development
+      if(origin.match(/localhost|127\.0\.0\.1/)) {
+        return callback(null, true);
+      }
+
+      callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
-    exposedHeaders: ['X-CSRF-Token'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   }));
 
-  // Set security headers
+  // Security headers
   app.use((req, res, next) => {
+    // Basic security headers
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('X-XSS-Protection', '1; mode=block');
+
+    // Allow embedding in iframes from Replit domains
+    res.setHeader(
+      'Content-Security-Policy',
+      "default-src 'self' *.replit.dev *.repl.co; " +
+      "frame-ancestors 'self' *.replit.dev *.repl.co; " +
+      "img-src 'self' data: blob: *.replit.dev *.repl.co; " +
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' *.replit.dev *.repl.co; " +
+      "style-src 'self' 'unsafe-inline' *.replit.dev *.repl.co;"
+    );
+
     next();
   });
 
   // Apply other security middleware
   app.use(hpp());
 
-  // Set up authentication routes
+  // Setup auth
   setupAuth(app);
 
-  // Register core routes
+  // Register routes
   app.use("/api/subscription", subscriptionRoutes);
   app.use("/api/webhook", webhookRoutes);
   app.use("/api/ai", aiRoutes);
@@ -65,7 +90,7 @@ export function registerRoutes(app: Express): Server {
   app.use("/api/announcements", requireAuth, announcementsRoutes);
   app.use("/api/admin/announcements", requireAdmin, announcementsRoutes);
 
-  // Restore logging middleware
+  // Logging middleware
   app.use(requestLogger);
   app.use(errorLogger);
 
