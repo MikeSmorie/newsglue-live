@@ -2,13 +2,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useUser } from "@/hooks/use-user";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import { Form } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table";
 import {
   Select,
@@ -30,9 +34,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { format } from "date-fns";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { Edit2, Trash2, Send, Users, Filter } from "lucide-react";
+
+const formSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  content: z.string().min(1, "Content is required"),
+  importance: z.enum(["normal", "important", "urgent"]),
+  targetAudience: z.object({
+    type: z.enum(["all", "subscription", "user"]),
+    targetIds: z.array(z.number()).optional(),
+  }),
+  expiresAt: z.string().optional(),
+  requiresResponse: z.boolean().default(false),
+});
 
 interface Announcement {
   id: number;
@@ -64,17 +82,79 @@ interface Announcement {
   };
 }
 
+interface Plan {
+  id: number;
+  name: string;
+}
+
+interface User {
+  id: number;
+  username: string;
+}
+
 export default function AdminCommunications() {
   const { user } = useUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, navigate] = useLocation();
   const [filter, setFilter] = useState<"all" | "unread" | "urgent">("all");
+  const [isComposing, setIsComposing] = useState(false);
+
+  // Form setup
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      importance: "normal",
+      targetAudience: { type: "all" },
+      requiresResponse: false,
+    },
+  });
 
   // Fetch announcements with responses and read stats
   const { data: announcements = [] } = useQuery<Announcement[]>({
     queryKey: ["/api/admin/announcements"],
     enabled: !!user && user.role === "admin",
+  });
+
+  // Fetch subscription plans for targeting
+  const { data: plans = [] } = useQuery<Plan[]>({
+    queryKey: ["/api/subscription/plans"],
+    enabled: !!user && user.role === "admin",
+  });
+
+  // Fetch users for individual targeting
+  const { data: users = [] } = useQuery<User[]>({
+    queryKey: ["/api/admin/users"],
+    enabled: !!user && user.role === "admin",
+  });
+
+  // Create announcement mutation
+  const createMutation = useMutation({
+    mutationFn: async (values: z.infer<typeof formSchema>) => {
+      const response = await fetch("/api/admin/announcements", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(values),
+      });
+      if (!response.ok) throw new Error("Failed to create announcement");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/announcements"] });
+      setIsComposing(false);
+      toast({
+        title: "Announcement created",
+        description: "Your message has been sent successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to create announcement",
+      });
+    },
   });
 
   // Delete announcement mutation
@@ -118,6 +198,10 @@ export default function AdminCommunications() {
     },
   });
 
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
+    createMutation.mutate(values);
+  };
+
   const filteredAnnouncements = announcements.filter(announcement => {
     if (filter === "unread") {
       return announcement.responses.some(response => !response.readByAdmin);
@@ -150,21 +234,165 @@ export default function AdminCommunications() {
                 <SelectItem value="urgent">Urgent Only</SelectItem>
               </SelectContent>
             </Select>
-            <Dialog>
+            <Dialog open={isComposing} onOpenChange={setIsComposing}>
               <DialogTrigger asChild>
                 <Button>
                   <Send className="mr-2 h-4 w-4" />
                   New Announcement
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="sm:max-w-[600px]">
                 <DialogHeader>
                   <DialogTitle>Create New Announcement</DialogTitle>
                   <DialogDescription>
                     Send an announcement to your users. You can target specific users or groups.
                   </DialogDescription>
                 </DialogHeader>
-                {/* Form implementation will be added in the next iteration */}
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <div className="space-y-4">
+                      <div>
+                        <Input
+                          placeholder="Announcement Title"
+                          {...form.register("title")}
+                        />
+                        {form.formState.errors.title && (
+                          <p className="text-sm text-destructive mt-1">
+                            {form.formState.errors.title.message}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <Textarea
+                          placeholder="Announcement Content"
+                          className="min-h-[100px]"
+                          {...form.register("content")}
+                        />
+                        {form.formState.errors.content && (
+                          <p className="text-sm text-destructive mt-1">
+                            {form.formState.errors.content.message}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <Select
+                          value={form.watch("importance")}
+                          onValueChange={(value) => form.setValue("importance", value as any)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select Importance" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="normal">Normal</SelectItem>
+                            <SelectItem value="important">Important</SelectItem>
+                            <SelectItem value="urgent">Urgent</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Select
+                          value={form.watch("targetAudience.type")}
+                          onValueChange={(value) => {
+                            form.setValue("targetAudience", { type: value as any });
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select Target Audience" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Users</SelectItem>
+                            <SelectItem value="subscription">By Subscription</SelectItem>
+                            <SelectItem value="user">Individual Users</SelectItem>
+                          </SelectContent>
+                        </Select>
+
+                        {form.watch("targetAudience.type") === "subscription" && plans.length > 0 && (
+                          <div className="mt-4">
+                            {plans.map((plan) => (
+                              <div key={plan.id} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`plan-${plan.id}`}
+                                  onCheckedChange={(checked) => {
+                                    const currentTargets = form.watch("targetAudience.targetIds") || [];
+                                    if (checked) {
+                                      form.setValue("targetAudience.targetIds", [...currentTargets, plan.id]);
+                                    } else {
+                                      form.setValue(
+                                        "targetAudience.targetIds",
+                                        currentTargets.filter(id => id !== plan.id)
+                                      );
+                                    }
+                                  }}
+                                />
+                                <label htmlFor={`plan-${plan.id}`} className="text-sm">
+                                  {plan.name}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {form.watch("targetAudience.type") === "user" && users.length > 0 && (
+                          <div className="mt-4">
+                            {users.map((user) => (
+                              <div key={user.id} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`user-${user.id}`}
+                                  onCheckedChange={(checked) => {
+                                    const currentTargets = form.watch("targetAudience.targetIds") || [];
+                                    if (checked) {
+                                      form.setValue("targetAudience.targetIds", [...currentTargets, user.id]);
+                                    } else {
+                                      form.setValue(
+                                        "targetAudience.targetIds",
+                                        currentTargets.filter(id => id !== user.id)
+                                      );
+                                    }
+                                  }}
+                                />
+                                <label htmlFor={`user-${user.id}`} className="text-sm">
+                                  {user.username}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <Input
+                          type="datetime-local"
+                          {...form.register("expiresAt")}
+                        />
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="requiresResponse"
+                          checked={form.watch("requiresResponse")}
+                          onCheckedChange={(checked) => {
+                            form.setValue("requiresResponse", checked as boolean);
+                          }}
+                        />
+                        <label htmlFor="requiresResponse" className="text-sm">
+                          Allow user responses
+                        </label>
+                      </div>
+                    </div>
+
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setIsComposing(false)}>
+                        Cancel
+                      </Button>
+                      <Button type="submit" disabled={createMutation.isPending}>
+                        {createMutation.isPending ? "Sending..." : "Send Announcement"}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
               </DialogContent>
             </Dialog>
           </div>
@@ -197,7 +425,7 @@ export default function AdminCommunications() {
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Users className="h-4 w-4" />
-                      {announcement.targetAudience.type === "all" 
+                      {announcement.targetAudience.type === "all"
                         ? "All Users"
                         : announcement.targetAudience.type === "subscription"
                         ? "Subscription Group"
@@ -261,8 +489,8 @@ export default function AdminCommunications() {
                       <Button variant="ghost" size="icon">
                         <Edit2 className="h-4 w-4" />
                       </Button>
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         size="icon"
                         onClick={() => {
                           if (window.confirm("Are you sure you want to delete this announcement?")) {
