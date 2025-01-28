@@ -1,17 +1,22 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, Minus, AlertCircle } from "lucide-react";
+import { Check, Minus, AlertCircle, Crown, Star, Clock } from "lucide-react";
 import { useUser } from "@/hooks/use-user";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 
 interface Plan {
   id: number;
   name: string;
   price: number;
   description: string | null;
+  annualPrice?: number;
+  trialDays?: number;
+  isPopular?: boolean;
+  perks?: string[];
 }
 
 interface Feature {
@@ -31,6 +36,7 @@ interface SubscriptionOverride {
   userId: number;
   overriddenByAdmin: boolean;
   overrideDate?: string;
+  proRatedAmount?: number;
 }
 
 export function SubscriptionComparison() {
@@ -40,7 +46,7 @@ export function SubscriptionComparison() {
   // Fetch plans, features, and current subscription with shorter polling interval
   const { data: plans = [] } = useQuery<Plan[]>({
     queryKey: ["/api/subscription/plans"],
-    refetchInterval: 5000, // Poll every 5 seconds for updates
+    refetchInterval: 5000,
   });
 
   const { data: features = [] } = useQuery<Feature[]>({
@@ -59,7 +65,6 @@ export function SubscriptionComparison() {
     refetchInterval: 5000,
   });
 
-  // Fetch subscription override information if the user is logged in
   const { data: subscriptionOverride } = useQuery<SubscriptionOverride>({
     queryKey: ["/api/subscription/override-info", user?.id],
     enabled: !!user,
@@ -96,7 +101,12 @@ export function SubscriptionComparison() {
                 <TableHead className="w-[200px]">Feature</TableHead>
                 {plans.map((plan) => (
                   <TableHead key={plan.id} className="text-center">
-                    <div className="space-y-1">
+                    <div className="space-y-1 relative">
+                      {plan.isPopular && (
+                        <Badge variant="default" className="absolute -top-8 left-1/2 -translate-x-1/2">
+                          Most Popular
+                        </Badge>
+                      )}
                       <div className="font-bold relative">
                         {plan.name}
                         {currentPlan?.id === plan.id && (
@@ -119,9 +129,35 @@ export function SubscriptionComparison() {
                           </div>
                         )}
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        ${plan.price}/month
+                      <div className="space-y-1">
+                        <div className="text-sm text-muted-foreground">
+                          ${plan.price}/month
+                        </div>
+                        {plan.annualPrice && (
+                          <div className="text-xs text-muted-foreground">
+                            or ${plan.annualPrice}/year
+                            <span className="text-green-500 ml-1">
+                              Save {Math.round(((plan.price * 12 - plan.annualPrice) / (plan.price * 12)) * 100)}%
+                            </span>
+                          </div>
+                        )}
+                        {plan.trialDays && (
+                          <div className="flex items-center justify-center gap-1 text-xs text-primary">
+                            <Clock className="h-3 w-3" />
+                            {plan.trialDays} days free trial
+                          </div>
+                        )}
                       </div>
+                      {plan.perks && plan.perks.length > 0 && (
+                        <div className="mt-2 space-y-1">
+                          {plan.perks.map((perk, index) => (
+                            <div key={index} className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+                              <Star className="h-3 w-3 text-yellow-500" />
+                              {perk}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </TableHead>
                 ))}
@@ -171,7 +207,23 @@ export function SubscriptionComparison() {
           {!user ? (
             <Button onClick={() => navigate("/auth")}>Sign Up Now</Button>
           ) : currentPlan ? (
-            <Button onClick={() => navigate("/subscriptions")}>Upgrade Plan</Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button onClick={() => navigate("/subscriptions")}>
+                    Upgrade Plan
+                    {subscriptionOverride?.proRatedAmount && (
+                      <span className="ml-2 text-xs">
+                        (Pro-rated adjustment: ${subscriptionOverride.proRatedAmount})
+                      </span>
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Upgrade now and only pay the difference for the remaining billing period</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           ) : (
             <Button onClick={() => navigate("/subscriptions")}>Choose a Plan</Button>
           )}
