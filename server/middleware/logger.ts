@@ -1,44 +1,77 @@
+
 import { Request, Response, NextFunction } from "express";
 import { db } from "@db";
 import { activityLogs, errorLogs } from "@db/schema";
 import { eq } from "drizzle-orm";
 
-export async function logActivity(userId: number, action: string, details?: string) {
+// Batch logging queue
+const activityQueue: any[] = [];
+const errorQueue: any[] = [];
+const BATCH_SIZE = 10;
+const FLUSH_INTERVAL = 5000; // 5 seconds
+
+async function flushActivityQueue() {
+  if (activityQueue.length === 0) return;
+  
+  const batchToInsert = activityQueue.splice(0, BATCH_SIZE);
   try {
-    await db.insert(activityLogs).values({
-      userId,
-      action,
-      details,
-      timestamp: new Date()
-    });
+    await db.insert(activityLogs).values(batchToInsert);
   } catch (error) {
-    console.error("Failed to log activity:", error);
+    console.error("Failed to flush activity logs:", error);
+  }
+}
+
+async function flushErrorQueue() {
+  if (errorQueue.length === 0) return;
+  
+  const batchToInsert = errorQueue.splice(0, BATCH_SIZE);
+  try {
+    await db.insert(errorLogs).values(batchToInsert);
+  } catch (error) {
+    console.error("Failed to flush error logs:", error);
+  }
+}
+
+// Set up periodic flushing
+setInterval(flushActivityQueue, FLUSH_INTERVAL);
+setInterval(flushErrorQueue, FLUSH_INTERVAL);
+
+export async function logActivity(userId: number, action: string, details?: string) {
+  activityQueue.push({
+    userId,
+    action,
+    details,
+    timestamp: new Date()
+  });
+
+  if (activityQueue.length >= BATCH_SIZE) {
+    await flushActivityQueue();
   }
 }
 
 export async function logSecurityEvent(event: string, details: string, severity: 'low' | 'medium' | 'high' = 'low') {
-  try {
-    await db.insert(errorLogs).values({
-      errorMessage: event,
-      location: 'Security',
-      stackTrace: details,
-      timestamp: new Date()
-    });
-  } catch (err) {
-    console.error("Failed to log security event:", err);
+  errorQueue.push({
+    errorMessage: event,
+    location: 'Security',
+    stackTrace: details,
+    timestamp: new Date()
+  });
+
+  if (errorQueue.length >= BATCH_SIZE) {
+    await flushErrorQueue();
   }
 }
 
 export async function logError(error: Error, location: string) {
-  try {
-    await db.insert(errorLogs).values({
-      errorMessage: error.message,
-      location,
-      stackTrace: error.stack,
-      timestamp: new Date()
-    });
-  } catch (err) {
-    console.error("Failed to log error:", err);
+  errorQueue.push({
+    errorMessage: error.message,
+    location,
+    stackTrace: error.stack,
+    timestamp: new Date()
+  });
+
+  if (errorQueue.length >= BATCH_SIZE) {
+    await flushErrorQueue();
   }
 }
 
@@ -51,7 +84,7 @@ export function requestLogger(req: Request, res: Response, next: NextFunction) {
   res.json = function (body: any) {
     if (req.user) {
       logActivity(req.user.id, `${req.method} ${req.path}`, 
-        `Status: ${res.statusCode}, Response: ${JSON.stringify(body).slice(0, 100)}`);
+        `Status: ${res.statusCode}`);
     }
     return originalJson.call(this, body);
   };

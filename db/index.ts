@@ -8,8 +8,15 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-export const db = drizzle({
-  connection: process.env.DATABASE_URL,
+const poolConfig = {
+  connection: process.env.DATABASE_URL?.replace('.us-east-2', '-pooler.us-east-2'),
   schema,
   ws: ws,
-});
+  pool: {
+    min: 2,
+    max: 10,
+    idleTimeoutMillis: 30000
+  }
+};
+
+export const db = drizzle(poolConfig);
