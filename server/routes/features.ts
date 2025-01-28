@@ -1,7 +1,7 @@
 import express from "express";
 import { db } from "@db";
-import { features, planFeatures, insertFeatureSchema, insertPlanFeatureSchema } from "@db/schema";
-import { eq } from "drizzle-orm";
+import { features, planFeatures, userSubscriptions, insertFeatureSchema, insertPlanFeatureSchema } from "@db/schema";
+import { eq, and } from "drizzle-orm";
 
 const router = express.Router();
 
@@ -31,6 +31,66 @@ router.post("/", async (req, res) => {
       message: "Error creating feature",
       error: error instanceof Error ? error.message : String(error)
     });
+  }
+});
+
+// Admin: Override features for a specific user
+router.post("/admin/override", async (req, res) => {
+  try {
+    const { userId, featureId, enabled } = req.body;
+
+    // Get user's subscription
+    const subscription = await db.query.userSubscriptions.findFirst({
+      where: eq(userSubscriptions.userId, userId)
+    });
+
+    if (!subscription) {
+      return res.status(404).json({ message: "User subscription not found" });
+    }
+
+    // Parse existing custom features or initialize empty array
+    const customFeatures = subscription.customFeatures ? 
+      JSON.parse(subscription.customFeatures) : [];
+
+    // Update custom features
+    const updatedFeatures = enabled ? 
+      [...new Set([...customFeatures, featureId])] : 
+      customFeatures.filter((id: number) => id !== featureId);
+
+    // Update subscription with new custom features
+    await db
+      .update(userSubscriptions)
+      .set({ 
+        customFeatures: JSON.stringify(updatedFeatures),
+      })
+      .where(eq(userSubscriptions.userId, userId));
+
+    res.json({ 
+      message: `Feature ${enabled ? 'enabled' : 'disabled'} for user`,
+      customFeatures: updatedFeatures
+    });
+  } catch (error) {
+    res.status(400).json({ 
+      message: "Error updating user features",
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+// Get user's custom features
+router.get("/admin/user-features/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const subscription = await db.query.userSubscriptions.findFirst({
+      where: eq(userSubscriptions.userId, parseInt(userId))
+    });
+
+    const customFeatures = subscription?.customFeatures ? 
+      JSON.parse(subscription.customFeatures) : [];
+
+    res.json({ customFeatures });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching user features" });
   }
 });
 
@@ -76,8 +136,10 @@ router.patch("/toggle", async (req, res) => {
       .update(planFeatures)
       .set({ enabled })
       .where(
-        eq(planFeatures.planId, planId),
-        eq(planFeatures.featureId, featureId)
+        and(
+          eq(planFeatures.planId, planId),
+          eq(planFeatures.featureId, featureId)
+        )
       )
       .returning();
 

@@ -30,24 +30,47 @@ interface PlanFeature {
   enabled: boolean;
 }
 
+interface User {
+  id: number;
+  username: string;
+}
+
+interface UserFeature {
+  userId: number;
+  featureId: number;
+  enabled: boolean;
+}
+
 export default function SubscriptionManager() {
   const [newFeature, setNewFeature] = useState({ name: "", category: "", description: "" });
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   // Fetch all subscription plans
-  const { data: plans, isLoading: plansLoading } = useQuery({
+  const { data: plans = [], isLoading: plansLoading } = useQuery<Plan[]>({
     queryKey: ["/api/subscription/plans"],
   });
 
   // Fetch all features
-  const { data: features, isLoading: featuresLoading } = useQuery({
+  const { data: features = [], isLoading: featuresLoading } = useQuery<Feature[]>({
     queryKey: ["/api/features"],
   });
 
   // Fetch plan-feature assignments
-  const { data: planFeatures, isLoading: assignmentsLoading } = useQuery({
+  const { data: planFeatures = [], isLoading: assignmentsLoading } = useQuery<PlanFeature[]>({
     queryKey: ["/api/features/assignments"],
+  });
+
+  // Fetch users for override management
+  const { data: users = [], isLoading: usersLoading } = useQuery<User[]>({
+    queryKey: ["/api/users"],
+  });
+
+  // Fetch user's custom features when a user is selected
+  const { data: userFeatures = [], isLoading: userFeaturesLoading } = useQuery<number[]>({
+    queryKey: ["/api/features/admin/user-features", selectedUser?.id],
+    enabled: !!selectedUser,
   });
 
   // Mutation for toggling features
@@ -73,6 +96,33 @@ export default function SubscriptionManager() {
         variant: "destructive",
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to update feature",
+      });
+    },
+  });
+
+  // Mutation for overriding user features
+  const overrideFeatureMutation = useMutation({
+    mutationFn: async ({ userId, featureId, enabled }: { userId: number; featureId: number; enabled: boolean }) => {
+      const response = await fetch("/api/features/admin/override", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, featureId, enabled }),
+      });
+      if (!response.ok) throw new Error("Failed to override feature");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/features/admin/user-features"] });
+      toast({
+        title: "Override updated",
+        description: "The feature override has been updated successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update override",
       });
     },
   });
@@ -105,7 +155,7 @@ export default function SubscriptionManager() {
     },
   });
 
-  if (plansLoading || featuresLoading || assignmentsLoading) {
+  if (plansLoading || featuresLoading || assignmentsLoading || usersLoading || userFeaturesLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -114,9 +164,13 @@ export default function SubscriptionManager() {
   }
 
   const isFeatureEnabled = (planId: number, featureId: number) => {
-    return planFeatures?.some(
-      (pf: PlanFeature) => pf.planId === planId && pf.featureId === featureId && pf.enabled
+    return planFeatures.some(
+      (pf) => pf.planId === planId && pf.featureId === featureId && pf.enabled
     );
+  };
+
+  const isFeatureOverridden = (featureId: number) => {
+    return userFeatures.includes(featureId);
   };
 
   return (
@@ -125,7 +179,7 @@ export default function SubscriptionManager() {
         <CardHeader>
           <CardTitle>Subscription Feature Manager</CardTitle>
           <CardDescription>
-            Manage features available in each subscription plan
+            Manage features available in each subscription plan and user overrides
           </CardDescription>
         </CardHeader>
 
@@ -172,23 +226,84 @@ export default function SubscriptionManager() {
             </Button>
           </form>
 
+          {/* User Override Section */}
+          <div className="mb-8">
+            <h3 className="text-lg font-medium mb-4">User Feature Overrides</h3>
+            <div className="space-y-4">
+              <div className="flex gap-4 items-end">
+                <div className="flex-1">
+                  <Label htmlFor="user">Select User</Label>
+                  <select
+                    id="user"
+                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    value={selectedUser?.id || ""}
+                    onChange={(e) => {
+                      const user = users.find(u => u.id === parseInt(e.target.value));
+                      setSelectedUser(user || null);
+                    }}
+                  >
+                    <option value="">Select a user...</option>
+                    {users.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.username}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {selectedUser && (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Feature</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead>Override</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {features.map((feature) => (
+                      <TableRow key={feature.id}>
+                        <TableCell>{feature.name}</TableCell>
+                        <TableCell>{feature.category}</TableCell>
+                        <TableCell>
+                          <Switch
+                            checked={isFeatureOverridden(feature.id)}
+                            onCheckedChange={(checked) =>
+                              overrideFeatureMutation.mutate({
+                                userId: selectedUser.id,
+                                featureId: feature.id,
+                                enabled: checked,
+                              })
+                            }
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </div>
+          </div>
+
           {/* Feature Assignment Table */}
+          <h3 className="text-lg font-medium mb-4">Plan Feature Assignments</h3>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Feature</TableHead>
                 <TableHead>Category</TableHead>
-                {plans?.map((plan: Plan) => (
+                {plans.map((plan) => (
                   <TableHead key={plan.id}>{plan.name}</TableHead>
                 ))}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {features?.map((feature: Feature) => (
+              {features.map((feature) => (
                 <TableRow key={feature.id}>
                   <TableCell>{feature.name}</TableCell>
                   <TableCell>{feature.category}</TableCell>
-                  {plans?.map((plan: Plan) => (
+                  {plans.map((plan) => (
                     <TableCell key={`${plan.id}-${feature.id}`}>
                       <Switch
                         checked={isFeatureEnabled(plan.id, feature.id)}

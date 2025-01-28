@@ -69,6 +69,7 @@ export const userSubscriptions = pgTable("user_subscriptions", {
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date"),
   cancelledAt: timestamp("cancelled_at"),
+  customFeatures: text("custom_features"), // JSON string for feature overrides
   createdAt: timestamp("created_at").defaultNow()
 });
 
