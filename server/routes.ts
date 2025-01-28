@@ -10,6 +10,7 @@ import subscriptionRoutes from "./routes/subscription";
 import webhookRoutes from "./routes/webhook";
 import aiRoutes from "./routes/ai";
 import featureRoutes from "./routes/features";
+import announcementsRoutes from "./routes/announcements";
 
 // Plugin registry
 const plugins: Record<string, { status: string; loadedAt?: Date }> = {};
@@ -48,7 +49,11 @@ export function registerRoutes(app: Express): Server {
   app.use("/api/subscription", subscriptionRoutes);
   app.use("/api/webhook", webhookRoutes);
   app.use("/api/ai", aiRoutes);
-  app.use("/api/features", requireAdmin, featureRoutes); // New feature routes, admin only
+  app.use("/api/features", requireAdmin, featureRoutes);
+
+  // Add announcement routes with appropriate middleware
+  app.use("/api/announcements", requireAuth, announcementsRoutes);
+  app.use("/api/admin/announcements", requireAdmin, announcementsRoutes);
 
   // Plugin Management Endpoints
   app.post("/api/plugins/load", requireAdmin, (req, res) => {

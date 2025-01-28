@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, boolean, decimal } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, boolean, decimal, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -180,6 +180,91 @@ export const planFeaturesRelations = relations(planFeatures, ({ one }) => ({
   })
 }));
 
+
+// New tables for admin-to-user communication
+export const adminAnnouncements = pgTable("admin_announcements", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  importance: text("importance").default("normal"), // normal, important, urgent
+  senderId: integer("sender_id").notNull().references(() => users.id),
+  expiresAt: timestamp("expires_at"),
+  requiresResponse: boolean("requires_response").default(false),
+  targetAudience: jsonb("target_audience").notNull(), // { type: "all" | "subscription" | "user", targetIds?: number[] }
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at"),
+  archived: boolean("archived").default(false)
+});
+
+export const announcementRecipients = pgTable("announcement_recipients", {
+  id: serial("id").primaryKey(),
+  announcementId: integer("announcement_id").notNull().references(() => adminAnnouncements.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  read: boolean("read").default(false),
+  readAt: timestamp("read_at"),
+  notificationSent: boolean("notification_sent").default(false),
+  emailSent: boolean("email_sent").default(false)
+});
+
+export const announcementResponses = pgTable("announcement_responses", {
+  id: serial("id").primaryKey(),
+  announcementId: integer("announcement_id").notNull().references(() => adminAnnouncements.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  readByAdmin: boolean("read_by_admin").default(false),
+  readByAdminAt: timestamp("read_by_admin_at")
+});
+
+// Add relations for the new tables
+export const adminAnnouncementsRelations = relations(adminAnnouncements, ({ one, many }) => ({
+  sender: one(users, {
+    fields: [adminAnnouncements.senderId],
+    references: [users.id]
+  }),
+  recipients: many(announcementRecipients),
+  responses: many(announcementResponses)
+}));
+
+export const announcementRecipientsRelations = relations(announcementRecipients, ({ one }) => ({
+  announcement: one(adminAnnouncements, {
+    fields: [announcementRecipients.announcementId],
+    references: [adminAnnouncements.id]
+  }),
+  user: one(users, {
+    fields: [announcementRecipients.userId],
+    references: [users.id]
+  })
+}));
+
+export const announcementResponsesRelations = relations(announcementResponses, ({ one }) => ({
+  announcement: one(adminAnnouncements, {
+    fields: [announcementResponses.announcementId],
+    references: [adminAnnouncements.id]
+  }),
+  user: one(users, {
+    fields: [announcementResponses.userId],
+    references: [users.id]
+  })
+}));
+
+// Add new schemas for validation
+export const insertAdminAnnouncementSchema = createInsertSchema(adminAnnouncements);
+export const selectAdminAnnouncementSchema = createSelectSchema(adminAnnouncements);
+
+export const insertAnnouncementRecipientSchema = createInsertSchema(announcementRecipients);
+export const selectAnnouncementRecipientSchema = createSelectSchema(announcementRecipients);
+
+export const insertAnnouncementResponseSchema = createInsertSchema(announcementResponses);
+export const selectAnnouncementResponseSchema = createSelectSchema(announcementResponses);
+
+// Add new types
+export type InsertAdminAnnouncement = typeof adminAnnouncements.$inferInsert;
+export type SelectAdminAnnouncement = typeof adminAnnouncements.$inferSelect;
+export type InsertAnnouncementRecipient = typeof announcementRecipients.$inferInsert;
+export type SelectAnnouncementRecipient = typeof announcementRecipients.$inferSelect;
+export type InsertAnnouncementResponse = typeof announcementResponses.$inferInsert;
+export type SelectAnnouncementResponse = typeof announcementResponses.$inferSelect;
 
 // Schemas for validation
 export const insertUserSchema = createInsertSchema(users, {
