@@ -62,6 +62,11 @@ const validateAnnouncementDates = (req: any, res: any, next: any) => {
         throw new Error('Invalid start date format');
       }
 
+      // Validate that start date is not in the past
+      if (parsedStartDate < new Date(Date.now() - 24 * 60 * 60 * 1000)) {
+        throw new Error('Start date cannot be in the past');
+      }
+
       // Validate end date if provided
       if (endDate) {
         const parsedEndDate = new Date(endDate);
@@ -92,6 +97,46 @@ const validateAnnouncementDates = (req: any, res: any, next: any) => {
   }
 };
 
+// Announcement payload validation middleware
+const validateAnnouncementPayload = (req: any, res: any, next: any) => {
+  if (req.path.includes('/announcements') && req.method === 'POST') {
+    const { title, content, importance, targetAudience } = req.body;
+
+    try {
+      // Validate required fields
+      if (!title || typeof title !== 'string' || title.length === 0) {
+        throw new Error('Title is required');
+      }
+      if (!content || typeof content !== 'string' || content.length === 0) {
+        throw new Error('Content is required');
+      }
+      if (!importance || !['normal', 'important', 'urgent'].includes(importance)) {
+        throw new Error('Valid importance level is required');
+      }
+      if (!targetAudience || !targetAudience.type || !['all', 'subscription', 'user'].includes(targetAudience.type)) {
+        throw new Error('Valid target audience type is required');
+      }
+
+      // Validate target IDs if needed
+      if (targetAudience.type !== 'all') {
+        if (!Array.isArray(targetAudience.targetIds) || targetAudience.targetIds.length === 0) {
+          throw new Error('At least one target recipient is required');
+        }
+      }
+
+      next();
+    } catch (error) {
+      console.error('Announcement payload validation error:', error);
+      res.status(400).json({
+        message: "Invalid announcement data",
+        details: error instanceof Error ? error.message : "Unknown validation error"
+      });
+    }
+  } else {
+    next();
+  }
+};
+
 export function registerRoutes(app: Express): Server {
   // Add CORS middleware
   app.use(cors({
@@ -102,6 +147,7 @@ export function registerRoutes(app: Express): Server {
   // Add validation middleware
   app.use(validateJSON);
   app.use(validateAnnouncementDates);
+  app.use(validateAnnouncementPayload);
 
   // Add logging middleware
   app.use(requestLogger);

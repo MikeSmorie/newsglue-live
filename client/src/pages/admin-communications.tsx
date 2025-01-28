@@ -67,8 +67,8 @@ const formSchema = z.object({
     required_error: "Start date is required",
   }).refine(date => {
     const parsed = new Date(date);
-    return !isNaN(parsed.getTime());
-  }, "Invalid start date"),
+    return !isNaN(parsed.getTime()) && parsed > new Date(Date.now() - 24 * 60 * 60 * 1000);
+  }, "Start date must be valid and not in the past"),
   endDate: z.string().optional(),
 }).refine((data) => {
   if (!data.endDate) return true;
@@ -129,16 +129,16 @@ export default function AdminCommunications() {
   const queryClient = useQueryClient();
   const [, navigate] = useLocation();
   const [filter, setFilter] = useState<"all" | "unread" | "urgent">("all");
-  const [isComposing, setIsComposing] = useState(true);  
+  const [isComposing, setIsComposing] = useState(true);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       importance: "normal",
       targetAudience: { type: "all" },
-      requiresResponse: false,
       startDate: new Date().toISOString().slice(0, 16),
     },
+    mode: "onChange", // Enable real-time validation
   });
 
   const { data: announcements = [] } = useQuery<Announcement[]>({
@@ -168,9 +168,19 @@ export default function AdminCommunications() {
           endDate: values.endDate ? new Date(values.endDate).toISOString() : undefined,
         };
 
+        // Validate JSON structure before sending
+        try {
+          JSON.stringify(formattedData);
+        } catch (error) {
+          throw new Error("Invalid form data structure. Please check all fields.");
+        }
+
         const response = await fetch("/api/admin/announcements", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
           credentials: "include",
           body: JSON.stringify(formattedData),
         });
@@ -244,6 +254,10 @@ export default function AdminCommunications() {
       console.log("Form errors:", form.formState.errors);
     }
   }, [form.formState.errors]);
+
+  // Form submission is only enabled when the form is valid
+  const isFormValid = form.formState.isValid;
+
   return (
     <div className="container py-10 space-y-8">
       <Card>
@@ -272,7 +286,7 @@ export default function AdminCommunications() {
                 <DialogHeader>
                   <DialogTitle>Create New Announcement</DialogTitle>
                   <DialogDescription>
-                    Send an announcement to your users. You can target specific users or groups.
+                    Send an announcement to your users. All fields marked with * are required.
                   </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
@@ -283,7 +297,7 @@ export default function AdminCommunications() {
                         name="title"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Title</FormLabel>
+                            <FormLabel>Title *</FormLabel>
                             <FormControl>
                               <Input placeholder="Announcement Title" {...field} />
                             </FormControl>
@@ -297,7 +311,7 @@ export default function AdminCommunications() {
                         name="content"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Content</FormLabel>
+                            <FormLabel>Content *</FormLabel>
                             <FormControl>
                               <Textarea
                                 placeholder="Announcement Content"
@@ -315,7 +329,7 @@ export default function AdminCommunications() {
                         name="importance"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Importance</FormLabel>
+                            <FormLabel>Importance *</FormLabel>
                             <Select
                               value={field.value}
                               onValueChange={field.onChange}
@@ -341,7 +355,7 @@ export default function AdminCommunications() {
                         name="targetAudience.type"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Target Audience</FormLabel>
+                            <FormLabel>Target Audience *</FormLabel>
                             <Select
                               value={field.value}
                               onValueChange={field.onChange}
@@ -423,14 +437,14 @@ export default function AdminCommunications() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="flex items-center gap-2">
-                                Start Date
+                                Start Date *
                                 <TooltipProvider>
                                   <Tooltip>
                                     <TooltipTrigger>
                                       <HelpCircle className="h-4 w-4" />
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                      <p>When the announcement should start appearing to users</p>
+                                      <p>When the announcement should start appearing to users. Must be a future date.</p>
                                     </TooltipContent>
                                   </Tooltip>
                                 </TooltipProvider>
@@ -459,7 +473,7 @@ export default function AdminCommunications() {
                                       <HelpCircle className="h-4 w-4" />
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                      <p>When the announcement should stop showing (optional)</p>
+                                      <p>When the announcement should stop showing. Must be after the start date.</p>
                                     </TooltipContent>
                                   </Tooltip>
                                 </TooltipProvider>
@@ -500,7 +514,7 @@ export default function AdminCommunications() {
                       <Button variant="outline" onClick={() => setIsComposing(false)}>
                         Cancel
                       </Button>
-                      <Button type="submit" disabled={createMutation.isPending}>
+                      <Button type="submit" disabled={!isFormValid || createMutation.isPending}>
                         {createMutation.isPending ? "Sending..." : "Send Announcement"}
                       </Button>
                     </DialogFooter>
