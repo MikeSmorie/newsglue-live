@@ -25,9 +25,19 @@ const announcementSchema = z.object({
       required_error: "Target audience type must be one of: all, subscription, user",
     }),
     targetIds: z.array(z.number()).optional(),
-  }),
-  startDate: z.string().transform((str) => new Date(str)),
-  endDate: z.string().optional().transform((str) => str ? new Date(str) : null),
+  }).refine(data => {
+    if (data.type !== "all" && (!data.targetIds || data.targetIds.length === 0)) {
+      return false;
+    }
+    return true;
+  }, "Please select at least one target recipient"),
+  startDate: z.string({
+    required_error: "Start date is required",
+  }).refine(date => {
+    const parsed = new Date(date);
+    return !isNaN(parsed.getTime()) && parsed > new Date(Date.now() - 24 * 60 * 60 * 1000);
+  }, "Start date must be valid and not in the past"),
+  endDate: z.string().optional().transform((str) => str ? new Date(str) : undefined),
   requiresResponse: z.boolean().optional().default(false),
 });
 
@@ -36,13 +46,13 @@ router.post("/admin/announcements", async (req, res) => {
   const requestId = Date.now().toString();
 
   try {
-    // Log raw request
+    // Step 1: Log raw request
     console.log(`[${requestId}] Raw announcement request:`, {
       headers: req.headers,
       body: JSON.stringify(req.body, null, 2)
     });
 
-    // Validate request body against schema
+    // Step 2: Validate request body against schema
     const validationResult = announcementSchema.safeParse(req.body);
 
     if (!validationResult.success) {
@@ -56,20 +66,20 @@ router.post("/admin/announcements", async (req, res) => {
       throw new Error("Unauthorized - No sender ID found");
     }
 
-    // Log validated data
+    // Step 3: Log validated data
     console.log(`[${requestId}] Validated announcement data:`, {
       ...validatedData,
       senderId
     });
 
-    // Create the announcement
+    // Step 4: Create the announcement
     const [announcement] = await db.insert(adminAnnouncements)
       .values({
         title: validatedData.title,
         content: validatedData.content,
         importance: validatedData.importance,
         senderId,
-        startDate: validatedData.startDate,
+        startDate: new Date(validatedData.startDate),
         endDate: validatedData.endDate,
         requiresResponse: validatedData.requiresResponse,
         targetAudience: validatedData.targetAudience
@@ -78,7 +88,7 @@ router.post("/admin/announcements", async (req, res) => {
 
     console.log(`[${requestId}] Announcement created:`, announcement);
 
-    // Get target recipients based on audience type
+    // Step 5: Get target recipients based on audience type
     let recipientUserIds: number[] = [];
 
     if (validatedData.targetAudience.type === "all") {
@@ -99,7 +109,7 @@ router.post("/admin/announcements", async (req, res) => {
       console.log(`[${requestId}] Targeting specific users:`, recipientUserIds.length);
     }
 
-    // Create recipient records
+    // Step 6: Create recipient records
     if (recipientUserIds.length > 0) {
       await db.insert(announcementRecipients)
         .values(
@@ -113,10 +123,12 @@ router.post("/admin/announcements", async (req, res) => {
       console.warn(`[${requestId}] No recipients found for announcement`);
     }
 
+    // Step 7: Return success response
     res.json({
       status: 'success',
       data: announcement,
-      requestId
+      requestId,
+      timestamp: new Date().toISOString()
     });
   } catch (error) {
     // Log the error with full context
