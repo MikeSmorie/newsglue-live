@@ -11,6 +11,7 @@ import MockDashboard from "@/pages/mock-dashboard";
 import MockSettings from "@/pages/mock-settings";
 import SubscriptionPage from "@/pages/subscriptions";
 import SubscriptionManager from "@/pages/subscription-manager";
+import SubscriptionFeatures from "@/pages/subscription-features";
 import { useUser } from "@/hooks/use-user";
 import { Loader2, LogOut } from "lucide-react";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -24,7 +25,6 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 
-// Protected Route Component
 function ProtectedAdminRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, isLoading } = useUser();
 
@@ -116,6 +116,7 @@ function Router() {
         <Route path="/mock-dashboard" component={MockDashboard} />
         <Route path="/mock-settings" component={MockSettings} />
         <Route path="/subscriptions" component={SubscriptionPage} />
+        <Route path="/features" component={SubscriptionFeatures} />
         <Route component={NotFound} />
       </Switch>
 
