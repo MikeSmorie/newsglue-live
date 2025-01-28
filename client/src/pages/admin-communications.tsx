@@ -196,7 +196,7 @@ export default function AdminCommunications() {
         });
 
         if (!response.ok) {
-          const errorData = await response.json();
+          const errorData = await response.json().catch(() => ({ message: "Failed to parse error response" }));
           console.error('API error response:', errorData);
           throw new Error(errorData.message || "Failed to create announcement");
         }
@@ -211,8 +211,8 @@ export default function AdminCommunications() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/announcements"] });
       setIsComposing(false);
       toast({
-        title: "Announcement created",
-        description: "Your message has been sent successfully.",
+        title: "Success",
+        description: "Announcement created successfully.",
       });
       form.reset();
     },
@@ -220,7 +220,7 @@ export default function AdminCommunications() {
       toast({
         variant: "destructive",
         title: "Error creating announcement",
-        description: error.message,
+        description: error.message || "Please check all required fields and try again.",
       });
     },
   });
@@ -525,7 +525,10 @@ export default function AdminCommunications() {
                       <Button variant="outline" onClick={() => setIsComposing(false)}>
                         Cancel
                       </Button>
-                      <Button type="submit" disabled={!isFormValid || createMutation.isPending}>
+                      <Button 
+                        type="submit" 
+                        disabled={!form.formState.isValid || createMutation.isPending}
+                      >
                         {createMutation.isPending ? "Sending..." : "Send Announcement"}
                       </Button>
                     </DialogFooter>
