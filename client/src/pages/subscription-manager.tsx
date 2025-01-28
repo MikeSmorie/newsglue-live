@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, Users } from "lucide-react";
 
 interface Feature {
   id: number;
@@ -34,11 +36,18 @@ interface PlanFeature {
 interface User {
   id: number;
   username: string;
+  subscription?: {
+    id: number;
+    planId: number;
+    status: string;
+  };
 }
 
 export default function SubscriptionManager() {
   const [newFeature, setNewFeature] = useState({ name: "", category: "", description: "" });
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
+  const [bulkPlanId, setBulkPlanId] = useState<number | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -57,9 +66,9 @@ export default function SubscriptionManager() {
     queryKey: ["/api/features/assignments"],
   });
 
-  // Fetch users for override management
+  // Fetch users with their subscription info
   const { data: users = [], isLoading: usersLoading } = useQuery<User[]>({
-    queryKey: ["/api/users"],
+    queryKey: ["/api/users/with-subscriptions"],
   });
 
   // Fetch user's custom features when a user is selected
@@ -95,7 +104,88 @@ export default function SubscriptionManager() {
     },
   });
 
-  // Mutation for adding new features
+  // Mutation for updating user subscription
+  const updateSubscriptionMutation = useMutation({
+    mutationFn: async ({ userId, planId }: { userId: number; planId: number }) => {
+      const response = await fetch("/api/subscription/override", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, planId }),
+      });
+      if (!response.ok) throw new Error("Failed to update subscription");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users/with-subscriptions"] });
+      toast({
+        title: "Subscription updated",
+        description: "The user's subscription has been updated successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update subscription",
+      });
+    },
+  });
+
+  // Mutation for bulk updating subscriptions
+  const bulkUpdateSubscriptionsMutation = useMutation({
+    mutationFn: async ({ userIds, planId }: { userIds: number[]; planId: number }) => {
+      const response = await fetch("/api/subscription/bulk-override", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userIds, planId }),
+      });
+      if (!response.ok) throw new Error("Failed to update subscriptions");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users/with-subscriptions"] });
+      setSelectedUsers([]);
+      setBulkPlanId(null);
+      toast({
+        title: "Subscriptions updated",
+        description: "The selected users' subscriptions have been updated successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update subscriptions",
+      });
+    },
+  });
+
+  // Rest of the existing mutations...
+  const overrideFeatureMutation = useMutation({
+    mutationFn: async ({ userId, featureId, enabled }: { userId: number; featureId: number; enabled: boolean }) => {
+      const response = await fetch("/api/features/admin/override", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, featureId, enabled }),
+      });
+      if (!response.ok) throw new Error("Failed to override feature");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/features/admin/user-features"] });
+      toast({
+        title: "Override updated",
+        description: "The feature override has been updated successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update override",
+      });
+    },
+  });
   const addFeatureMutation = useMutation({
     mutationFn: async (feature: typeof newFeature) => {
       const response = await fetch("/api/features", {
@@ -123,33 +213,6 @@ export default function SubscriptionManager() {
     },
   });
 
-  // Mutation for overriding user features
-  const overrideFeatureMutation = useMutation({
-    mutationFn: async ({ userId, featureId, enabled }: { userId: number; featureId: number; enabled: boolean }) => {
-      const response = await fetch("/api/features/admin/override", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, featureId, enabled }),
-      });
-      if (!response.ok) throw new Error("Failed to override feature");
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/features/admin/user-features"] });
-      toast({
-        title: "Override updated",
-        description: "The feature override has been updated successfully.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update override",
-      });
-    },
-  });
-
   if (plansLoading || featuresLoading || assignmentsLoading || usersLoading || userFeaturesLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -168,20 +231,29 @@ export default function SubscriptionManager() {
     return userFeatures.includes(featureId);
   };
 
+  const handleBulkUpdate = () => {
+    if (!bulkPlanId || selectedUsers.length === 0) return;
+    bulkUpdateSubscriptionsMutation.mutate({
+      userIds: selectedUsers,
+      planId: bulkPlanId,
+    });
+  };
+
   return (
     <div className="container py-10 space-y-8">
       <Card>
         <CardHeader>
           <CardTitle>Subscription Feature Manager</CardTitle>
           <CardDescription>
-            Manage features available in each subscription plan and user overrides
+            Manage features, subscription plans, and user overrides
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="features">
             <TabsList className="mb-4">
               <TabsTrigger value="features">Feature Matrix</TabsTrigger>
-              <TabsTrigger value="user-overrides">User Overrides</TabsTrigger>
+              <TabsTrigger value="subscriptions">User Subscriptions</TabsTrigger>
+              <TabsTrigger value="user-overrides">Feature Overrides</TabsTrigger>
               <TabsTrigger value="add-feature">Add New Feature</TabsTrigger>
             </TabsList>
 
@@ -226,6 +298,114 @@ export default function SubscriptionManager() {
                     ))}
                   </TableBody>
                 </Table>
+              </div>
+            </TabsContent>
+
+            {/* User Subscriptions Tab */}
+            <TabsContent value="subscriptions">
+              <div className="space-y-4">
+                {/* Bulk Update Section */}
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-4 mb-4">
+                      <Select
+                        value={bulkPlanId?.toString() || ""}
+                        onValueChange={(value) => setBulkPlanId(parseInt(value))}
+                      >
+                        <SelectTrigger className="w-[200px]">
+                          <SelectValue placeholder="Select plan..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {plans.map((plan) => (
+                            <SelectItem key={plan.id} value={plan.id.toString()}>
+                              {plan.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        onClick={handleBulkUpdate}
+                        disabled={!bulkPlanId || selectedUsers.length === 0}
+                      >
+                        <Users className="h-4 w-4 mr-2" />
+                        Update Selected Users ({selectedUsers.length})
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Users Table */}
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[30px]">
+                          <Checkbox
+                            checked={selectedUsers.length === users.length}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedUsers(users.map(u => u.id));
+                              } else {
+                                setSelectedUsers([]);
+                              }
+                            }}
+                          />
+                        </TableHead>
+                        <TableHead>Username</TableHead>
+                        <TableHead>Current Plan</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {users.map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedUsers.includes(user.id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedUsers([...selectedUsers, user.id]);
+                                } else {
+                                  setSelectedUsers(selectedUsers.filter(id => id !== user.id));
+                                }
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell>{user.username}</TableCell>
+                          <TableCell>
+                            {plans.find(p => p.id === user.subscription?.planId)?.name || "No Plan"}
+                          </TableCell>
+                          <TableCell>
+                            {user.subscription?.status || "Inactive"}
+                          </TableCell>
+                          <TableCell>
+                            <Select
+                              value={user.subscription?.planId?.toString() || ""}
+                              onValueChange={(value) => {
+                                updateSubscriptionMutation.mutate({
+                                  userId: user.id,
+                                  planId: parseInt(value),
+                                });
+                              }}
+                            >
+                              <SelectTrigger className="w-[200px]">
+                                <SelectValue placeholder="Change plan..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {plans.map((plan) => (
+                                  <SelectItem key={plan.id} value={plan.id.toString()}>
+                                    {plan.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
             </TabsContent>
 
