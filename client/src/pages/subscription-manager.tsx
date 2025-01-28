@@ -9,8 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Users } from "lucide-react";
+import { Loader2, Plus, Users, HelpCircle } from "lucide-react";
 
 interface Feature {
   id: number;
@@ -243,7 +244,20 @@ export default function SubscriptionManager() {
     <div className="container py-10 space-y-8">
       <Card>
         <CardHeader>
-          <CardTitle>Subscription Feature Manager</CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle>Subscription Feature Manager</CardTitle>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="h-5 w-5 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent side="right" className="max-w-[300px]">
+                  <p>Manage subscription plans, features, and user access levels all in one place. 
+                     Use the tabs below to switch between different management views.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
           <CardDescription>
             Manage features, subscription plans, and user overrides
           </CardDescription>
@@ -259,6 +273,20 @@ export default function SubscriptionManager() {
 
             {/* Feature Matrix Tab */}
             <TabsContent value="features">
+              <div className="flex items-center gap-2 mb-4">
+                <h3 className="text-lg font-medium">Feature Matrix</h3>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="max-w-[300px]">
+                      <p>Use the toggles to enable or disable features for each subscription plan. 
+                         Changes take effect immediately for all users on that plan.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
               <div className="rounded-md border">
                 <Table>
                   <TableHeader>
@@ -307,6 +335,20 @@ export default function SubscriptionManager() {
                 {/* Bulk Update Section */}
                 <Card>
                   <CardContent className="pt-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <h3 className="text-lg font-medium">Bulk Update Subscriptions</h3>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent side="right" className="max-w-[300px]">
+                            <p>Select multiple users and update their subscription plans all at once. 
+                               This override will persist even after payment gateway updates.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
                     <div className="flex items-center gap-4 mb-4">
                       <Select
                         value={bulkPlanId?.toString() || ""}
@@ -334,7 +376,21 @@ export default function SubscriptionManager() {
                   </CardContent>
                 </Card>
 
-                {/* Users Table */}
+                {/* Users Table with Help Icon */}
+                <div className="flex items-center gap-2 mb-4">
+                  <h3 className="text-lg font-medium">Individual Subscription Management</h3>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="max-w-[300px]">
+                        <p>Manage individual user subscriptions here. Changes override the payment gateway 
+                           assignment and persist until manually changed again.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
                 <div className="rounded-md border">
                   <Table>
                     <TableHeader>
@@ -344,7 +400,7 @@ export default function SubscriptionManager() {
                             checked={selectedUsers.length === users.length}
                             onCheckedChange={(checked) => {
                               if (checked) {
-                                setSelectedUsers(users.map(u => u.id));
+                                setSelectedUsers(users.map((u) => u.id));
                               } else {
                                 setSelectedUsers([]);
                               }
@@ -367,14 +423,14 @@ export default function SubscriptionManager() {
                                 if (checked) {
                                   setSelectedUsers([...selectedUsers, user.id]);
                                 } else {
-                                  setSelectedUsers(selectedUsers.filter(id => id !== user.id));
+                                  setSelectedUsers(selectedUsers.filter((id) => id !== user.id));
                                 }
                               }}
                             />
                           </TableCell>
                           <TableCell>{user.username}</TableCell>
                           <TableCell>
-                            {plans.find(p => p.id === user.subscription?.planId)?.name || "No Plan"}
+                            {plans.find((p) => p.id === user.subscription?.planId)?.name || "No Plan"}
                           </TableCell>
                           <TableCell>
                             {user.subscription?.status || "Inactive"}
@@ -412,6 +468,20 @@ export default function SubscriptionManager() {
             {/* User Overrides Tab */}
             <TabsContent value="user-overrides">
               <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <h3 className="text-lg font-medium">Feature Overrides</h3>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="max-w-[300px]">
+                        <p>Grant or revoke specific features for individual users, regardless of their 
+                           subscription plan. These overrides take precedence over plan settings.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
                 <div className="flex gap-4 items-end">
                   <div className="flex-1">
                     <Label htmlFor="user">Select User</Label>
@@ -420,7 +490,7 @@ export default function SubscriptionManager() {
                       className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                       value={selectedUser?.id || ""}
                       onChange={(e) => {
-                        const user = users.find(u => u.id === parseInt(e.target.value));
+                        const user = users.find((u) => u.id === parseInt(e.target.value));
                         setSelectedUser(user || null);
                       }}
                     >
@@ -470,6 +540,20 @@ export default function SubscriptionManager() {
 
             {/* Add New Feature Tab */}
             <TabsContent value="add-feature">
+              <div className="flex items-center gap-2 mb-4">
+                <h3 className="text-lg font-medium">Add New Feature</h3>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="max-w-[300px]">
+                      <p>Create new features that can be assigned to subscription plans. 
+                         After adding a feature, assign it to plans using the Feature Matrix tab.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
