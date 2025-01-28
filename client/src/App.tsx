@@ -26,6 +26,7 @@ import { AdminProvider } from "@/contexts/admin-context";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import SubscriptionPlans from "@/pages/subscription-plans";
 
 function ProtectedAdminRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, isLoading } = useUser();
@@ -99,8 +100,8 @@ function Router() {
             </span>
             <FontSizeControls />
             <ThemeToggle />
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="icon"
               onClick={handleLogout}
               className="h-8 w-8"
@@ -119,6 +120,7 @@ function Router() {
         <Route path="/mock-settings" component={MockSettings} />
         <Route path="/subscriptions" component={SubscriptionPage} />
         <Route path="/subscription" component={SubscriptionManagement} />
+        <Route path="/subscription/plans" component={SubscriptionPlans} />
         <Route path="/features" component={SubscriptionFeatures} />
         <Route component={NotFound} />
       </Switch>
