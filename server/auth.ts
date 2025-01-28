@@ -8,9 +8,6 @@ import { promisify } from "util";
 import { users, insertUserSchema, type SelectUser } from "@db/schema";
 import { db } from "@db";
 import { eq } from "drizzle-orm";
-import hpp from "hpp";
-import rateLimit from "express-rate-limit";
-import { body, validationResult } from "express-validator";
 
 const scryptAsync = promisify(scrypt);
 const crypto = {
@@ -31,35 +28,6 @@ const crypto = {
   },
 };
 
-// Validation middleware
-const validateRegisterInput = [
-  body("username").trim().notEmpty().withMessage("Username is required"),
-  body("password").trim().isLength({ min: 6 }).withMessage("Password must be at least 6 characters"),
-];
-
-const validateLoginInput = [
-  body("username").trim().notEmpty().withMessage("Username is required"),
-  body("password").trim().notEmpty().withMessage("Password is required"),
-];
-
-const handleValidationErrors = (req: any, res: any, next: any) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      message: "Validation error",
-      errors: errors.array().map(err => err.msg)
-    });
-  }
-  next();
-};
-
-// Rate limiting middleware
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 requests per windowMs
-  message: "Too many login attempts, please try again later"
-});
-
 // extend express user object with our schema
 declare global {
   namespace Express {
@@ -73,23 +41,19 @@ export function setupAuth(app: Express) {
     secret: process.env.REPL_ID || "porygon-supremacy",
     resave: false,
     saveUninitialized: false,
-    proxy: true, // Trust the reverse proxy
-    cookie: {
-      sameSite: 'none',
-      secure: true,
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      path: '/',
-      // Remove domain restriction to allow all Replit domains
-    },
+    cookie: {},
     store: new MemoryStore({
       checkPeriod: 86400000, // prune expired entries every 24h
     }),
   };
 
-  // Trust proxy in all environments for Replit
-  app.set("trust proxy", 1);
+  if (app.get("env") === "production") {
+    app.set("trust proxy", 1);
+    sessionSettings.cookie = {
+      secure: true,
+    };
+  }
 
-  app.use(hpp()); // Prevent parameter pollution
   app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());
@@ -110,6 +74,12 @@ export function setupAuth(app: Express) {
         if (!isMatch) {
           return done(null, false, { message: "Incorrect password." });
         }
+
+        // Update last login timestamp
+        await db
+          .update(users)
+          .set({ lastLogin: new Date() })
+          .where(eq(users.id, user.id));
 
         return done(null, user);
       } catch (err) {
@@ -135,7 +105,7 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/register", validateRegisterInput, handleValidationErrors, async (req, res) => {
+  app.post("/api/register", async (req, res) => {
     try {
       const result = insertUserSchema.safeParse(req.body);
       if (!result.success) {
@@ -147,13 +117,13 @@ export function setupAuth(app: Express) {
       const { username, password } = result.data;
 
       // Check if user already exists
-      const existingUser = await db
+      const [existingUser] = await db
         .select()
         .from(users)
         .where(eq(users.username, username))
         .limit(1);
 
-      if (existingUser.length > 0) {
+      if (existingUser) {
         return res.status(400).json({
           message: "Username already exists"
         });
@@ -162,13 +132,14 @@ export function setupAuth(app: Express) {
       // Hash the password
       const hashedPassword = await crypto.hash(password);
 
-      // Create the new user
+      // Create the new user with initial login timestamp
       const [newUser] = await db
         .insert(users)
         .values({
-          username: username,
+          username,
           password: hashedPassword,
-          role: "user"
+          role: "user", // Explicitly set role as user
+          lastLogin: new Date() // Set initial login time
         })
         .returning();
 
@@ -191,7 +162,64 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/login", authLimiter, validateLoginInput, handleValidationErrors, (req, res, next) => {
+  app.post("/api/register-admin", async (req, res) => {
+    try {
+      const result = insertUserSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({
+          message: "Invalid input: " + result.error.issues.map(i => i.message).join(", ")
+        });
+      }
+
+      const { username, password } = result.data;
+
+      // Check if user already exists
+      const [existingUser] = await db
+        .select()
+        .from(users)
+        .where(eq(users.username, username))
+        .limit(1);
+
+      if (existingUser) {
+        return res.status(400).json({
+          message: "Username already exists"
+        });
+      }
+
+      // Hash the password
+      const hashedPassword = await crypto.hash(password);
+
+      // Create the new admin user
+      const [newUser] = await db
+        .insert(users)
+        .values({
+          username,
+          password: hashedPassword,
+          role: "admin", // Set role as admin
+          lastLogin: new Date() // Set initial login time
+        })
+        .returning();
+
+      req.login(newUser, (err) => {
+        if (err) {
+          return res.status(500).json({
+            message: "Error during login after registration"
+          });
+        }
+        return res.json({
+          message: "Admin registration successful",
+          user: { id: newUser.id, username: newUser.username, role: newUser.role },
+        });
+      });
+    } catch (error: any) {
+      return res.status(500).json({
+        message: "Internal server error",
+        error: error.message
+      });
+    }
+  });
+
+  app.post("/api/login", (req, res, next) => {
     const result = insertUserSchema.safeParse(req.body);
     if (!result.success) {
       return res.status(400).json({
@@ -199,7 +227,7 @@ export function setupAuth(app: Express) {
       });
     }
 
-    const cb = async (err: any, user: Express.User | false, info: IVerifyOptions) => {
+    const cb = async (err: any, user: Express.User, info: IVerifyOptions) => {
       if (err) {
         return res.status(500).json({
           message: "Internal server error",
@@ -227,7 +255,6 @@ export function setupAuth(app: Express) {
         });
       });
     };
-
     passport.authenticate("local", cb)(req, res, next);
   });
 

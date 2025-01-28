@@ -45,7 +45,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ProgressScreen } from "@/components/ui/progress-screen";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required").max(255, "Title is too long"),
@@ -71,7 +70,6 @@ const formSchema = z.object({
     return !isNaN(parsed.getTime()) && parsed > new Date(Date.now() - 24 * 60 * 60 * 1000);
   }, "Start date must be valid and not in the past"),
   endDate: z.string().optional(),
-  requiresResponse: z.boolean().default(false),
 }).refine((data) => {
   if (!data.endDate) return true;
   const startDate = new Date(data.startDate);
@@ -132,10 +130,6 @@ export default function AdminCommunications() {
   const [, navigate] = useLocation();
   const [filter, setFilter] = useState<"all" | "unread" | "urgent">("all");
   const [isComposing, setIsComposing] = useState(true);
-  const [sendingStatus, setSendingStatus] = useState<"sending" | "success" | "error" | null>(null);
-  const [sendingMessage, setSendingMessage] = useState("");
-  const [progress, setProgress] = useState(0);
-  const [total, setTotal] = useState(0);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -143,9 +137,8 @@ export default function AdminCommunications() {
       importance: "normal",
       targetAudience: { type: "all" },
       startDate: new Date().toISOString().slice(0, 16),
-      requiresResponse: false, // Added default value
     },
-    mode: "onChange", 
+    mode: "onChange", // Enable real-time validation
   });
 
   const { data: announcements = [] } = useQuery<Announcement[]>({
@@ -168,6 +161,7 @@ export default function AdminCommunications() {
   const createMutation = useMutation({
     mutationFn: async (values: FormData) => {
       try {
+        // Format dates for API
         const formattedData = {
           title: values.title.trim(),
           content: values.content.trim(),
@@ -177,12 +171,13 @@ export default function AdminCommunications() {
             targetIds: values.targetAudience.targetIds || undefined
           },
           startDate: new Date(values.startDate).toISOString(),
-          ...(values.endDate && { endDate: new Date(values.endDate).toISOString() }),
-          requiresResponse: values.requiresResponse // Added requiresResponse
+          ...(values.endDate && { endDate: new Date(values.endDate).toISOString() })
         };
 
+        // Debug logging
         console.log('Announcement payload:', JSON.stringify(formattedData, null, 2));
 
+        // Validate JSON structure before sending
         try {
           JSON.stringify(formattedData);
         } catch (error) {
@@ -212,26 +207,16 @@ export default function AdminCommunications() {
         throw error;
       }
     },
-    onMutate: () => {
-      setSendingStatus("sending");
-      setSendingMessage("Preparing to send announcement...");
-      setProgress(0);
-      setTotal(100); // Set total progress to 100 (adjust as needed)
-    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/announcements"] });
-      setSendingStatus("success");
-      setSendingMessage("Announcement sent successfully!");
-      setTimeout(() => {
-        setIsComposing(false);
-        setSendingStatus(null);
-        form.reset();
-      }, 2000);
+      setIsComposing(false);
+      toast({
+        title: "Success",
+        description: "Announcement created successfully.",
+      });
+      form.reset();
     },
     onError: (error: Error) => {
-      setSendingStatus("error");
-      setSendingMessage(error.message || "Failed to send announcement");
-      setTimeout(() => setSendingStatus(null), 3000);
       toast({
         variant: "destructive",
         title: "Error creating announcement",
@@ -281,6 +266,7 @@ export default function AdminCommunications() {
     }
   }, [form.formState.errors]);
 
+  // Form submission is only enabled when the form is valid
   const isFormValid = form.formState.isValid;
 
   return (
@@ -308,257 +294,246 @@ export default function AdminCommunications() {
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[600px]">
-                {sendingStatus ? (
-                  <ProgressScreen
-                    status={sendingStatus}
-                    message={sendingMessage}
-                    progress={progress}
-                    total={total}
-                  />
-                ) : (
-                  <>
-                    <DialogHeader>
-                      <DialogTitle>Create New Announcement</DialogTitle>
-                      <DialogDescription>
-                        Send an announcement to your users. All fields marked with * are required.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <Form {...form}>
-                      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                        <div className="space-y-4">
-                          <FormField
-                            control={form.control}
-                            name="title"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Title *</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="Announcement Title" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                <DialogHeader>
+                  <DialogTitle>Create New Announcement</DialogTitle>
+                  <DialogDescription>
+                    Send an announcement to your users. All fields marked with * are required.
+                  </DialogDescription>
+                </DialogHeader>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <div className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="title"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Title *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Announcement Title" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                          <FormField
-                            control={form.control}
-                            name="content"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Content *</FormLabel>
-                                <FormControl>
-                                  <Textarea
-                                    placeholder="Announcement Content"
-                                    className="min-h-[100px]"
-                                    {...field}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                      <FormField
+                        control={form.control}
+                        name="content"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Content *</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="Announcement Content"
+                                className="min-h-[100px]"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                          <FormField
-                            control={form.control}
-                            name="importance"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Importance *</FormLabel>
-                                <Select
-                                  value={field.value}
-                                  onValueChange={field.onChange}
-                                >
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select Importance" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="normal">Normal</SelectItem>
-                                    <SelectItem value="important">Important</SelectItem>
-                                    <SelectItem value="urgent">Urgent</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                      <FormField
+                        control={form.control}
+                        name="importance"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Importance *</FormLabel>
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select Importance" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="normal">Normal</SelectItem>
+                                <SelectItem value="important">Important</SelectItem>
+                                <SelectItem value="urgent">Urgent</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                          <FormField
-                            control={form.control}
-                            name="targetAudience.type"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Target Audience *</FormLabel>
-                                <Select
-                                  value={field.value}
-                                  onValueChange={field.onChange}
-                                >
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select Target Audience" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="all">All Users</SelectItem>
-                                    <SelectItem value="subscription">By Subscription</SelectItem>
-                                    <SelectItem value="user">Individual Users</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                      <FormField
+                        control={form.control}
+                        name="targetAudience.type"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Target Audience *</FormLabel>
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select Target Audience" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="all">All Users</SelectItem>
+                                <SelectItem value="subscription">By Subscription</SelectItem>
+                                <SelectItem value="user">Individual Users</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                          {form.watch("targetAudience.type") === "subscription" && plans.length > 0 && (
-                            <div className="mt-4 space-y-2">
-                              <FormLabel>Select Subscription Plans</FormLabel>
-                              {plans.map((plan) => (
-                                <div key={plan.id} className="flex items-center space-x-2">
-                                  <Checkbox
-                                    id={`plan-${plan.id}`}
-                                    onCheckedChange={(checked) => {
-                                      const currentTargets = form.watch("targetAudience.targetIds") || [];
-                                      if (checked) {
-                                        form.setValue("targetAudience.targetIds", [...currentTargets, plan.id]);
-                                      } else {
-                                        form.setValue(
-                                          "targetAudience.targetIds",
-                                          currentTargets.filter(id => id !== plan.id)
-                                        );
-                                      }
-                                    }}
-                                  />
-                                  <label htmlFor={`plan-${plan.id}`} className="text-sm">
-                                    {plan.name}
-                                  </label>
-                                </div>
-                              ))}
+                      {form.watch("targetAudience.type") === "subscription" && plans.length > 0 && (
+                        <div className="mt-4 space-y-2">
+                          <FormLabel>Select Subscription Plans</FormLabel>
+                          {plans.map((plan) => (
+                            <div key={plan.id} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`plan-${plan.id}`}
+                                onCheckedChange={(checked) => {
+                                  const currentTargets = form.watch("targetAudience.targetIds") || [];
+                                  if (checked) {
+                                    form.setValue("targetAudience.targetIds", [...currentTargets, plan.id]);
+                                  } else {
+                                    form.setValue(
+                                      "targetAudience.targetIds",
+                                      currentTargets.filter(id => id !== plan.id)
+                                    );
+                                  }
+                                }}
+                              />
+                              <label htmlFor={`plan-${plan.id}`} className="text-sm">
+                                {plan.name}
+                              </label>
                             </div>
-                          )}
-
-                          {form.watch("targetAudience.type") === "user" && users.length > 0 && (
-                            <div className="mt-4 space-y-2">
-                              <FormLabel>Select Users</FormLabel>
-                              {users.map((user) => (
-                                <div key={user.id} className="flex items-center space-x-2">
-                                  <Checkbox
-                                    id={`user-${user.id}`}
-                                    onCheckedChange={(checked) => {
-                                      const currentTargets = form.watch("targetAudience.targetIds") || [];
-                                      if (checked) {
-                                        form.setValue("targetAudience.targetIds", [...currentTargets, user.id]);
-                                      } else {
-                                        form.setValue(
-                                          "targetAudience.targetIds",
-                                          currentTargets.filter(id => id !== user.id)
-                                        );
-                                      }
-                                    }}
-                                  />
-                                  <label htmlFor={`user-${user.id}`} className="text-sm">
-                                    {user.username}
-                                  </label>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          <div className="space-y-4">
-                            <FormField
-                              control={form.control}
-                              name="startDate"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel className="flex items-center gap-2">
-                                    Start Date *
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger>
-                                          <HelpCircle className="h-4 w-4" />
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          <p>When the announcement should start appearing to users. Must be a future date.</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  </FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      type="datetime-local"
-                                      {...field}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-
-                            <FormField
-                              control={form.control}
-                              name="endDate"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel className="flex items-center gap-2">
-                                    End Date
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger>
-                                          <HelpCircle className="h-4 w-4" />
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          <p>When the announcement should stop showing. Must be after the start date.</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  </FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      type="datetime-local"
-                                      {...field}
-                                      value={field.value || ""}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-
-                          <FormField
-                            control={form.control}
-                            name="requiresResponse"
-                            render={({ field }) => (
-                              <FormItem className="flex items-center space-x-2">
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                  />
-                                </FormControl>
-                                <FormLabel className="text-sm">
-                                  Allow user responses
-                                </FormLabel>
-                              </FormItem>
-                            )}
-                          />
+                          ))}
                         </div>
+                      )}
 
-                        <DialogFooter>
-                          <Button variant="outline" onClick={() => setIsComposing(false)}>
-                            Cancel
-                          </Button>
-                          <Button 
-                            type="submit" 
-                            disabled={!form.formState.isValid || createMutation.isPending}
-                          >
-                            {createMutation.isPending ? "Sending..." : "Send Announcement"}
-                          </Button>
-                        </DialogFooter>
-                      </form>
-                    </Form>
-                  </>
-                )}
+                      {form.watch("targetAudience.type") === "user" && users.length > 0 && (
+                        <div className="mt-4 space-y-2">
+                          <FormLabel>Select Users</FormLabel>
+                          {users.map((user) => (
+                            <div key={user.id} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`user-${user.id}`}
+                                onCheckedChange={(checked) => {
+                                  const currentTargets = form.watch("targetAudience.targetIds") || [];
+                                  if (checked) {
+                                    form.setValue("targetAudience.targetIds", [...currentTargets, user.id]);
+                                  } else {
+                                    form.setValue(
+                                      "targetAudience.targetIds",
+                                      currentTargets.filter(id => id !== user.id)
+                                    );
+                                  }
+                                }}
+                              />
+                              <label htmlFor={`user-${user.id}`} className="text-sm">
+                                {user.username}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="startDate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="flex items-center gap-2">
+                                Start Date *
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger>
+                                      <HelpCircle className="h-4 w-4" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>When the announcement should start appearing to users. Must be a future date.</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="datetime-local"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="endDate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="flex items-center gap-2">
+                                End Date
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger>
+                                      <HelpCircle className="h-4 w-4" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>When the announcement should stop showing. Must be after the start date.</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="datetime-local"
+                                  {...field}
+                                  value={field.value || ""}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <FormField
+                        control={form.control}
+                        name="requiresResponse"
+                        render={({ field }) => (
+                          <FormItem className="flex items-center space-x-2">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <FormLabel className="text-sm">
+                              Allow user responses
+                            </FormLabel>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setIsComposing(false)}>
+                        Cancel
+                      </Button>
+                      <Button 
+                        type="submit" 
+                        disabled={!form.formState.isValid || createMutation.isPending}
+                      >
+                        {createMutation.isPending ? "Sending..." : "Send Announcement"}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
               </DialogContent>
             </Dialog>
           </div>

@@ -28,8 +28,6 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import SubscriptionPlans from "@/pages/subscription-plans";
-import { ProgressScreen } from "@/components/ui/progress-screen";
-import { useState, useEffect } from "react";
 
 function ProtectedAdminRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, isLoading } = useUser();
@@ -134,50 +132,12 @@ function Router() {
   );
 }
 
-function LoadingWrapper({ children }: { children: React.ReactNode }) {
-  const [loading, setLoading] = useState(true);
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setLoading(false);
-          return 100;
-        }
-        return prev + 10;
-      });
-    }, 500);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <ProgressScreen
-          status="loading"
-          message="Loading application..."
-          progress={progress}
-          total={100}
-          size="default"
-        />
-      </div>
-    );
-  }
-
-  return children;
-}
-
 function App() {
   return (
     <ThemeProvider defaultTheme="system">
       <AdminProvider>
         <QueryClientProvider client={queryClient}>
-          <LoadingWrapper>
-            <Router />
-          </LoadingWrapper>
+          <Router />
           <Toaster />
         </QueryClientProvider>
       </AdminProvider>
