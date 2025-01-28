@@ -50,11 +50,15 @@ export const subscriptionPlans = pgTable("subscription_plans", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
+  position: integer("position").notNull().default(0),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   interval: text("interval").notNull(), // monthly, yearly, etc.
   features: text("features"), // JSON string of features
   isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").defaultNow()
+  trialPeriodDays: integer("trial_period_days"),
+  metadata: text("metadata"), // JSON string for additional flexible properties
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at")
 });
 
 export const userSubscriptions = pgTable("user_subscriptions", {

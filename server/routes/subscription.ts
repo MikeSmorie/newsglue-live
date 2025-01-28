@@ -98,4 +98,49 @@ router.get("/user/:userId", async (req, res) => {
   }
 });
 
+// Admin: Create or update subscription plan
+router.post("/admin/plans", async (req, res) => {
+  try {
+    const planData = insertSubscriptionPlanSchema.parse(req.body);
+
+    const [plan] = await db.insert(subscriptionPlans)
+      .values(planData)
+      .returning();
+
+    res.json(plan);
+  } catch (error) {
+    res.status(400).json({ 
+      message: "Error creating subscription plan",
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+// Admin: Update plan ordering
+router.patch("/admin/plans/reorder", async (req, res) => {
+  try {
+    const { planIds } = req.body; // Array of plan IDs in desired order
+
+    // Update positions for each plan
+    await Promise.all(
+      planIds.map((planId: number, index: number) =>
+        db.update(subscriptionPlans)
+          .set({ position: index })
+          .where(eq(subscriptionPlans.id, planId))
+      )
+    );
+
+    const updatedPlans = await db.query.subscriptionPlans.findMany({
+      orderBy: subscriptionPlans.position
+    });
+
+    res.json(updatedPlans);
+  } catch (error) {
+    res.status(400).json({ 
+      message: "Error reordering subscription plans",
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
 export default router;
