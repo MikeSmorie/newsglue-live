@@ -69,17 +69,16 @@ const formSchema = z.object({
     const parsed = new Date(date);
     return !isNaN(parsed.getTime());
   }, "Invalid start date"),
-  endDate: z.string().optional().refine(date => {
-    if (!date) return true;
-    const parsed = new Date(date);
-    return !isNaN(parsed.getTime());
-  }, "Invalid end date").refine((date, ctx) => {
-    if (!date) return true;
-    const startDate = new Date(ctx.parent.startDate);
-    const endDate = new Date(date);
-    return endDate > startDate;
-  }, "End date must be after start date"),
+  endDate: z.string().optional(),
   requiresResponse: z.boolean().default(false),
+}).refine((data) => {
+  if (!data.endDate) return true;
+  const startDate = new Date(data.startDate);
+  const endDate = new Date(data.endDate);
+  return endDate > startDate;
+}, {
+  message: "End date must be after start date",
+  path: ["endDate"], 
 });
 
 interface Announcement {
@@ -129,49 +128,36 @@ export default function AdminCommunications() {
   const queryClient = useQueryClient();
   const [, navigate] = useLocation();
   const [filter, setFilter] = useState<"all" | "unread" | "urgent">("all");
-  const [isComposing, setIsComposing] = useState(true);  // Set to true by default
-
-  // Form setup with enhanced error handling
+  const [isComposing, setIsComposing] = useState(true);  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       importance: "normal",
       targetAudience: { type: "all" },
       requiresResponse: false,
-      startDate: new Date().toISOString().slice(0, 16), // Set current date/time as default
+      startDate: new Date().toISOString().slice(0, 16), 
     },
   });
-
-  // Fetch announcements with responses and read stats
   const { data: announcements = [] } = useQuery<Announcement[]>({
     queryKey: ["/api/admin/announcements"],
     enabled: !!user && user.role === "admin",
   });
-
-  // Close compose modal if announcements exist
   useEffect(() => {
     if (announcements.length > 0) {
       setIsComposing(false);
     }
   }, [announcements]);
-
-  // Fetch subscription plans for targeting
   const { data: plans = [] } = useQuery<Plan[]>({
     queryKey: ["/api/subscription/plans"],
     enabled: !!user && user.role === "admin",
   });
-
-  // Fetch users for individual targeting
   const { data: users = [] } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
     enabled: !!user && user.role === "admin",
   });
-
-  // Create announcement mutation with improved error handling
   const createMutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
       try {
-        // Ensure dates are valid
         const startDate = new Date(values.startDate);
         if (isNaN(startDate.getTime())) {
           throw new Error("Invalid start date format");
@@ -187,7 +173,6 @@ export default function AdminCommunications() {
           }
         }
 
-        // Validate target audience
         if (values.targetAudience.type !== "all" && (!values.targetAudience.targetIds || values.targetAudience.targetIds.length === 0)) {
           throw new Error("Please select at least one recipient");
         }
@@ -219,7 +204,7 @@ export default function AdminCommunications() {
         title: "Announcement created",
         description: "Your message has been sent successfully.",
       });
-      form.reset(); // Reset form after successful submission
+      form.reset(); 
     },
     onError: (error: Error) => {
       toast({
@@ -229,8 +214,6 @@ export default function AdminCommunications() {
       });
     },
   });
-
-  // Delete announcement mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
       const response = await fetch(`/api/admin/announcements/${id}`, {
@@ -255,29 +238,22 @@ export default function AdminCommunications() {
       });
     },
   });
-
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       await createMutation.mutateAsync(values);
     } catch (error) {
-      // Error is handled by mutation's onError callback
       console.error("Form submission failed:", error);
     }
   };
-
-  // Redirect non-admin users
   if (!user || user.role !== "admin") {
     navigate("/");
     return null;
   }
-
-  // Form error logging for debugging
   useEffect(() => {
     if (Object.keys(form.formState.errors).length > 0) {
       console.log("Form errors:", form.formState.errors);
     }
   }, [form.formState.errors]);
-
   return (
     <div className="container py-10 space-y-8">
       <Card>
@@ -575,7 +551,6 @@ export default function AdminCommunications() {
                                 </CardHeader>
                                 <CardContent>
                                   <p className="text-sm">{response.content}</p>
-                                  {/*The markResponseReadMutation is missing from the original code.  Cannot add it without further information. */}
                                 </CardContent>
                               </Card>
                             ))}
