@@ -163,15 +163,25 @@ export default function AdminCommunications() {
       try {
         // Format dates for API
         const formattedData = {
-          ...values,
+          title: values.title.trim(),
+          content: values.content.trim(),
+          importance: values.importance,
+          targetAudience: {
+            type: values.targetAudience.type,
+            targetIds: values.targetAudience.targetIds || undefined
+          },
           startDate: new Date(values.startDate).toISOString(),
-          endDate: values.endDate ? new Date(values.endDate).toISOString() : undefined,
+          ...(values.endDate && { endDate: new Date(values.endDate).toISOString() })
         };
+
+        // Debug logging
+        console.log('Announcement payload:', JSON.stringify(formattedData, null, 2));
 
         // Validate JSON structure before sending
         try {
           JSON.stringify(formattedData);
         } catch (error) {
+          console.error('JSON serialization error:', error);
           throw new Error("Invalid form data structure. Please check all fields.");
         }
 
@@ -187,6 +197,7 @@ export default function AdminCommunications() {
 
         if (!response.ok) {
           const errorData = await response.json();
+          console.error('API error response:', errorData);
           throw new Error(errorData.message || "Failed to create announcement");
         }
 

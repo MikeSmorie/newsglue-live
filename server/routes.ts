@@ -35,6 +35,9 @@ const requireAdmin = (req: any, res: any, next: any) => {
 const validateJSON = (req: any, res: any, next: any) => {
   if (req.is('application/json')) {
     try {
+      // Log incoming request for debugging
+      console.log('Incoming announcement payload:', JSON.stringify(req.body, null, 2));
+
       // If parsing fails, it will throw an error
       JSON.parse(JSON.stringify(req.body));
       next();
@@ -100,28 +103,29 @@ const validateAnnouncementDates = (req: any, res: any, next: any) => {
 // Announcement payload validation middleware
 const validateAnnouncementPayload = (req: any, res: any, next: any) => {
   if (req.path.includes('/announcements') && req.method === 'POST') {
-    const { title, content, importance, targetAudience } = req.body;
+    const { title, content, importance, targetAudience, startDate, endDate } = req.body;
 
     try {
       // Validate required fields
-      if (!title || typeof title !== 'string' || title.length === 0) {
+      if (!title?.trim()) {
         throw new Error('Title is required');
       }
-      if (!content || typeof content !== 'string' || content.length === 0) {
+      if (!content?.trim()) {
         throw new Error('Content is required');
       }
       if (!importance || !['normal', 'important', 'urgent'].includes(importance)) {
         throw new Error('Valid importance level is required');
       }
-      if (!targetAudience || !targetAudience.type || !['all', 'subscription', 'user'].includes(targetAudience.type)) {
+      if (!targetAudience?.type || !['all', 'subscription', 'user'].includes(targetAudience.type)) {
         throw new Error('Valid target audience type is required');
+      }
+      if (!startDate) {
+        throw new Error('Start date is required');
       }
 
       // Validate target IDs if needed
-      if (targetAudience.type !== 'all') {
-        if (!Array.isArray(targetAudience.targetIds) || targetAudience.targetIds.length === 0) {
-          throw new Error('At least one target recipient is required');
-        }
+      if (targetAudience.type !== 'all' && (!Array.isArray(targetAudience.targetIds) || targetAudience.targetIds.length === 0)) {
+        throw new Error('At least one target recipient is required for non-global announcements');
       }
 
       next();
@@ -148,10 +152,6 @@ export function registerRoutes(app: Express): Server {
   app.use(validateJSON);
   app.use(validateAnnouncementDates);
   app.use(validateAnnouncementPayload);
-
-  // Add logging middleware
-  app.use(requestLogger);
-  app.use(errorLogger);
 
   // Set up authentication routes
   setupAuth(app);
