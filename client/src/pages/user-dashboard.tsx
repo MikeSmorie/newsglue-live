@@ -39,6 +39,8 @@ interface Announcement {
       username: string;
     };
     createdAt: string;
+    startDate?: string;
+    endDate?: string;
   };
   read: boolean;
 }
@@ -47,15 +49,6 @@ export default function UserDashboard() {
   const { user } = useUser();
   const { godMode } = useAdmin();
   const { toast } = useToast();
-
-  const { data: features = [] } = useQuery<Feature[]>({
-    queryKey: ["/api/features"],
-  });
-
-  const { data: userFeatures = [] } = useQuery<number[]>({
-    queryKey: ["/api/features/user"],
-    enabled: !!user,
-  });
 
   const { data: currentPlan } = useQuery<Plan>({
     queryKey: ["/api/subscription/current-plan"],
@@ -66,14 +59,6 @@ export default function UserDashboard() {
     queryKey: ["/api/announcements"],
     enabled: !!user,
   });
-
-  const handleLockedFeatureClick = () => {
-    toast({
-      title: "Feature Locked",
-      description: `This feature is only available for ${currentPlan?.name || 'higher'} subscribers. Upgrade your plan to access.`,
-      variant: "destructive",
-    });
-  };
 
   const handleMarkAsRead = async (announcementId: number) => {
     try {
@@ -148,6 +133,12 @@ export default function UserDashboard() {
                               </div>
                               <CardDescription>
                                 From {item.announcement.sender.username} • {new Date(item.announcement.createdAt).toLocaleDateString()}
+                                {item.announcement.startDate && (
+                                  <span> • Starts: {new Date(item.announcement.startDate).toLocaleDateString()}</span>
+                                )}
+                                {item.announcement.endDate && (
+                                  <span> • Ends: {new Date(item.announcement.endDate).toLocaleDateString()}</span>
+                                )}
                               </CardDescription>
                             </CardHeader>
                             <CardContent>

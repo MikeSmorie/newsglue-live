@@ -36,9 +36,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { Edit2, Trash2, Send, Users, Filter } from "lucide-react";
+import { Edit2, Trash2, Send, Users, Filter, HelpCircle } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -48,7 +54,12 @@ const formSchema = z.object({
     type: z.enum(["all", "subscription", "user"]),
     targetIds: z.array(z.number()).optional(),
   }),
-  expiresAt: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional().refine((date) => {
+    if (!date) return true;
+    const startDate = new Date(date);
+    return !isNaN(startDate.getTime());
+  }, "Invalid end date"),
   requiresResponse: z.boolean().default(false),
 });
 
@@ -62,7 +73,8 @@ interface Announcement {
     targetIds?: number[];
   };
   createdAt: string;
-  expiresAt?: string;
+  startDate?: string;
+  endDate?: string;
   sender: {
     username: string;
   };
@@ -98,7 +110,7 @@ export default function AdminCommunications() {
   const queryClient = useQueryClient();
   const [, navigate] = useLocation();
   const [filter, setFilter] = useState<"all" | "unread" | "urgent">("all");
-  const [isComposing, setIsComposing] = useState(false);
+  const [isComposing, setIsComposing] = useState(true);  // Set to true by default
 
   // Form setup
   const form = useForm<z.infer<typeof formSchema>>({
@@ -116,6 +128,13 @@ export default function AdminCommunications() {
     enabled: !!user && user.role === "admin",
   });
 
+  // Close compose modal if announcements exist
+  useEffect(() => {
+    if (announcements.length > 0) {
+      setIsComposing(false);
+    }
+  }, [announcements]);
+
   // Fetch subscription plans for targeting
   const { data: plans = [] } = useQuery<Plan[]>({
     queryKey: ["/api/subscription/plans"],
@@ -131,12 +150,22 @@ export default function AdminCommunications() {
   // Create announcement mutation
   const createMutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
+      // Validate dates
+      if (values.startDate && values.endDate) {
+        const start = new Date(values.startDate);
+        const end = new Date(values.endDate);
+        if (end < start) {
+          throw new Error("End date must be after start date");
+        }
+      }
+
       const response = await fetch("/api/admin/announcements", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify(values),
       });
+
       if (!response.ok) throw new Error("Failed to create announcement");
       return response.json();
     },
@@ -183,35 +212,11 @@ export default function AdminCommunications() {
     },
   });
 
-  // Mark response as read mutation
-  const markResponseReadMutation = useMutation({
-    mutationFn: async ({ announcementId, responseId }: { announcementId: number; responseId: number }) => {
-      const response = await fetch(`/api/admin/announcements/${announcementId}/responses/${responseId}/read`, {
-        method: "POST",
-        credentials: "include",
-      });
-      if (!response.ok) throw new Error("Failed to mark response as read");
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/announcements"] });
-    },
-  });
-
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     createMutation.mutate(values);
   };
 
-  const filteredAnnouncements = announcements.filter(announcement => {
-    if (filter === "unread") {
-      return announcement.responses.some(response => !response.readByAdmin);
-    }
-    if (filter === "urgent") {
-      return announcement.importance === "urgent";
-    }
-    return true;
-  });
-
+  // Redirect non-admin users
   if (!user || user.role !== "admin") {
     navigate("/");
     return null;
@@ -362,11 +367,52 @@ export default function AdminCommunications() {
                         )}
                       </div>
 
-                      <div>
-                        <Input
-                          type="datetime-local"
-                          {...form.register("expiresAt")}
-                        />
+                      <div className="space-y-4">
+                        <div className="flex items-center space-x-2">
+                          <div className="flex-1">
+                            <label className="text-sm font-medium flex items-center gap-2">
+                              Start Date
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger>
+                                    <HelpCircle className="h-4 w-4" />
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>When the announcement should start appearing to users</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </label>
+                            <Input
+                              type="datetime-local"
+                              {...form.register("startDate")}
+                              className="mt-1"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-2">
+                          <div className="flex-1">
+                            <label className="text-sm font-medium flex items-center gap-2">
+                              End Date
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger>
+                                    <HelpCircle className="h-4 w-4" />
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>When the announcement should stop showing (optional)</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </label>
+                            <Input
+                              type="datetime-local"
+                              {...form.register("endDate")}
+                              className="mt-1"
+                            />
+                          </div>
+                        </div>
                       </div>
 
                       <div className="flex items-center space-x-2">
@@ -403,14 +449,14 @@ export default function AdminCommunications() {
               <TableRow>
                 <TableHead>Title</TableHead>
                 <TableHead>Target Audience</TableHead>
-                <TableHead>Sent</TableHead>
+                <TableHead>Dates</TableHead>
                 <TableHead>Read Status</TableHead>
                 <TableHead>Responses</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredAnnouncements.map((announcement) => (
+              {announcements.map((announcement) => (
                 <TableRow key={announcement.id}>
                   <TableCell>
                     <div className="flex flex-col gap-1">
@@ -432,7 +478,17 @@ export default function AdminCommunications() {
                         : "Individual Users"}
                     </div>
                   </TableCell>
-                  <TableCell>{new Date(announcement.createdAt).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      <p>Created: {new Date(announcement.createdAt).toLocaleDateString()}</p>
+                      {announcement.startDate && (
+                        <p>Starts: {new Date(announcement.startDate).toLocaleDateString()}</p>
+                      )}
+                      {announcement.endDate && (
+                        <p>Ends: {new Date(announcement.endDate).toLocaleDateString()}</p>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <Badge variant="secondary">
                       {announcement.recipientStats.read}/{announcement.recipientStats.total} read
