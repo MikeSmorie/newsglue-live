@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useUser } from "@/hooks/use-user";
 import { useToast } from "@/hooks/use-toast";
-import { Form } from "@/components/ui/form";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -81,6 +81,8 @@ const formSchema = z.object({
   path: ["endDate"], 
 });
 
+type FormData = z.infer<typeof formSchema>;
+
 interface Announcement {
   id: number;
   title: string;
@@ -129,15 +131,17 @@ export default function AdminCommunications() {
   const [, navigate] = useLocation();
   const [filter, setFilter] = useState<"all" | "unread" | "urgent">("all");
   const [isComposing, setIsComposing] = useState(true);  
-  const form = useForm<z.infer<typeof formSchema>>({
+
+  const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       importance: "normal",
       targetAudience: { type: "all" },
       requiresResponse: false,
-      startDate: new Date().toISOString().slice(0, 16), 
+      startDate: new Date().toISOString().slice(0, 16),
     },
   });
+
   const { data: announcements = [] } = useQuery<Announcement[]>({
     queryKey: ["/api/admin/announcements"],
     enabled: !!user && user.role === "admin",
@@ -156,8 +160,9 @@ export default function AdminCommunications() {
     enabled: !!user && user.role === "admin",
   });
   const createMutation = useMutation({
-    mutationFn: async (values: z.infer<typeof formSchema>) => {
+    mutationFn: async (values: FormData) => {
       try {
+        // Validate and format dates
         const startDate = new Date(values.startDate);
         if (isNaN(startDate.getTime())) {
           throw new Error("Invalid start date format");
@@ -173,15 +178,23 @@ export default function AdminCommunications() {
           }
         }
 
+        // Validate target audience
         if (values.targetAudience.type !== "all" && (!values.targetAudience.targetIds || values.targetAudience.targetIds.length === 0)) {
           throw new Error("Please select at least one recipient");
         }
+
+        // Format dates for API
+        const formattedData = {
+          ...values,
+          startDate: startDate.toISOString(),
+          endDate: values.endDate ? new Date(values.endDate).toISOString() : undefined,
+        };
 
         const response = await fetch("/api/admin/announcements", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify(values),
+          body: JSON.stringify(formattedData),
         });
 
         if (!response.ok) {
@@ -204,7 +217,7 @@ export default function AdminCommunications() {
         title: "Announcement created",
         description: "Your message has been sent successfully.",
       });
-      form.reset(); 
+      form.reset();
     },
     onError: (error: Error) => {
       toast({
@@ -214,6 +227,7 @@ export default function AdminCommunications() {
       });
     },
   });
+
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
       const response = await fetch(`/api/admin/announcements/${id}`, {
@@ -238,7 +252,7 @@ export default function AdminCommunications() {
       });
     },
   });
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: FormData) => {
     try {
       await createMutation.mutateAsync(values);
     } catch (error) {
@@ -288,177 +302,222 @@ export default function AdminCommunications() {
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                     <div className="space-y-4">
-                      <div>
-                        <Input
-                          placeholder="Announcement Title"
-                          {...form.register("title")}
-                        />
-                        {form.formState.errors.title && (
-                          <p className="text-sm text-destructive mt-1">
-                            {form.formState.errors.title.message}
-                          </p>
+                      <FormField
+                        control={form.control}
+                        name="title"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Title</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Announcement Title" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
                         )}
-                      </div>
+                      />
 
-                      <div>
-                        <Textarea
-                          placeholder="Announcement Content"
-                          className="min-h-[100px]"
-                          {...form.register("content")}
-                        />
-                        {form.formState.errors.content && (
-                          <p className="text-sm text-destructive mt-1">
-                            {form.formState.errors.content.message}
-                          </p>
+                      <FormField
+                        control={form.control}
+                        name="content"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Content</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="Announcement Content"
+                                className="min-h-[100px]"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
                         )}
-                      </div>
+                      />
 
-                      <div>
-                        <Select
-                          value={form.watch("importance")}
-                          onValueChange={(value) => form.setValue("importance", value as any)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select Importance" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="normal">Normal</SelectItem>
-                            <SelectItem value="important">Important</SelectItem>
-                            <SelectItem value="urgent">Urgent</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <Select
-                          value={form.watch("targetAudience.type")}
-                          onValueChange={(value) => {
-                            form.setValue("targetAudience", { type: value as any });
-                          }}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select Target Audience" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Users</SelectItem>
-                            <SelectItem value="subscription">By Subscription</SelectItem>
-                            <SelectItem value="user">Individual Users</SelectItem>
-                          </SelectContent>
-                        </Select>
-
-                        {form.watch("targetAudience.type") === "subscription" && plans.length > 0 && (
-                          <div className="mt-4">
-                            {plans.map((plan) => (
-                              <div key={plan.id} className="flex items-center space-x-2">
-                                <Checkbox
-                                  id={`plan-${plan.id}`}
-                                  onCheckedChange={(checked) => {
-                                    const currentTargets = form.watch("targetAudience.targetIds") || [];
-                                    if (checked) {
-                                      form.setValue("targetAudience.targetIds", [...currentTargets, plan.id]);
-                                    } else {
-                                      form.setValue(
-                                        "targetAudience.targetIds",
-                                        currentTargets.filter(id => id !== plan.id)
-                                      );
-                                    }
-                                  }}
-                                />
-                                <label htmlFor={`plan-${plan.id}`} className="text-sm">
-                                  {plan.name}
-                                </label>
-                              </div>
-                            ))}
-                          </div>
+                      <FormField
+                        control={form.control}
+                        name="importance"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Importance</FormLabel>
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select Importance" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="normal">Normal</SelectItem>
+                                <SelectItem value="important">Important</SelectItem>
+                                <SelectItem value="urgent">Urgent</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
                         )}
+                      />
 
-                        {form.watch("targetAudience.type") === "user" && users.length > 0 && (
-                          <div className="mt-4">
-                            {users.map((user) => (
-                              <div key={user.id} className="flex items-center space-x-2">
-                                <Checkbox
-                                  id={`user-${user.id}`}
-                                  onCheckedChange={(checked) => {
-                                    const currentTargets = form.watch("targetAudience.targetIds") || [];
-                                    if (checked) {
-                                      form.setValue("targetAudience.targetIds", [...currentTargets, user.id]);
-                                    } else {
-                                      form.setValue(
-                                        "targetAudience.targetIds",
-                                        currentTargets.filter(id => id !== user.id)
-                                      );
-                                    }
-                                  }}
-                                />
-                                <label htmlFor={`user-${user.id}`} className="text-sm">
-                                  {user.username}
-                                </label>
-                              </div>
-                            ))}
-                          </div>
+                      <FormField
+                        control={form.control}
+                        name="targetAudience.type"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Target Audience</FormLabel>
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select Target Audience" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="all">All Users</SelectItem>
+                                <SelectItem value="subscription">By Subscription</SelectItem>
+                                <SelectItem value="user">Individual Users</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
                         )}
-                      </div>
+                      />
+
+                      {form.watch("targetAudience.type") === "subscription" && plans.length > 0 && (
+                        <div className="mt-4 space-y-2">
+                          <FormLabel>Select Subscription Plans</FormLabel>
+                          {plans.map((plan) => (
+                            <div key={plan.id} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`plan-${plan.id}`}
+                                onCheckedChange={(checked) => {
+                                  const currentTargets = form.watch("targetAudience.targetIds") || [];
+                                  if (checked) {
+                                    form.setValue("targetAudience.targetIds", [...currentTargets, plan.id]);
+                                  } else {
+                                    form.setValue(
+                                      "targetAudience.targetIds",
+                                      currentTargets.filter(id => id !== plan.id)
+                                    );
+                                  }
+                                }}
+                              />
+                              <label htmlFor={`plan-${plan.id}`} className="text-sm">
+                                {plan.name}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {form.watch("targetAudience.type") === "user" && users.length > 0 && (
+                        <div className="mt-4 space-y-2">
+                          <FormLabel>Select Users</FormLabel>
+                          {users.map((user) => (
+                            <div key={user.id} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`user-${user.id}`}
+                                onCheckedChange={(checked) => {
+                                  const currentTargets = form.watch("targetAudience.targetIds") || [];
+                                  if (checked) {
+                                    form.setValue("targetAudience.targetIds", [...currentTargets, user.id]);
+                                  } else {
+                                    form.setValue(
+                                      "targetAudience.targetIds",
+                                      currentTargets.filter(id => id !== user.id)
+                                    );
+                                  }
+                                }}
+                              />
+                              <label htmlFor={`user-${user.id}`} className="text-sm">
+                                {user.username}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      )}
 
                       <div className="space-y-4">
-                        <div className="flex items-center space-x-2">
-                          <div className="flex-1">
-                            <label className="text-sm font-medium flex items-center gap-2">
-                              Start Date
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger>
-                                    <HelpCircle className="h-4 w-4" />
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>When the announcement should start appearing to users</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            </label>
-                            <Input
-                              type="datetime-local"
-                              {...form.register("startDate")}
-                              className="mt-1"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="flex items-center space-x-2">
-                          <div className="flex-1">
-                            <label className="text-sm font-medium flex items-center gap-2">
-                              End Date
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger>
-                                    <HelpCircle className="h-4 w-4" />
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>When the announcement should stop showing (optional)</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            </label>
-                            <Input
-                              type="datetime-local"
-                              {...form.register("endDate")}
-                              className="mt-1"
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="requiresResponse"
-                          checked={form.watch("requiresResponse")}
-                          onCheckedChange={(checked) => {
-                            form.setValue("requiresResponse", checked as boolean);
-                          }}
+                        <FormField
+                          control={form.control}
+                          name="startDate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="flex items-center gap-2">
+                                Start Date
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger>
+                                      <HelpCircle className="h-4 w-4" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>When the announcement should start appearing to users</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="datetime-local"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
                         />
-                        <label htmlFor="requiresResponse" className="text-sm">
-                          Allow user responses
-                        </label>
+
+                        <FormField
+                          control={form.control}
+                          name="endDate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="flex items-center gap-2">
+                                End Date
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger>
+                                      <HelpCircle className="h-4 w-4" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>When the announcement should stop showing (optional)</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="datetime-local"
+                                  {...field}
+                                  value={field.value || ""}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                       </div>
+
+                      <FormField
+                        control={form.control}
+                        name="requiresResponse"
+                        render={({ field }) => (
+                          <FormItem className="flex items-center space-x-2">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <FormLabel className="text-sm">
+                              Allow user responses
+                            </FormLabel>
+                          </FormItem>
+                        )}
+                      />
                     </div>
 
                     <DialogFooter>
