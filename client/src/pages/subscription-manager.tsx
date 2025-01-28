@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Plus } from "lucide-react";
 
@@ -33,12 +34,6 @@ interface PlanFeature {
 interface User {
   id: number;
   username: string;
-}
-
-interface UserFeature {
-  userId: number;
-  featureId: number;
-  enabled: boolean;
 }
 
 export default function SubscriptionManager() {
@@ -100,33 +95,6 @@ export default function SubscriptionManager() {
     },
   });
 
-  // Mutation for overriding user features
-  const overrideFeatureMutation = useMutation({
-    mutationFn: async ({ userId, featureId, enabled }: { userId: number; featureId: number; enabled: boolean }) => {
-      const response = await fetch("/api/features/admin/override", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, featureId, enabled }),
-      });
-      if (!response.ok) throw new Error("Failed to override feature");
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/features/admin/user-features"] });
-      toast({
-        title: "Override updated",
-        description: "The feature override has been updated successfully.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update override",
-      });
-    },
-  });
-
   // Mutation for adding new features
   const addFeatureMutation = useMutation({
     mutationFn: async (feature: typeof newFeature) => {
@@ -151,6 +119,33 @@ export default function SubscriptionManager() {
         variant: "destructive",
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to add feature",
+      });
+    },
+  });
+
+  // Mutation for overriding user features
+  const overrideFeatureMutation = useMutation({
+    mutationFn: async ({ userId, featureId, enabled }: { userId: number; featureId: number; enabled: boolean }) => {
+      const response = await fetch("/api/features/admin/override", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, featureId, enabled }),
+      });
+      if (!response.ok) throw new Error("Failed to override feature");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/features/admin/user-features"] });
+      toast({
+        title: "Override updated",
+        description: "The feature override has been updated successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update override",
       });
     },
   });
@@ -182,145 +177,161 @@ export default function SubscriptionManager() {
             Manage features available in each subscription plan and user overrides
           </CardDescription>
         </CardHeader>
-
         <CardContent>
-          {/* Add New Feature Form */}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              addFeatureMutation.mutate(newFeature);
-            }}
-            className="space-y-4 mb-8"
-          >
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Feature Name</Label>
-                <Input
-                  id="name"
-                  value={newFeature.name}
-                  onChange={(e) => setNewFeature({ ...newFeature, name: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
-                <Input
-                  id="category"
-                  value={newFeature.category}
-                  onChange={(e) => setNewFeature({ ...newFeature, category: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Input
-                  id="description"
-                  value={newFeature.description}
-                  onChange={(e) => setNewFeature({ ...newFeature, description: e.target.value })}
-                />
-              </div>
-            </div>
-            <Button type="submit" className="ml-auto" disabled={addFeatureMutation.isPending}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Feature
-            </Button>
-          </form>
+          <Tabs defaultValue="features">
+            <TabsList className="mb-4">
+              <TabsTrigger value="features">Feature Matrix</TabsTrigger>
+              <TabsTrigger value="user-overrides">User Overrides</TabsTrigger>
+              <TabsTrigger value="add-feature">Add New Feature</TabsTrigger>
+            </TabsList>
 
-          {/* User Override Section */}
-          <div className="mb-8">
-            <h3 className="text-lg font-medium mb-4">User Feature Overrides</h3>
-            <div className="space-y-4">
-              <div className="flex gap-4 items-end">
-                <div className="flex-1">
-                  <Label htmlFor="user">Select User</Label>
-                  <select
-                    id="user"
-                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                    value={selectedUser?.id || ""}
-                    onChange={(e) => {
-                      const user = users.find(u => u.id === parseInt(e.target.value));
-                      setSelectedUser(user || null);
-                    }}
-                  >
-                    <option value="">Select a user...</option>
-                    {users.map((user) => (
-                      <option key={user.id} value={user.id}>
-                        {user.username}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {selectedUser && (
+            {/* Feature Matrix Tab */}
+            <TabsContent value="features">
+              <div className="rounded-md border">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Feature</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Override</TableHead>
+                      <TableHead className="w-[200px]">Feature</TableHead>
+                      <TableHead className="w-[120px]">Category</TableHead>
+                      {plans.map((plan) => (
+                        <TableHead key={plan.id} className="text-center">
+                          {plan.name}
+                          <div className="text-xs text-muted-foreground">
+                            ${plan.price}
+                          </div>
+                        </TableHead>
+                      ))}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {features.map((feature) => (
                       <TableRow key={feature.id}>
-                        <TableCell>{feature.name}</TableCell>
+                        <TableCell className="font-medium">{feature.name}</TableCell>
                         <TableCell>{feature.category}</TableCell>
-                        <TableCell>
-                          <Switch
-                            checked={isFeatureOverridden(feature.id)}
-                            onCheckedChange={(checked) =>
-                              overrideFeatureMutation.mutate({
-                                userId: selectedUser.id,
-                                featureId: feature.id,
-                                enabled: checked,
-                              })
-                            }
-                          />
-                        </TableCell>
+                        {plans.map((plan) => (
+                          <TableCell key={`${plan.id}-${feature.id}`} className="text-center">
+                            <Switch
+                              checked={isFeatureEnabled(plan.id, feature.id)}
+                              onCheckedChange={(checked) =>
+                                toggleFeatureMutation.mutate({
+                                  planId: plan.id,
+                                  featureId: feature.id,
+                                  enabled: checked,
+                                })
+                              }
+                            />
+                          </TableCell>
+                        ))}
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
-              )}
-            </div>
-          </div>
+              </div>
+            </TabsContent>
 
-          {/* Feature Assignment Table */}
-          <h3 className="text-lg font-medium mb-4">Plan Feature Assignments</h3>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Feature</TableHead>
-                <TableHead>Category</TableHead>
-                {plans.map((plan) => (
-                  <TableHead key={plan.id}>{plan.name}</TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {features.map((feature) => (
-                <TableRow key={feature.id}>
-                  <TableCell>{feature.name}</TableCell>
-                  <TableCell>{feature.category}</TableCell>
-                  {plans.map((plan) => (
-                    <TableCell key={`${plan.id}-${feature.id}`}>
-                      <Switch
-                        checked={isFeatureEnabled(plan.id, feature.id)}
-                        onCheckedChange={(checked) =>
-                          toggleFeatureMutation.mutate({
-                            planId: plan.id,
-                            featureId: feature.id,
-                            enabled: checked,
-                          })
-                        }
-                      />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+            {/* User Overrides Tab */}
+            <TabsContent value="user-overrides">
+              <div className="space-y-4">
+                <div className="flex gap-4 items-end">
+                  <div className="flex-1">
+                    <Label htmlFor="user">Select User</Label>
+                    <select
+                      id="user"
+                      className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                      value={selectedUser?.id || ""}
+                      onChange={(e) => {
+                        const user = users.find(u => u.id === parseInt(e.target.value));
+                        setSelectedUser(user || null);
+                      }}
+                    >
+                      <option value="">Select a user...</option>
+                      {users.map((user) => (
+                        <option key={user.id} value={user.id}>
+                          {user.username}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {selectedUser && (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Feature</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead>Override</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {features.map((feature) => (
+                        <TableRow key={feature.id}>
+                          <TableCell>{feature.name}</TableCell>
+                          <TableCell>{feature.category}</TableCell>
+                          <TableCell>
+                            <Switch
+                              checked={isFeatureOverridden(feature.id)}
+                              onCheckedChange={(checked) =>
+                                overrideFeatureMutation.mutate({
+                                  userId: selectedUser.id,
+                                  featureId: feature.id,
+                                  enabled: checked,
+                                })
+                              }
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </div>
+            </TabsContent>
+
+            {/* Add New Feature Tab */}
+            <TabsContent value="add-feature">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  addFeatureMutation.mutate(newFeature);
+                }}
+                className="space-y-4"
+              >
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Feature Name</Label>
+                    <Input
+                      id="name"
+                      value={newFeature.name}
+                      onChange={(e) => setNewFeature({ ...newFeature, name: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="category">Category</Label>
+                    <Input
+                      id="category"
+                      value={newFeature.category}
+                      onChange={(e) => setNewFeature({ ...newFeature, category: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Description</Label>
+                    <Input
+                      id="description"
+                      value={newFeature.description}
+                      onChange={(e) => setNewFeature({ ...newFeature, description: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <Button type="submit" className="ml-auto" disabled={addFeatureMutation.isPending}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Feature
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
