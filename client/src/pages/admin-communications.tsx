@@ -70,7 +70,6 @@ const formSchema = z.object({
     return !isNaN(parsed.getTime());
   }, "Invalid start date"),
   endDate: z.string().optional(),
-  requiresResponse: z.boolean().default(false),
 }).refine((data) => {
   if (!data.endDate) return true;
   const startDate = new Date(data.startDate);
@@ -162,31 +161,10 @@ export default function AdminCommunications() {
   const createMutation = useMutation({
     mutationFn: async (values: FormData) => {
       try {
-        // Validate and format dates
-        const startDate = new Date(values.startDate);
-        if (isNaN(startDate.getTime())) {
-          throw new Error("Invalid start date format");
-        }
-
-        if (values.endDate) {
-          const endDate = new Date(values.endDate);
-          if (isNaN(endDate.getTime())) {
-            throw new Error("Invalid end date format");
-          }
-          if (endDate <= startDate) {
-            throw new Error("End date must be after start date");
-          }
-        }
-
-        // Validate target audience
-        if (values.targetAudience.type !== "all" && (!values.targetAudience.targetIds || values.targetAudience.targetIds.length === 0)) {
-          throw new Error("Please select at least one recipient");
-        }
-
         // Format dates for API
         const formattedData = {
           ...values,
-          startDate: startDate.toISOString(),
+          startDate: new Date(values.startDate).toISOString(),
           endDate: values.endDate ? new Date(values.endDate).toISOString() : undefined,
         };
 
@@ -198,16 +176,14 @@ export default function AdminCommunications() {
         });
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => null);
-          throw new Error(errorData?.message || "Failed to create announcement");
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Failed to create announcement");
         }
 
         return response.json();
       } catch (error) {
-        if (error instanceof Error) {
-          throw error;
-        }
-        throw new Error("An unexpected error occurred");
+        console.error("Announcement creation error:", error);
+        throw error;
       }
     },
     onSuccess: () => {

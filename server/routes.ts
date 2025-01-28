@@ -31,12 +31,77 @@ const requireAdmin = (req: any, res: any, next: any) => {
   res.status(403).json({ message: "Not authorized" });
 };
 
+// JSON validation middleware
+const validateJSON = (req: any, res: any, next: any) => {
+  if (req.is('application/json')) {
+    try {
+      // If parsing fails, it will throw an error
+      JSON.parse(JSON.stringify(req.body));
+      next();
+    } catch (error) {
+      console.error('Invalid JSON payload:', error);
+      res.status(400).json({ 
+        message: "Invalid JSON format", 
+        details: error instanceof Error ? error.message : "Unknown parsing error" 
+      });
+    }
+  } else {
+    next();
+  }
+};
+
+// Date validation middleware for announcements
+const validateAnnouncementDates = (req: any, res: any, next: any) => {
+  if (req.path.includes('/announcements') && req.method === 'POST') {
+    const { startDate, endDate } = req.body;
+
+    try {
+      // Validate start date
+      const parsedStartDate = new Date(startDate);
+      if (isNaN(parsedStartDate.getTime())) {
+        throw new Error('Invalid start date format');
+      }
+
+      // Validate end date if provided
+      if (endDate) {
+        const parsedEndDate = new Date(endDate);
+        if (isNaN(parsedEndDate.getTime())) {
+          throw new Error('Invalid end date format');
+        }
+        if (parsedEndDate <= parsedStartDate) {
+          throw new Error('End date must be after start date');
+        }
+      }
+
+      // Add parsed dates to request for later use
+      req.parsedDates = {
+        startDate: parsedStartDate,
+        endDate: endDate ? new Date(endDate) : undefined
+      };
+
+      next();
+    } catch (error) {
+      console.error('Date validation error:', error);
+      res.status(400).json({ 
+        message: "Date validation failed", 
+        details: error instanceof Error ? error.message : "Invalid date format" 
+      });
+    }
+  } else {
+    next();
+  }
+};
+
 export function registerRoutes(app: Express): Server {
   // Add CORS middleware
   app.use(cors({
     origin: process.env.NODE_ENV === 'production' ? false : '*',
     credentials: true
   }));
+
+  // Add validation middleware
+  app.use(validateJSON);
+  app.use(validateAnnouncementDates);
 
   // Add logging middleware
   app.use(requestLogger);
