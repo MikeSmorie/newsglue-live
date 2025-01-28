@@ -1,10 +1,11 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, Minus } from "lucide-react";
+import { Check, Minus, AlertCircle } from "lucide-react";
 import { useUser } from "@/hooks/use-user";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Plan {
   id: number;
@@ -26,26 +27,43 @@ interface PlanFeature {
   enabled: boolean;
 }
 
+interface SubscriptionOverride {
+  userId: number;
+  overriddenByAdmin: boolean;
+  overrideDate?: string;
+}
+
 export function SubscriptionComparison() {
   const { user } = useUser();
   const [, navigate] = useLocation();
 
-  // Fetch plans, features, and current subscription
+  // Fetch plans, features, and current subscription with shorter polling interval
   const { data: plans = [] } = useQuery<Plan[]>({
     queryKey: ["/api/subscription/plans"],
+    refetchInterval: 5000, // Poll every 5 seconds for updates
   });
 
   const { data: features = [] } = useQuery<Feature[]>({
     queryKey: ["/api/features"],
+    refetchInterval: 5000,
   });
 
   const { data: planFeatures = [] } = useQuery<PlanFeature[]>({
     queryKey: ["/api/features/assignments"],
+    refetchInterval: 5000,
   });
 
   const { data: currentPlan } = useQuery<Plan>({
     queryKey: ["/api/subscription/current-plan"],
     enabled: !!user,
+    refetchInterval: 5000,
+  });
+
+  // Fetch subscription override information if the user is logged in
+  const { data: subscriptionOverride } = useQuery<SubscriptionOverride>({
+    queryKey: ["/api/subscription/override-info", user?.id],
+    enabled: !!user,
+    refetchInterval: 5000,
   });
 
   // Helper function to check if a feature is enabled for a plan
@@ -82,9 +100,23 @@ export function SubscriptionComparison() {
                       <div className="font-bold relative">
                         {plan.name}
                         {currentPlan?.id === plan.id && (
-                          <span className="absolute -top-5 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">
-                            Current Plan
-                          </span>
+                          <div className="absolute -top-5 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1">
+                            <span className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full whitespace-nowrap">
+                              Current Plan
+                            </span>
+                            {subscriptionOverride?.overriddenByAdmin && (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger>
+                                    <AlertCircle className="h-4 w-4 text-yellow-500" />
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Your subscription was upgraded by an admin on {new Date(subscriptionOverride.overrideDate || '').toLocaleDateString()}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
+                          </div>
                         )}
                       </div>
                       <div className="text-sm text-muted-foreground">
