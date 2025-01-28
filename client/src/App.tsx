@@ -12,6 +12,7 @@ import MockSettings from "@/pages/mock-settings";
 import SubscriptionPage from "@/pages/subscriptions";
 import SubscriptionManager from "@/pages/subscription-manager";
 import SubscriptionFeatures from "@/pages/subscription-features";
+import UserDashboard from "@/pages/user-dashboard";
 import { useUser } from "@/hooks/use-user";
 import { Loader2, LogOut } from "lucide-react";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -112,7 +113,7 @@ function Router() {
       <Switch>
         <Route path="/admin" component={() => <ProtectedAdminRoute component={AdminDashboard} />} />
         <Route path="/admin/subscription-manager" component={() => <ProtectedAdminRoute component={SubscriptionManager} />} />
-        <Route path="/" component={PlaceholderApp} />
+        <Route path="/" component={UserDashboard} />
         <Route path="/mock-dashboard" component={MockDashboard} />
         <Route path="/mock-settings" component={MockSettings} />
         <Route path="/subscriptions" component={SubscriptionPage} />
