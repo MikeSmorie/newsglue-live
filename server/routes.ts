@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { requestLogger, errorLogger } from "./middleware/logger";
 import { db } from "@db";
-import hpp from "hpp";
+import hpp from 'hpp';
 import { activityLogs, errorLogs, users } from "@db/schema";
 import { eq } from "drizzle-orm";
 import cors from "cors";
