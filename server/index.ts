@@ -1,8 +1,30 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import helmet from "helmet"; // Security headers
+import cors from "cors"; // Cross-origin protection
+import rateLimit from "express-rate-limit"; // Rate limiting
+import hpp from "hpp"; // HTTP parameter pollution prevention
+import csrf from "csurf"; // CSRF protection
 
 const app = express();
+
+// Security middleware
+app.use(helmet()); // Secure HTTP headers
+app.use(cors()); // Enable CORS
+app.use(hpp()); // Prevent HTTP Parameter Pollution
+
+// Rate limiting for API endpoints
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: "Too many requests from this IP, please try again later.",
+});
+app.use("/api", limiter);
+
+// CSRF Protection Middleware (disabled for now if API needs JSON handling)
+const csrfProtection = csrf({ cookie: false }); // Consider enabling cookies for stronger protection
+// app.use(csrfProtection); // Enable when frontend can send CSRF tokens
 
 // Body parsing middleware
 app.use(express.json());
