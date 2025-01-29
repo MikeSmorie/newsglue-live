@@ -43,6 +43,10 @@ export default function AdminCommunications() {
 
   const createMutation = useMutation({
     mutationFn: async (values: FormData) => {
+      if (!user || user.role !== 'admin') {
+        throw new Error('Unauthorized');
+      }
+
       // Create URLSearchParams
       const formData = new URLSearchParams();
       formData.append('title', values.title.trim());
@@ -69,7 +73,8 @@ export default function AdminCommunications() {
         throw new Error(error);
       }
 
-      return response;
+      const data = await response.json();
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/messages"] });
@@ -80,10 +85,11 @@ export default function AdminCommunications() {
       form.reset();
     },
     onError: (error: Error) => {
+      console.error('Mutation error:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to create announcement",
       });
     },
   });

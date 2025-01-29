@@ -41,7 +41,7 @@ export function registerRoutes(app: Express) {
   app.use("/api/webhook", webhookRoutes);
   app.use("/api/ai", aiRoutes);
   app.use("/api/features", requireAdmin, featureRoutes);
-  app.use("/api/messages", requireAdmin, messagesRoutes);
+  app.use("/api/messages", messagesRoutes);
 
   return createServer(app);
 }
