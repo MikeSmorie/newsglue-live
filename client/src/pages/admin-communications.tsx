@@ -77,7 +77,7 @@ const formSchema = z.object({
   return endDate > startDate;
 }, {
   message: "End date must be after start date",
-  path: ["endDate"], 
+  path: ["endDate"],
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -161,38 +161,29 @@ export default function AdminCommunications() {
   const createMutation = useMutation({
     mutationFn: async (values: FormData) => {
       try {
-        // Format dates for API
-        const formattedData = {
-          title: values.title.trim(),
-          content: values.content.trim(),
-          importance: values.importance,
-          targetAudience: {
-            type: values.targetAudience.type,
-            targetIds: values.targetAudience.targetIds || undefined
-          },
-          startDate: new Date(values.startDate).toISOString(),
-          ...(values.endDate && { endDate: new Date(values.endDate).toISOString() })
-        };
-
-        // Debug logging
-        console.log('Announcement payload:', JSON.stringify(formattedData, null, 2));
-
-        // Validate JSON structure before sending
-        try {
-          JSON.stringify(formattedData);
-        } catch (error) {
-          console.error('JSON serialization error:', error);
-          throw new Error("Invalid form data structure. Please check all fields.");
+        // Convert form values to FormData
+        const formData = new FormData();
+        formData.append('title', values.title.trim());
+        formData.append('content', values.content.trim());
+        formData.append('importance', values.importance);
+        formData.append('targetAudience', JSON.stringify(values.targetAudience));
+        formData.append('startDate', new Date(values.startDate).toISOString());
+        if (values.endDate) {
+          formData.append('endDate', new Date(values.endDate).toISOString());
         }
+
+        // Debug panel - log outgoing request
+        console.log('=== OUTGOING ANNOUNCEMENT REQUEST ===');
+        console.log('FormData entries:');
+        for (const [key, value] of formData.entries()) {
+          console.log(`${key}: ${value}`);
+        }
+        console.log('=====================================');
 
         const response = await fetch("/api/admin/announcements", {
           method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-          },
-          credentials: "include",
-          body: JSON.stringify(formattedData),
+          body: formData,
+          credentials: "include"
         });
 
         if (!response.ok) {
@@ -268,6 +259,16 @@ export default function AdminCommunications() {
 
   // Form submission is only enabled when the form is valid
   const isFormValid = form.formState.isValid;
+
+  // Add debug panel component
+  const DebugPanel = () => (
+    <div className="fixed bottom-4 right-4 p-4 bg-black/80 text-white rounded-lg max-w-md max-h-64 overflow-auto">
+      <h3 className="text-sm font-mono mb-2">Request Debug Panel</h3>
+      <pre className="text-xs font-mono whitespace-pre-wrap" id="debug-output">
+        Waiting for requests...
+      </pre>
+    </div>
+  );
 
   return (
     <div className="container py-10 space-y-8">
@@ -525,8 +526,8 @@ export default function AdminCommunications() {
                       <Button variant="outline" onClick={() => setIsComposing(false)}>
                         Cancel
                       </Button>
-                      <Button 
-                        type="submit" 
+                      <Button
+                        type="submit"
                         disabled={!form.formState.isValid || createMutation.isPending}
                       >
                         {createMutation.isPending ? "Sending..." : "Send Announcement"}
@@ -646,6 +647,7 @@ export default function AdminCommunications() {
           </Table>
         </CardContent>
       </Card>
+      {process.env.NODE_ENV !== 'production' && <DebugPanel />}
     </div>
   );
 }
