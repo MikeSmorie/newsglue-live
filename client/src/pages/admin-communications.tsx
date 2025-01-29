@@ -8,8 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { useUser } from "@/hooks/use-user";
-import { useState, useEffect } from "react"; // Added for useState
-
+import { useState } from "react";
 
 interface Message {
   id: number;
@@ -28,9 +27,7 @@ export default function AdminCommunications() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, navigate] = useLocation();
-
-  // Debug state
-  const [debugInfo, setDebugInfo] = useState<string>('Waiting for form submission...');
+  const [debugInfo, setDebugInfo] = useState('Waiting for form submission...');
 
   const form = useForm<FormData>({
     defaultValues: {
@@ -46,21 +43,23 @@ export default function AdminCommunications() {
 
   const createMutation = useMutation({
     mutationFn: async (values: FormData) => {
-      // Create form data
-      const formData = new FormData();
+      // Create URLSearchParams
+      const formData = new URLSearchParams();
       formData.append('title', values.title.trim());
       formData.append('content', values.content.trim());
 
-      // Update debug panel
+      // Update debug info
       setDebugInfo(
         'Sending form data:\n' +
-        Array.from(formData.entries())
-          .map(([key, value]) => `${key}: ${value}`)
-          .join('\n')
+        'Content-Type: application/x-www-form-urlencoded\n' +
+        'Body: ' + formData.toString()
       );
 
       const response = await fetch("/api/messages", {
         method: "POST",
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
         body: formData,
         credentials: "include"
       });
@@ -70,7 +69,7 @@ export default function AdminCommunications() {
         throw new Error(error);
       }
 
-      return response.json();
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/messages"] });
@@ -101,20 +100,6 @@ export default function AdminCommunications() {
     navigate("/");
     return null;
   }
-
-  // Debug panel component with real-time updates from original code
-  const DebugPanel = () => (
-    <div className="fixed bottom-4 right-4 p-4 bg-black/80 text-white rounded-lg max-w-md max-h-64 overflow-auto">
-      <h3 className="text-sm font-mono mb-2">Request Debug Panel</h3>
-      <div className="flex flex-col gap-2">
-        <div className="text-xs text-yellow-400">Content-Type: multipart/form-data</div>
-        <pre className="text-xs font-mono whitespace-pre-wrap" id="debug-output">
-          {debugInfo} {/* Using the debugInfo state */}
-        </pre>
-      </div>
-    </div>
-  );
-
 
   return (
     <div className="container py-10 space-y-8">
@@ -163,16 +148,15 @@ export default function AdminCommunications() {
                   type="button" 
                   variant="outline"
                   onClick={() => {
-                    const formData = new FormData();
+                    const formData = new URLSearchParams();
                     const values = form.getValues();
                     Object.entries(values).forEach(([key, value]) => {
                       formData.append(key, value);
                     });
                     setDebugInfo(
                       'Current form data:\n' +
-                      Array.from(formData.entries())
-                        .map(([key, value]) => `${key}: ${value}`)
-                        .join('\n')
+                      'Content-Type: application/x-www-form-urlencoded\n' +
+                      'Body: ' + formData.toString()
                     );
                   }}
                 >
@@ -213,7 +197,6 @@ export default function AdminCommunications() {
           </div>
         </CardContent>
       </Card>
-      {process.env.NODE_ENV !== 'production' && <DebugPanel />}
     </div>
   );
 }
