@@ -11,9 +11,7 @@ import webhookRoutes from "./routes/webhook";
 import aiRoutes from "./routes/ai";
 import featureRoutes from "./routes/features";
 import announcementsRoutes from "./routes/announcements";
-
-// Plugin registry
-const plugins: Record<string, { status: string; loadedAt?: Date }> = {};
+import express from "express";
 
 // Middleware to check if user is authenticated
 const requireAuth = (req: any, res: any, next: any) => {
@@ -31,34 +29,63 @@ const requireAdmin = (req: any, res: any, next: any) => {
   res.status(403).json({ message: "Not authorized" });
 };
 
-// Basic JSON validation middleware for non-announcement routes
-const validateJSON = (req: any, res: any, next: any) => {
-  if (req.is('application/json') && !req.path.includes('/announcements')) {
-    try {
-      JSON.parse(JSON.stringify(req.body));
-      next();
-    } catch (error) {
-      res.status(400).json({ 
+// Content-Type enforcement middleware
+const enforceJsonContentType = (req: any, res: any, next: any) => {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    if (!req.is('application/json')) {
+      return res.status(415).json({
         status: 'error',
-        message: "Invalid JSON format", 
-        details: error instanceof Error ? error.message : "Unknown parsing error",
-        timestamp: new Date().toISOString()
+        message: 'Content-Type must be application/json',
+        received: req.headers['content-type']
       });
     }
-  } else {
-    next();
   }
+  next();
+};
+
+// Request payload logging middleware
+const logRequestPayload = (req: any, res: any, next: any) => {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    console.log('[Request Interceptor]', {
+      path: req.path,
+      method: req.method,
+      headers: req.headers,
+      body: JSON.stringify(req.body, null, 2),
+      timestamp: new Date().toISOString()
+    });
+  }
+  next();
 };
 
 export function registerRoutes(app: Express): Server {
-  // Add CORS middleware
+  // Add CORS middleware first
   app.use(cors({
     origin: process.env.NODE_ENV === 'production' ? false : '*',
     credentials: true
   }));
 
-  // Add validation middleware
-  app.use(validateJSON);
+  // Parse JSON body before routes
+  app.use(express.json({
+    verify: (req: any, res: any, buf: Buffer) => {
+      try {
+        JSON.parse(buf.toString());
+      } catch (e) {
+        res.status(400).json({
+          status: 'error',
+          message: 'Invalid JSON in request body',
+          details: e instanceof Error ? e.message : 'Unknown parsing error',
+          timestamp: new Date().toISOString()
+        });
+        throw new Error('Invalid JSON');
+      }
+    }
+  }));
+
+  // Add logging middleware
+  app.use(logRequestPayload);
+
+  // Enforce JSON content type
+  app.use(enforceJsonContentType);
 
   // Set up authentication routes
   setupAuth(app);
@@ -68,8 +95,6 @@ export function registerRoutes(app: Express): Server {
   app.use("/api/webhook", webhookRoutes);
   app.use("/api/ai", aiRoutes);
   app.use("/api/features", requireAdmin, featureRoutes);
-
-  // Add announcement routes with appropriate middleware
   app.use("/api/announcements", requireAuth, announcementsRoutes);
   app.use("/api/admin/announcements", requireAdmin, announcementsRoutes);
 
@@ -239,3 +264,6 @@ export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
   return httpServer;
 }
+
+// Plugin registry
+const plugins: Record<string, { status: string; loadedAt?: Date }> = {};

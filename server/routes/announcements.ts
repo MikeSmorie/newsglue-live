@@ -37,7 +37,11 @@ const announcementSchema = z.object({
     const parsed = new Date(date);
     return !isNaN(parsed.getTime()) && parsed > new Date(Date.now() - 24 * 60 * 60 * 1000);
   }, "Start date must be valid and not in the past"),
-  endDate: z.string().optional(),
+  endDate: z.string().optional().refine(date => {
+    if (!date) return true;
+    const parsed = new Date(date);
+    return !isNaN(parsed.getTime());
+  }, "End date must be a valid date if provided"),
 });
 
 // Create a new announcement
