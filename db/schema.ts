@@ -33,6 +33,21 @@ export const errorLogs = pgTable("error_logs", {
   stackTrace: text("stack_trace")
 });
 
+// Simple messages table with no relations
+export const messages = pgTable("messages", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+// Add schema and types for messages
+export const insertMessageSchema = createInsertSchema(messages);
+export const selectMessageSchema = createSelectSchema(messages);
+export type InsertMessage = typeof messages.$inferInsert;
+export type SelectMessage = typeof messages.$inferSelect;
+
+
 // Payment and Subscription Related Schema
 export const subscriptionStatusEnum = z.enum(["active", "cancelled", "expired", "pending"]);
 export type SubscriptionStatus = z.infer<typeof subscriptionStatusEnum>;

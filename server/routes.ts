@@ -7,6 +7,7 @@ import subscriptionRoutes from "./routes/subscription";
 import webhookRoutes from "./routes/webhook";
 import aiRoutes from "./routes/ai";
 import featureRoutes from "./routes/features";
+import messagesRoutes from "./routes/announcements";
 
 // Simple auth checks
 const requireAuth = (req: any, res: any, next: any) => {
@@ -40,6 +41,7 @@ export function registerRoutes(app: Express) {
   app.use("/api/webhook", webhookRoutes);
   app.use("/api/ai", aiRoutes);
   app.use("/api/features", requireAdmin, featureRoutes);
+  app.use("/api/messages", requireAdmin, messagesRoutes);
 
   return createServer(app);
 }
