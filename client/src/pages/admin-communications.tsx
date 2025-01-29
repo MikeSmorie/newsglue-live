@@ -64,7 +64,7 @@ export default function AdminCommunications() {
         throw new Error(await response.text());
       }
 
-      return response.text();
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/messages"] });
@@ -73,8 +73,10 @@ export default function AdminCommunications() {
         description: "Announcement created.",
       });
       form.reset();
+      setDebugInfo('Form submitted successfully!');
     },
     onError: (error: Error) => {
+      setDebugInfo('Error: ' + error.message);
       toast({
         variant: "destructive",
         title: "Error",
@@ -172,19 +174,25 @@ export default function AdminCommunications() {
           {/* Messages List */}
           <div className="space-y-4 mt-8">
             <h3 className="font-semibold">Recent Announcements</h3>
-            {messages.map((message) => (
-              <Card key={message.id}>
-                <CardHeader>
-                  <CardTitle className="text-lg">{message.title}</CardTitle>
-                  <div className="text-sm text-muted-foreground">
-                    {new Date(message.createdAt).toLocaleString()}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="whitespace-pre-wrap">{message.content}</p>
-                </CardContent>
+            {messages.length === 0 ? (
+              <Card className="p-4">
+                <p className="text-muted-foreground text-center">No announcements yet</p>
               </Card>
-            ))}
+            ) : (
+              messages.map((message) => (
+                <Card key={message.id}>
+                  <CardHeader>
+                    <CardTitle className="text-lg">{message.title}</CardTitle>
+                    <div className="text-sm text-muted-foreground">
+                      {new Date(message.createdAt).toLocaleString()}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="whitespace-pre-wrap">{message.content}</p>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
         </CardContent>
       </Card>

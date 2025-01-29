@@ -24,13 +24,21 @@ router.post("/messages", async (req, res) => {
       return res.status(400).send('Title and content are required');
     }
 
-    const result = await db.insert(messages).values({
-      title,
-      content,
-      createdAt: new Date()
-    });
+    const [newMessage] = await db
+      .insert(messages)
+      .values({
+        title,
+        content,
+        createdAt: new Date()
+      })
+      .returning();
 
-    res.send('Announcement created');
+    console.log('Created message:', newMessage);
+
+    res.status(200).send({
+      success: true,
+      message: 'Announcement created successfully'
+    });
 
   } catch (error) {
     console.error('Failed to create announcement:', error);
