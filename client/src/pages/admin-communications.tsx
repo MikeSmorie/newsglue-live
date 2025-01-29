@@ -38,7 +38,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { Edit2, Trash2, Send, Users, Filter, HelpCircle } from "lucide-react";
+import { Edit2, Trash2, Send, Users, Filter, HelpCircle, BugPlay } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -130,6 +130,7 @@ export default function AdminCommunications() {
   const [, navigate] = useLocation();
   const [filter, setFilter] = useState<"all" | "unread" | "urgent">("all");
   const [isComposing, setIsComposing] = useState(true);
+  const [debugMode, setDebugMode] = useState(false);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -138,7 +139,7 @@ export default function AdminCommunications() {
       targetAudience: { type: "all" },
       startDate: new Date().toISOString().slice(0, 16),
     },
-    mode: "onChange", // Enable real-time validation
+    mode: "onChange", 
   });
 
   const { data: announcements = [] } = useQuery<Announcement[]>({
@@ -161,7 +162,6 @@ export default function AdminCommunications() {
   const createMutation = useMutation({
     mutationFn: async (values: FormData) => {
       try {
-        // Convert form values to FormData
         const formData = new FormData();
         formData.append('title', values.title.trim());
         formData.append('content', values.content.trim());
@@ -172,7 +172,6 @@ export default function AdminCommunications() {
           formData.append('endDate', new Date(values.endDate).toISOString());
         }
 
-        // Debug panel - log outgoing request
         console.log('=== OUTGOING ANNOUNCEMENT REQUEST ===');
         console.log('FormData entries:');
         for (const [key, value] of formData.entries()) {
@@ -180,14 +179,12 @@ export default function AdminCommunications() {
         }
         console.log('=====================================');
 
-        // Update debug panel UI
         const debugOutput = document.getElementById('debug-output');
         if (debugOutput) {
           debugOutput.textContent = Array.from(formData.entries())
             .map(([key, value]) => `${key}: ${value}`)
             .join('\n');
         }
-
 
         const response = await fetch("/api/admin/announcements", {
           method: "POST",
@@ -256,6 +253,55 @@ export default function AdminCommunications() {
       console.error("Form submission failed:", error);
     }
   };
+
+  const debugSubmit = async (values: FormData) => {
+    try {
+      const formData = new FormData();
+      formData.append('title', values.title.trim());
+      formData.append('content', values.content.trim());
+      formData.append('importance', values.importance);
+      formData.append('targetAudience', JSON.stringify(values.targetAudience));
+      formData.append('startDate', new Date(values.startDate).toISOString());
+      if (values.endDate) {
+        formData.append('endDate', new Date(values.endDate).toISOString());
+      }
+
+      console.log('=== DEBUG SUBMISSION REQUEST ===');
+      console.log('Content-Type: multipart/form-data');
+      console.log('FormData entries:');
+      for (const [key, value] of formData.entries()) {
+        console.log(`${key}: ${value}`);
+      }
+      console.log('================================');
+
+      const debugOutput = document.getElementById('debug-output');
+      if (debugOutput) {
+        debugOutput.textContent = `Content-Type: multipart/form-data\n\n${
+          Array.from(formData.entries())
+            .map(([key, value]) => `${key}: ${value}`)
+            .join('\n')
+        }`;
+      }
+
+      if (debugMode) {
+        toast({
+          title: "Debug Mode",
+          description: "Request details logged to debug panel",
+        });
+        return;
+      }
+
+      return createMutation.mutate(values);
+    } catch (error) {
+      console.error("Debug submission error:", error);
+      toast({
+        variant: "destructive",
+        title: "Debug Error",
+        description: error instanceof Error ? error.message : "Failed to prepare debug submission",
+      });
+    }
+  };
+
   if (!user || user.role !== "admin") {
     navigate("/");
     return null;
@@ -266,21 +312,7 @@ export default function AdminCommunications() {
     }
   }, [form.formState.errors]);
 
-  // Form submission is only enabled when the form is valid
   const isFormValid = form.formState.isValid;
-
-  // Debug panel component with real-time updates
-  const DebugPanel = () => (
-    <div className="fixed bottom-4 right-4 p-4 bg-black/80 text-white rounded-lg max-w-md max-h-64 overflow-auto">
-      <h3 className="text-sm font-mono mb-2">Request Debug Panel</h3>
-      <div className="flex flex-col gap-2">
-        <div className="text-xs text-yellow-400">Content-Type: multipart/form-data</div>
-        <pre className="text-xs font-mono whitespace-pre-wrap" id="debug-output">
-          Waiting for requests...
-        </pre>
-      </div>
-    </div>
-  );
 
   return (
     <div className="container py-10 space-y-8">
@@ -314,7 +346,7 @@ export default function AdminCommunications() {
                   </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <form onSubmit={form.handleSubmit(debugMode ? debugSubmit : onSubmit)} className="space-y-6">
                     <div className="space-y-4">
                       <FormField
                         control={form.control}
@@ -534,16 +566,39 @@ export default function AdminCommunications() {
                       />
                     </div>
 
-                    <DialogFooter>
-                      <Button variant="outline" onClick={() => setIsComposing(false)}>
-                        Cancel
-                      </Button>
-                      <Button
-                        type="submit"
-                        disabled={!form.formState.isValid || createMutation.isPending}
-                      >
-                        {createMutation.isPending ? "Sending..." : "Send Announcement"}
-                      </Button>
+                    <DialogFooter className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setDebugMode(!debugMode)}
+                          className={debugMode ? "bg-yellow-500/10" : ""}
+                        >
+                          <BugPlay className="h-4 w-4" />
+                        </Button>
+                        {debugMode && (
+                          <span className="text-sm text-muted-foreground">
+                            Debug Mode Active
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button variant="outline" onClick={() => setIsComposing(false)}>
+                          Cancel
+                        </Button>
+                        <Button
+                          type="submit"
+                          disabled={!form.formState.isValid || createMutation.isPending}
+                        >
+                          {debugMode
+                            ? "Debug Submit"
+                            : createMutation.isPending
+                              ? "Sending..."
+                              : "Send Announcement"
+                          }
+                        </Button>
+                      </div>
                     </DialogFooter>
                   </form>
                 </Form>
@@ -582,8 +637,8 @@ export default function AdminCommunications() {
                       {announcement.targetAudience.type === "all"
                         ? "All Users"
                         : announcement.targetAudience.type === "subscription"
-                        ? "Subscription Group"
-                        : "Individual Users"}
+                          ? "Subscription Group"
+                          : "Individual Users"}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -659,7 +714,24 @@ export default function AdminCommunications() {
           </Table>
         </CardContent>
       </Card>
-      {process.env.NODE_ENV !== 'production' && <DebugPanel />}
+      {(process.env.NODE_ENV !== 'production' || debugMode) && (
+        <div className="fixed bottom-4 right-4 p-4 bg-black/80 text-white rounded-lg max-w-md max-h-64 overflow-auto">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-mono">Request Debug Panel</h3>
+            {debugMode && (
+              <Badge variant="outline" className="text-yellow-400 border-yellow-400">
+                Debug Mode
+              </Badge>
+            )}
+          </div>
+          <div className="flex flex-col gap-2">
+            <div className="text-xs text-yellow-400">Content-Type: multipart/form-data</div>
+            <pre className="text-xs font-mono whitespace-pre-wrap" id="debug-output">
+              Waiting for requests...
+            </pre>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
