@@ -180,6 +180,15 @@ export default function AdminCommunications() {
         }
         console.log('=====================================');
 
+        // Update debug panel UI
+        const debugOutput = document.getElementById('debug-output');
+        if (debugOutput) {
+          debugOutput.textContent = Array.from(formData.entries())
+            .map(([key, value]) => `${key}: ${value}`)
+            .join('\n');
+        }
+
+
         const response = await fetch("/api/admin/announcements", {
           method: "POST",
           body: formData,
@@ -260,13 +269,16 @@ export default function AdminCommunications() {
   // Form submission is only enabled when the form is valid
   const isFormValid = form.formState.isValid;
 
-  // Add debug panel component
+  // Debug panel component with real-time updates
   const DebugPanel = () => (
     <div className="fixed bottom-4 right-4 p-4 bg-black/80 text-white rounded-lg max-w-md max-h-64 overflow-auto">
       <h3 className="text-sm font-mono mb-2">Request Debug Panel</h3>
-      <pre className="text-xs font-mono whitespace-pre-wrap" id="debug-output">
-        Waiting for requests...
-      </pre>
+      <div className="flex flex-col gap-2">
+        <div className="text-xs text-yellow-400">Content-Type: multipart/form-data</div>
+        <pre className="text-xs font-mono whitespace-pre-wrap" id="debug-output">
+          Waiting for requests...
+        </pre>
+      </div>
     </div>
   );
 
