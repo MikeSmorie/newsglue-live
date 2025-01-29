@@ -8,8 +8,7 @@ const router = express.Router();
 router.use((req, res, next) => {
   if (req.method === 'POST') {
     console.log('\n=== ANNOUNCEMENT REQUEST DEBUG ===');
-    console.log('Headers:', req.headers);
-    console.log('Body:', req.body);
+    console.log('Raw body:', req.body);
     console.log('================================\n');
   }
   next();
@@ -18,25 +17,20 @@ router.use((req, res, next) => {
 // Create announcement - accepts only form data
 router.post("/messages", async (req, res) => {
   try {
-    const { title, content } = req.body;
+    const title = req.body.title;
+    const content = req.body.content;
 
     if (!title || !content) {
       return res.status(400).send('Title and content are required');
     }
 
-    const [message] = await db.insert(messages)
-      .values({
-        title,
-        content,
-        createdAt: new Date()
-      })
-      .returning();
-
-    res.json({ 
-      status: 'success',
-      message: 'Announcement created',
-      data: message 
+    const result = await db.insert(messages).values({
+      title,
+      content,
+      createdAt: new Date()
     });
+
+    res.send('Announcement created');
 
   } catch (error) {
     console.error('Failed to create announcement:', error);
@@ -44,13 +38,13 @@ router.post("/messages", async (req, res) => {
   }
 });
 
-// Get all announcements
+// Get all announcements 
 router.get("/messages", async (req, res) => {
   try {
     const allMessages = await db.query.messages.findMany({
       orderBy: (messages, { desc }) => [desc(messages.createdAt)]
     });
-    res.json(allMessages);
+    res.send(allMessages);
   } catch (error) {
     console.error('Failed to fetch announcements:', error);
     res.status(500).send('Failed to fetch announcements');

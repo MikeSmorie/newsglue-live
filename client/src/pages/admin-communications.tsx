@@ -43,21 +43,13 @@ export default function AdminCommunications() {
 
   const createMutation = useMutation({
     mutationFn: async (values: FormData) => {
-      if (!user || user.role !== 'admin') {
-        throw new Error('Unauthorized');
-      }
-
-      // Create URLSearchParams
+      // Create form data
       const formData = new URLSearchParams();
       formData.append('title', values.title.trim());
       formData.append('content', values.content.trim());
 
       // Update debug info
-      setDebugInfo(
-        'Sending form data:\n' +
-        'Content-Type: application/x-www-form-urlencoded\n' +
-        'Body: ' + formData.toString()
-      );
+      setDebugInfo('Sending form data:\n' + formData.toString());
 
       const response = await fetch("/api/messages", {
         method: "POST",
@@ -69,23 +61,20 @@ export default function AdminCommunications() {
       });
 
       if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error);
+        throw new Error(await response.text());
       }
 
-      const data = await response.json();
-      return data;
+      return response.text();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/messages"] });
       toast({
         title: "Success",
-        description: "Announcement created successfully.",
+        description: "Announcement created.",
       });
       form.reset();
     },
     onError: (error: Error) => {
-      console.error('Mutation error:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -159,11 +148,7 @@ export default function AdminCommunications() {
                     Object.entries(values).forEach(([key, value]) => {
                       formData.append(key, value);
                     });
-                    setDebugInfo(
-                      'Current form data:\n' +
-                      'Content-Type: application/x-www-form-urlencoded\n' +
-                      'Body: ' + formData.toString()
-                    );
+                    setDebugInfo('Debug form data:\n' + formData.toString());
                   }}
                 >
                   Debug Form
