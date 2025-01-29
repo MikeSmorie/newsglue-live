@@ -2,160 +2,107 @@ import express from "express";
 import { db } from "@db";
 import { 
   adminAnnouncements, 
-  announcementRecipients, 
-  announcementResponses,
-  userSubscriptions,
+  announcementRecipients,
   users,
   errorLogs 
 } from "@db/schema";
-import { eq, and, inArray } from "drizzle-orm";
-import { z } from "zod";
+import { eq } from "drizzle-orm";
 
 const router = express.Router();
 
-// Zod schema for announcement validation
-const announcementSchema = z.object({
-  title: z.string().min(1, "Title is required").max(255, "Title is too long"),
-  content: z.string().min(1, "Content is required").max(10000, "Content is too long"),
-  importance: z.enum(["normal", "important", "urgent"], {
-    required_error: "Please select importance level",
-  }),
-  targetAudience: z.object({
-    type: z.enum(["all", "subscription", "user"], {
-      required_error: "Please select target audience type",
-    }),
-    targetIds: z.array(z.number()).optional(),
-  }).refine(data => {
-    if (data.type !== "all" && (!data.targetIds || data.targetIds.length === 0)) {
-      return false;
-    }
-    return true;
-  }, "Please select at least one target recipient"),
-  startDate: z.string({
-    required_error: "Start date is required",
-  }).refine(date => {
-    const parsed = new Date(date);
-    return !isNaN(parsed.getTime()) && parsed > new Date(Date.now() - 24 * 60 * 60 * 1000);
-  }, "Start date must be valid and not in the past"),
-  endDate: z.string().optional().refine(date => {
-    if (!date) return true;
-    const parsed = new Date(date);
-    return !isNaN(parsed.getTime());
-  }, "End date must be a valid date if provided"),
-});
-
-// Create a new announcement
+// Create a new announcement with minimal JSON handling
 router.post("/admin/announcements", async (req, res) => {
   const requestId = Date.now().toString();
 
   try {
-    // Step 1: Log raw request
-    console.log(`[${requestId}] Raw announcement request:`, {
-      headers: req.headers,
-      body: JSON.stringify(req.body, null, 2)
+    // Step 1: Log raw request data
+    console.log(`[${requestId}] Raw request body:`, {
+      body: req.body,
+      contentType: req.headers['content-type']
     });
 
-    // Step 2: Validate request body against schema
-    const validationResult = announcementSchema.safeParse(req.body);
+    // Step 2: Basic validation of required fields
+    const { title, content } = req.body;
 
-    if (!validationResult.success) {
-      throw new Error(validationResult.error.issues.map(i => i.message).join(", "));
+    if (!title?.trim()) {
+      throw new Error('Title is required');
     }
 
-    const validatedData = validationResult.data;
-    const senderId = req.user?.id;
+    if (!content?.trim()) {
+      throw new Error('Content is required');
+    }
 
+    // Step 3: Log validated data
+    console.log(`[${requestId}] Validated fields:`, {
+      title: title.trim(),
+      content: content.trim()
+    });
+
+    const senderId = req.user?.id;
     if (!senderId) {
       throw new Error("Unauthorized - No sender ID found");
     }
 
-    // Step 3: Log validated data
-    console.log(`[${requestId}] Validated announcement data:`, {
-      ...validatedData,
-      senderId
-    });
-
-    // Step 4: Create the announcement
+    // Step 4: Create basic announcement
     const [announcement] = await db.insert(adminAnnouncements)
       .values({
-        title: validatedData.title,
-        content: validatedData.content,
-        importance: validatedData.importance,
+        title: title.trim(),
+        content: content.trim(),
+        importance: 'normal',
         senderId,
-        startDate: new Date(validatedData.startDate),
-        endDate: validatedData.endDate ? new Date(validatedData.endDate) : undefined,
-        requiresResponse: false,
-        targetAudience: validatedData.targetAudience
+        startDate: new Date(),
+        targetAudience: { type: 'all' }
       })
       .returning();
 
-    console.log(`[${requestId}] Announcement created:`, announcement);
+    console.log(`[${requestId}] Created announcement:`, announcement);
 
-    // Step 5: Get target recipients based on audience type
-    let recipientUserIds: number[] = [];
+    // Step 5: Add all users as recipients
+    const allUsers = await db.query.users.findMany({
+      columns: { id: true }
+    });
 
-    if (validatedData.targetAudience.type === "all") {
-      const allUsers = await db.query.users.findMany({
-        columns: { id: true }
-      });
-      recipientUserIds = allUsers.map(user => user.id);
-      console.log(`[${requestId}] Targeting all users:`, recipientUserIds.length);
-    } else if (validatedData.targetAudience.type === "subscription" && validatedData.targetAudience.targetIds) {
-      const subscriptionUsers = await db.query.userSubscriptions.findMany({
-        where: inArray(userSubscriptions.planId, validatedData.targetAudience.targetIds),
-        columns: { userId: true }
-      });
-      recipientUserIds = subscriptionUsers.map(sub => sub.userId);
-      console.log(`[${requestId}] Targeting subscription users:`, recipientUserIds.length);
-    } else if (validatedData.targetAudience.type === "user" && validatedData.targetAudience.targetIds) {
-      recipientUserIds = validatedData.targetAudience.targetIds;
-      console.log(`[${requestId}] Targeting specific users:`, recipientUserIds.length);
-    }
+    await db.insert(announcementRecipients)
+      .values(
+        allUsers.map(user => ({
+          announcementId: announcement.id,
+          userId: user.id
+        }))
+      );
 
-    // Step 6: Create recipient records
-    if (recipientUserIds.length > 0) {
-      await db.insert(announcementRecipients)
-        .values(
-          recipientUserIds.map(userId => ({
-            announcementId: announcement.id,
-            userId
-          }))
-        );
-      console.log(`[${requestId}] Created recipient records for ${recipientUserIds.length} users`);
-    } else {
-      console.warn(`[${requestId}] No recipients found for announcement`);
-    }
+    console.log(`[${requestId}] Added ${allUsers.length} recipients`);
 
-    // Step 7: Return success response
+    // Step 6: Return success response
     res.json({
       status: 'success',
-      data: announcement,
-      requestId,
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    // Log the error with full context
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error(`[${requestId}] Announcement creation failed:`, {
-      error: errorMessage,
-      stack: error instanceof Error ? error.stack : undefined,
-      requestBody: req.body
+      message: 'Announcement created successfully',
+      data: {
+        id: announcement.id,
+        title: announcement.title,
+        content: announcement.content
+      }
     });
 
-    // Log error to database
+  } catch (error) {
+    // Log error details
+    console.error(`[${requestId}] Error creating announcement:`, {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+
+    // Log to database
     await db.insert(errorLogs).values({
-      errorMessage,
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
       location: 'announcement_creation',
       timestamp: new Date(),
       stackTrace: error instanceof Error ? error.stack : undefined
     });
 
-    res.status(400).json({ 
+    // Return clear error message
+    res.status(400).json({
       status: 'error',
-      message: "Failed to create announcement",
-      details: errorMessage,
-      requestId,
-      timestamp: new Date().toISOString()
+      message: error instanceof Error ? error.message : 'Failed to create announcement',
+      requestId
     });
   }
 });
