@@ -1,158 +1,59 @@
 import express from "express";
 import { db } from "@db";
-import { 
-  adminAnnouncements, 
-  announcementRecipients,
-  users,
-  errorLogs 
-} from "@db/schema";
+import { messages } from "@db/schema";
 
 const router = express.Router();
 
-// Debug middleware to log raw request data
+// Debug logging middleware
 router.use((req, res, next) => {
-  console.log('\n=== RAW ANNOUNCEMENT REQUEST ===');
-  console.log('Headers:', req.headers);
-  console.log('Method:', req.method);
-  console.log('URL:', req.url);
-  console.log('Body:', req.body);
-  console.log('Raw body:', req.rawBody);
-  console.log('Content type:', req.get('content-type'));
-  console.log('================================\n');
+  if (req.method === 'POST') {
+    console.log('\n=== ANNOUNCEMENT REQUEST DEBUG ===');
+    console.log('Headers:', req.headers);
+    console.log('Body:', req.body);
+    console.log('================================\n');
+  }
   next();
 });
 
-// Create a new announcement with minimal processing
-router.post("/admin/announcements", async (req, res) => {
-  const requestId = Date.now().toString();
-  console.log(`[${requestId}] Processing announcement request`);
-
+// Create announcement - accepts only form data
+router.post("/messages", async (req, res) => {
   try {
-    // Force default values if body is empty
-    const title = req.body?.title || 'Default Title';
-    const content = req.body?.content || 'Default Content';
+    const { title, content } = req.body;
 
-    console.log(`[${requestId}] Extracted values:`, {
-      title,
-      content,
-      rawBody: req.body
-    });
-
-    const senderId = req.user?.id;
-    if (!senderId) {
-      throw new Error("No sender ID found");
+    if (!title || !content) {
+      return res.status(400).send('Title and content are required');
     }
 
-    // Directly create announcement without validation
-    const [announcement] = await db.insert(adminAnnouncements)
+    const [message] = await db.insert(messages)
       .values({
         title,
         content,
-        importance: 'normal',
-        senderId,
-        startDate: new Date(),
-        targetAudience: { type: 'all' }
+        createdAt: new Date()
       })
       .returning();
 
-    console.log(`[${requestId}] Created announcement:`, announcement);
-
-    // Add all users as recipients
-    const allUsers = await db.query.users.findMany({
-      columns: { id: true }
-    });
-
-    await db.insert(announcementRecipients)
-      .values(
-        allUsers.map(user => ({
-          announcementId: announcement.id,
-          userId: user.id
-        }))
-      );
-
-    console.log(`[${requestId}] Added ${allUsers.length} recipients`);
-
-    // Always return success
-    res.json({
+    res.json({ 
       status: 'success',
-      message: 'Announcement processed',
-      data: announcement
+      message: 'Announcement created',
+      data: message 
     });
 
   } catch (error) {
-    console.error(`[${requestId}] Database error:`, error);
-
-    // Log to database but don't let it block the response
-    try {
-      await db.insert(errorLogs).values({
-        errorMessage: error instanceof Error ? error.message : 'Unknown error',
-        location: 'announcement_creation',
-        timestamp: new Date(),
-        stackTrace: error instanceof Error ? error.stack : undefined
-      });
-    } catch (logError) {
-      console.error('Failed to log error:', logError);
-    }
-
-    res.status(500).json({
-      status: 'error',
-      message: 'Database error occurred',
-      requestId
-    });
+    console.error('Failed to create announcement:', error);
+    res.status(500).send('Failed to create announcement');
   }
 });
 
-// Get announcements for a user
-router.get("/announcements", async (req, res) => {
+// Get all announcements
+router.get("/messages", async (req, res) => {
   try {
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    const announcements = await db.query.announcementRecipients.findMany({
-      where: eq(announcementRecipients.userId, userId),
-      with: {
-        announcement: {
-          with: {
-            sender: {
-              columns: {
-                id: true,
-                username: true
-              }
-            }
-          }
-        }
-      }
+    const allMessages = await db.query.messages.findMany({
+      orderBy: (messages, { desc }) => [desc(messages.createdAt)]
     });
-
-    res.json(announcements);
+    res.json(allMessages);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching announcements" });
-  }
-});
-
-// Mark announcement as read
-router.post("/announcements/:id/read", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const userId = req.user?.id;
-
-    if (!userId) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    await db.update(announcementRecipients)
-      .set({ 
-        read: true,
-        readAt: new Date()
-      })
-      .where(eq(announcementRecipients.announcementId, parseInt(id)))
-      .where(eq(announcementRecipients.userId, userId));
-
-    res.json({ message: "Announcement marked as read" });
-  } catch (error) {
-    res.status(500).json({ message: "Error updating announcement status" });
+    console.error('Failed to fetch announcements:', error);
+    res.status(500).send('Failed to fetch announcements');
   }
 });
 
