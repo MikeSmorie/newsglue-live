@@ -6,11 +6,17 @@ const router = express.Router();
 
 // Create announcement - accepts only form data
 router.post("/messages", async (req, res) => {
+  console.log('Received announcement request:', {
+    body: req.body,
+    contentType: req.headers['content-type']
+  });
+
   try {
     const title = req.body.title;
     const content = req.body.content;
 
     if (!title || !content) {
+      console.log('Missing required fields:', { title, content });
       return res.status(400).send('Title and content are required');
     }
 
@@ -24,6 +30,11 @@ router.post("/messages", async (req, res) => {
       .returning();
 
     console.log('Created message:', newMessage);
+
+    // Only send OK if we actually have a new message
+    if (!newMessage?.id) {
+      throw new Error('Failed to create message - no ID returned');
+    }
 
     res.status(200).send('OK');
 
@@ -39,7 +50,9 @@ router.get("/messages", async (req, res) => {
     const allMessages = await db.query.messages.findMany({
       orderBy: (messages, { desc }) => [desc(messages.createdAt)]
     });
-    res.send(allMessages);
+
+    console.log('Fetched messages:', allMessages);
+    res.json(allMessages);
   } catch (error) {
     console.error('Failed to fetch announcements:', error);
     res.status(500).send('Failed to fetch announcements');
