@@ -64,7 +64,7 @@ export default function AdminCommunications() {
         throw new Error(await response.text());
       }
 
-      return response.json();
+      return response.text();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/messages"] });

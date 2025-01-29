@@ -4,16 +4,6 @@ import { messages } from "@db/schema";
 
 const router = express.Router();
 
-// Debug logging middleware
-router.use((req, res, next) => {
-  if (req.method === 'POST') {
-    console.log('\n=== ANNOUNCEMENT REQUEST DEBUG ===');
-    console.log('Raw body:', req.body);
-    console.log('================================\n');
-  }
-  next();
-});
-
 // Create announcement - accepts only form data
 router.post("/messages", async (req, res) => {
   try {
@@ -35,10 +25,7 @@ router.post("/messages", async (req, res) => {
 
     console.log('Created message:', newMessage);
 
-    res.status(200).send({
-      success: true,
-      message: 'Announcement created successfully'
-    });
+    res.status(200).send('OK');
 
   } catch (error) {
     console.error('Failed to create announcement:', error);
