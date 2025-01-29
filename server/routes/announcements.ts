@@ -18,11 +18,11 @@ const announcementSchema = z.object({
   title: z.string().min(1, "Title is required").max(255, "Title is too long"),
   content: z.string().min(1, "Content is required").max(10000, "Content is too long"),
   importance: z.enum(["normal", "important", "urgent"], {
-    required_error: "Importance must be one of: normal, important, urgent",
+    required_error: "Please select importance level",
   }),
   targetAudience: z.object({
     type: z.enum(["all", "subscription", "user"], {
-      required_error: "Target audience type must be one of: all, subscription, user",
+      required_error: "Please select target audience type",
     }),
     targetIds: z.array(z.number()).optional(),
   }).refine(data => {
@@ -37,8 +37,7 @@ const announcementSchema = z.object({
     const parsed = new Date(date);
     return !isNaN(parsed.getTime()) && parsed > new Date(Date.now() - 24 * 60 * 60 * 1000);
   }, "Start date must be valid and not in the past"),
-  endDate: z.string().optional().transform((str) => str ? new Date(str) : undefined),
-  requiresResponse: z.boolean().optional().default(false),
+  endDate: z.string().optional(),
 });
 
 // Create a new announcement
@@ -56,7 +55,7 @@ router.post("/admin/announcements", async (req, res) => {
     const validationResult = announcementSchema.safeParse(req.body);
 
     if (!validationResult.success) {
-      throw new Error(validationResult.error.errors.map(e => e.message).join(", "));
+      throw new Error(validationResult.error.issues.map(i => i.message).join(", "));
     }
 
     const validatedData = validationResult.data;
@@ -80,8 +79,8 @@ router.post("/admin/announcements", async (req, res) => {
         importance: validatedData.importance,
         senderId,
         startDate: new Date(validatedData.startDate),
-        endDate: validatedData.endDate,
-        requiresResponse: validatedData.requiresResponse,
+        endDate: validatedData.endDate ? new Date(validatedData.endDate) : undefined,
+        requiresResponse: false,
         targetAudience: validatedData.targetAudience
       })
       .returning();
