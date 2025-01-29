@@ -6,7 +6,6 @@ import {
   users,
   errorLogs 
 } from "@db/schema";
-import { eq, and } from "drizzle-orm";
 
 const router = express.Router();
 
