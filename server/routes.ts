@@ -29,20 +29,6 @@ const requireAdmin = (req: any, res: any, next: any) => {
   res.status(403).json({ message: "Not authorized" });
 };
 
-// Content-Type enforcement middleware
-const enforceJsonContentType = (req: any, res: any, next: any) => {
-  if (req.method !== 'GET' && req.method !== 'HEAD') {
-    if (!req.is('application/json')) {
-      return res.status(415).json({
-        status: 'error',
-        message: 'Content-Type must be application/json',
-        received: req.headers['content-type']
-      });
-    }
-  }
-  next();
-};
-
 // Request payload logging middleware
 const logRequestPayload = (req: any, res: any, next: any) => {
   if (req.method !== 'GET' && req.method !== 'HEAD') {
@@ -50,7 +36,7 @@ const logRequestPayload = (req: any, res: any, next: any) => {
       path: req.path,
       method: req.method,
       headers: req.headers,
-      body: JSON.stringify(req.body, null, 2),
+      body: req.body,
       timestamp: new Date().toISOString()
     });
   }
@@ -64,28 +50,11 @@ export function registerRoutes(app: Express): Server {
     credentials: true
   }));
 
-  // Parse JSON body before routes
-  app.use(express.json({
-    verify: (req: any, res: any, buf: Buffer) => {
-      try {
-        JSON.parse(buf.toString());
-      } catch (e) {
-        res.status(400).json({
-          status: 'error',
-          message: 'Invalid JSON in request body',
-          details: e instanceof Error ? e.message : 'Unknown parsing error',
-          timestamp: new Date().toISOString()
-        });
-        throw new Error('Invalid JSON');
-      }
-    }
-  }));
+  // Parse URL-encoded bodies (as sent by HTML forms)
+  app.use(express.urlencoded({ extended: true }));
 
   // Add logging middleware
   app.use(logRequestPayload);
-
-  // Enforce JSON content type
-  app.use(enforceJsonContentType);
 
   // Set up authentication routes
   setupAuth(app);

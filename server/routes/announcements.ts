@@ -6,11 +6,11 @@ import {
   users,
   errorLogs 
 } from "@db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 const router = express.Router();
 
-// Create a new announcement with minimal JSON handling
+// Create a new announcement with form-data handling
 router.post("/admin/announcements", async (req, res) => {
   const requestId = Date.now().toString();
 
@@ -21,7 +21,7 @@ router.post("/admin/announcements", async (req, res) => {
       contentType: req.headers['content-type']
     });
 
-    // Step 2: Basic validation of required fields
+    // Step 2: Extract and validate form fields
     const { title, content } = req.body;
 
     if (!title?.trim()) {
@@ -152,66 +152,12 @@ router.post("/announcements/:id/read", async (req, res) => {
         read: true,
         readAt: new Date()
       })
-      .where(
-        and(
-          eq(announcementRecipients.announcementId, parseInt(id)),
-          eq(announcementRecipients.userId, userId)
-        )
-      );
+      .where(eq(announcementRecipients.announcementId, parseInt(id)))
+      .where(eq(announcementRecipients.userId, userId));
 
     res.json({ message: "Announcement marked as read" });
   } catch (error) {
     res.status(500).json({ message: "Error updating announcement status" });
-  }
-});
-
-// Respond to an announcement
-router.post("/announcements/:id/respond", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { content } = req.body;
-    const userId = req.user?.id;
-
-    if (!userId) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    const [response] = await db.insert(announcementResponses)
-      .values({
-        announcementId: parseInt(id),
-        userId,
-        content
-      })
-      .returning();
-
-    res.json(response);
-  } catch (error) {
-    res.status(400).json({ 
-      message: "Error creating response",
-      error: error instanceof Error ? error.message : String(error)
-    });
-  }
-});
-
-// Admin: Get all responses
-router.get("/admin/announcements/responses", async (req, res) => {
-  try {
-    const responses = await db.query.announcementResponses.findMany({
-      with: {
-        announcement: true,
-        user: {
-          columns: {
-            id: true,
-            username: true
-          }
-        }
-      },
-      orderBy: (responses, { desc }) => [desc(responses.createdAt)]
-    });
-
-    res.json(responses);
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching responses" });
   }
 });
 
