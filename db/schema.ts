@@ -26,12 +26,32 @@ export const activityLogs = pgTable("activity_logs", {
 
 export const errorLogs = pgTable("error_logs", {
   id: serial("id").primaryKey(),
-  errorMessage: text("error_message").notNull(),
-  location: text("location").notNull(),
   timestamp: timestamp("timestamp").defaultNow(),
-  resolved: text("resolved").default("No"),
-  stackTrace: text("stack_trace")
+  level: text("level").notNull(),  // INFO, WARNING, ERROR
+  message: text("message").notNull(),
+  source: text("source").notNull(),
+  stackTrace: text("stack_trace"),
+  resolved: boolean("resolved").default(false),
+  resolvedAt: timestamp("resolved_at"),
+  resolvedBy: integer("resolved_by").references(() => users.id)
 });
+
+// Add relations for error logs
+export const errorLogsRelations = relations(errorLogs, ({ one }) => ({
+  resolvedByUser: one(users, {
+    fields: [errorLogs.resolvedBy],
+    references: [users.id],
+  }),
+}));
+
+// Add schemas for validation
+export const insertErrorLogSchema = createInsertSchema(errorLogs);
+export const selectErrorLogSchema = createSelectSchema(errorLogs);
+
+// Add types
+export type InsertErrorLog = typeof errorLogs.$inferInsert;
+export type SelectErrorLog = typeof errorLogs.$inferSelect;
+
 
 // Simple messages table with no relations
 export const messages = pgTable("messages", {
@@ -293,8 +313,6 @@ export const selectUserSchema = createSelectSchema(users);
 export const insertActivityLogSchema = createInsertSchema(activityLogs);
 export const selectActivityLogSchema = createSelectSchema(activityLogs);
 
-export const insertErrorLogSchema = createInsertSchema(errorLogs);
-export const selectErrorLogSchema = createSelectSchema(errorLogs);
 
 export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans);
 export const selectSubscriptionPlanSchema = createSelectSchema(subscriptionPlans);
@@ -327,8 +345,6 @@ export type InsertUser = typeof users.$inferInsert;
 export type SelectUser = typeof users.$inferSelect;
 export type InsertActivityLog = typeof activityLogs.$inferInsert;
 export type SelectActivityLog = typeof activityLogs.$inferSelect;
-export type InsertErrorLog = typeof errorLogs.$inferInsert;
-export type SelectErrorLog = typeof errorLogs.$inferSelect;
 export type InsertSubscriptionPlan = typeof subscriptionPlans.$inferInsert;
 export type SelectSubscriptionPlan = typeof subscriptionPlans.$inferSelect;
 export type InsertUserSubscription = typeof userSubscriptions.$inferInsert;
