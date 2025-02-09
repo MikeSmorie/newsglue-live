@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import "express-async-errors"; // Add this import at the top
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
