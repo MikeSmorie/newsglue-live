@@ -1,65 +1,107 @@
 import express from "express";
-import { aiAssistant } from "../ai_assistant/service";
-import { AIQuerySchema, AIFeedbackSchema } from "../ai_assistant/types";
+import { OpenAI } from "openai";
 import { db } from "@db";
 import { errorLogs, activityLogs } from "@db/schema";
 import { sql } from "drizzle-orm";
 
 const router = express.Router();
+const openai = new OpenAI();
 
 // Middleware to check if user can access admin-level AI
 const canAccessAdminAI = (req: any, res: any, next: any) => {
   if (req.isAuthenticated() && req.user.role === "admin") {
     return next();
   }
-  res.status(403).json({ message: "Admin access required for God Mode AI" });
+  res.status(403).json({ message: "Admin access required for admin AI features" });
 };
 
-// Handle AI queries
-router.post("/query", async (req, res) => {
+// Handle module suggestions
+router.post("/suggest-modules", async (req, res) => {
   try {
-    const queryData = AIQuerySchema.parse(req.body);
+    const { description } = req.body;
 
-    // Check permissions for admin queries
-    if (queryData.type === "admin" && (!req.isAuthenticated() || req.user.role !== "admin")) {
-      return res.status(403).json({ message: "Admin access required for God Mode AI" });
+    if (!description) {
+      return res.status(400).json({ error: "Description is required" });
     }
 
-    const response = await aiAssistant.processQuery({
-      ...queryData,
-      userId: req.user?.id || 0
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: "You are a helpful assistant that suggests module names for a modular application. Return exactly 10 short, clear module names based on the app description."
+        },
+        {
+          role: "user",
+          content: `Suggest 10 module names for this app: ${description}`
+        }
+      ],
+      max_tokens: 150
     });
 
-    res.json(response);
-  } catch (error) {
-    // Log the error
-    await db.insert(errorLogs).values({
-      errorMessage: error instanceof Error ? error.message : "Unknown error in AI route",
-      location: "AI Query Endpoint",
-      stackTrace: error instanceof Error ? error.stack : undefined,
+    const suggestions = response.choices[0]?.message?.content
+      ?.split('\n')
+      .filter(line => line.trim())
+      .slice(0, 10) || [];
+
+    // Log activity
+    await db.insert(activityLogs).values({
+      action: "ai_module_suggestion",
+      userId: req.user?.id || 0,
+      details: description,
       timestamp: new Date()
     });
 
-    res.status(400).json({ 
-      message: "Error processing AI query",
-      error: error instanceof Error ? error.message : String(error)
+    res.json({ suggestions });
+  } catch (error) {
+    console.error("AI module suggestion error:", error);
+
+    // Log error
+    await db.insert(errorLogs).values({
+      message: error instanceof Error ? error.message : "Unknown error",
+      source: "AI Module Suggestion",
+      stackTrace: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date(),
+      userId: req.user?.id || 0
+    });
+
+    res.status(500).json({ 
+      error: "Failed to get module suggestions",
+      details: error instanceof Error ? error.message : String(error)
     });
   }
 });
 
-// Record feedback for AI responses
-router.post("/feedback", async (req, res) => {
+// Handle AI queries
+router.post("/query", async (req, res) => {
   try {
-    const feedback = AIFeedbackSchema.parse(req.body);
+    const { query, type = "user" } = req.body;
 
-    await aiAssistant.recordFeedback(feedback);
+    // Check permissions for admin queries
+    if (type === "admin" && (!req.isAuthenticated() || req.user.role !== "admin")) {
+      return res.status(403).json({ message: "Admin access required for admin-level queries" });
+    }
 
-    res.json({ message: "Feedback recorded successfully" });
-  } catch (error) {
-    res.status(400).json({ 
-      message: "Error recording feedback",
-      error: error instanceof Error ? error.message : String(error)
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [{ role: "user", content: query }],
+      max_tokens: 150
     });
+
+    res.json({ response: response.choices[0]?.message?.content });
+  } catch (error) {
+    console.error("AI query error:", error);
+
+    // Log error
+    await db.insert(errorLogs).values({
+      message: error instanceof Error ? error.message : "Unknown error",
+      source: "AI Query",
+      stackTrace: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date(),
+      userId: req.user?.id || 0
+    });
+
+    res.status(500).json({ error: "Failed to process AI query" });
   }
 });
 
@@ -74,6 +116,7 @@ router.get("/history", canAccessAdminAI, async (req, res) => {
 
     res.json(interactions);
   } catch (error) {
+    console.error("AI history error:", error);
     res.status(500).json({ message: "Error fetching AI interaction history" });
   }
 });
