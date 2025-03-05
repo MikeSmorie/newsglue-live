@@ -1,13 +1,17 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useLocation } from "wouter";
 
 export default function AppCentral() {
   const [, setLocation] = useLocation();
+  const [moduleNames, setModuleNames] = useState<string[]>(
+    Array.from({ length: 10 }, (_, i) => `Module ${i + 1}`)
+  );
 
   const modules = Array.from({ length: 10 }, (_, i) => ({
     id: i + 1,
-    name: `Module ${i + 1}`,
+    name: moduleNames[i],
     path: `/module-${i + 1}`
   }));
 
@@ -28,7 +32,7 @@ export default function AppCentral() {
           <Card 
             key={module.id}
             className="mb-2 hover:shadow-lg transition-shadow cursor-pointer"
-            onClick={() => setLocation(module.path)}
+            onClick={() => setLocation(`/module/${module.id}`)}
           >
             <div className="p-4">
               <span className="text-lg">{module.name}</span>
