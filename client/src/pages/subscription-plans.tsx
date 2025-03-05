@@ -96,19 +96,24 @@ export default function SubscriptionPlans() {
             Select the plan that best fits your needs
           </p>
         </div>
-        {currentPlan && (
-          <Button variant="outline" onClick={() => navigate("/subscription")}>
-            Back to Subscription Management
+        <div className="flex gap-4">
+          <Button variant="outline" onClick={() => navigate("/")}>
+            Back to App Central
           </Button>
-        )}
+          {currentPlan && (
+            <Button variant="outline" onClick={() => navigate("/subscription")}>
+              Back to Subscription Management
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Plan Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {plans.map((plan) => (
-          <Card 
-            key={plan.id} 
-            className={`relative ${plan.isPopular ? 'border-primary' : ''}`}
+          <Card
+            key={plan.id}
+            className={`relative ${plan.isPopular ? "border-primary" : ""}`}
           >
             {plan.isPopular && (
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -146,7 +151,7 @@ export default function SubscriptionPlans() {
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button className="w-full" variant={plan.isPopular ? "default" : "outline"}>
-                      {currentPlan ? 'Change Plan' : 'Select Plan'}
+                      {currentPlan ? "Change Plan" : "Select Plan"}
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </DialogTrigger>

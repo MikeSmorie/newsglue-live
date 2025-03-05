@@ -130,6 +130,18 @@ export default function SubscriptionManagement() {
 
   return (
     <div className="container py-10 space-y-8">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Subscription Management</h1>
+          <p className="text-muted-foreground mt-2">
+            Manage your subscription and billing details
+          </p>
+        </div>
+        <Button variant="outline" onClick={() => navigate("/")}>
+          Back to App Central
+        </Button>
+      </div>
+
       {/* Current Subscription Status */}
       <Card>
         <CardHeader>

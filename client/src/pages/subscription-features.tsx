@@ -1,17 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { useUser } from "@/hooks/use-user";
+import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { Lock, Check, X, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useUser } from "@/hooks/use-user";
 
 interface Feature {
   id: number;
@@ -30,8 +23,8 @@ interface Plan {
 export default function SubscriptionFeatures() {
   const { user } = useUser();
   const { toast } = useToast();
+  const [, navigate] = useLocation();
 
-  // Fetch all features and user's subscription info
   const { data: features = [] } = useQuery<Feature[]>({
     queryKey: ["/api/features"],
   });
@@ -46,7 +39,6 @@ export default function SubscriptionFeatures() {
     enabled: !!user,
   });
 
-  // Handle locked feature click
   const handleLockedFeatureClick = (feature: Feature) => {
     toast({
       title: "Feature Locked",
@@ -57,7 +49,6 @@ export default function SubscriptionFeatures() {
 
   return (
     <div className="container py-10 space-y-8">
-      {/* Subscription Level Banner */}
       <Card className="bg-muted">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -67,44 +58,24 @@ export default function SubscriptionFeatures() {
                 Current Plan: <span className="font-bold">{currentPlan?.name || "No active plan"}</span>
               </CardDescription>
             </div>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="default">
-                  Manage Subscription
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Upgrade Your Plan</DialogTitle>
-                  <DialogDescription>
-                    Choose a plan that best suits your needs and unlock more features.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4">
-                  <p>
-                    Your current plan: <strong>{currentPlan?.name || "No Plan"}</strong>
-                  </p>
-                  <Button
-                    onClick={() => window.location.href = "/subscriptions"}
-                    variant="default"
-                  >
-                    View Available Plans
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <div className="flex gap-4">
+              <Button variant="outline" onClick={() => navigate("/")}>
+                Back to App Central
+              </Button>
+              <Button variant="default" onClick={() => navigate("/subscription/plans")}>
+                Manage Subscription
+              </Button>
+            </div>
           </div>
         </CardHeader>
       </Card>
 
-      {/* Features Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {features.map((feature) => {
           const isAccessible = userFeatures.includes(feature.id);
 
           return (
-            <Card 
+            <Card
               key={feature.id}
               className={`relative ${isAccessible ? 'hover:shadow-md' : 'opacity-75'}`}
             >
@@ -132,8 +103,8 @@ export default function SubscriptionFeatures() {
                 {!isAccessible && (
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button 
-                        variant="secondary" 
+                      <Button
+                        variant="secondary"
                         className="w-full"
                         onClick={() => handleLockedFeatureClick(feature)}
                       >
@@ -155,7 +126,7 @@ export default function SubscriptionFeatures() {
                           Your Current Plan: <strong>{currentPlan?.name || "No Plan"}</strong>
                         </p>
                         <Button
-                          onClick={() => window.location.href = "/subscriptions"}
+                          onClick={() => navigate("/subscriptions")}
                           variant="default"
                           className="w-full"
                         >
