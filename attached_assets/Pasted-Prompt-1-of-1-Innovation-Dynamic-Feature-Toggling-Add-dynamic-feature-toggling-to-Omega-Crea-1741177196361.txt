@@ -1,0 +1,98 @@
+Prompt 1 of 1 – Innovation: Dynamic Feature Toggling
+Add dynamic feature toggling to Omega:
+
+// Create /db/schema.ts (or update if exists)
+import { pgTable, varchar, boolean, integer } from "drizzle-orm/pg-core";
+
+export const featureFlags = pgTable("feature_flags", {
+  id: varchar("id").primaryKey(),
+  featureId: varchar("feature_id").notNull(),
+  isEnabled: boolean("is_enabled").default(false),
+  minSubscriptionTier: integer("min_subscription_tier").default(0),
+});
+
+// Update /server/index.ts
+import { ModuleManager } from "./moduleManager";
+import express from "express";
+import { db } from "./db"; // Adjust path to your db setup
+import { featureFlags } from "./db/schema";
+const app = express();
+app.use(express.json());
+
+const moduleManager = new ModuleManager();
+
+app.get("/api/features/:featureId", async (req, res) => {
+  const { featureId } = req.params;
+  const feature = await db.select().from(featureFlags).where(eq(featureFlags.featureId, featureId)).get();
+  console.log("[DEBUG] Feature check:", feature);
+  res.json({ isEnabled: feature?.isEnabled || false });
+});
+
+export default app;
+
+// Update /client/src/App.tsx (to test feature toggling)
+import React, { useState, useEffect } from "react";
+import { Link, Route, useRoute } from "wouter";
+
+const ModuleView = ({ moduleId }) => {
+  const [moduleName, setModuleName] = useState(`Module ${moduleId}`);
+  const [featureEnabled, setFeatureEnabled] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/features/feature_${moduleId}`)
+      .then((res) => res.json())
+      .then((data) => setFeatureEnabled(data.isEnabled))
+      .catch((err) => console.error("[ERROR] Feature fetch failed:", err));
+  }, [moduleId]);
+
+  return (
+    <div>
+      <input
+        value={moduleName}
+        onChange={(e) => setModuleName(e.target.value)}
+        className="p-2 mb-2"
+      />
+      <p>Module {moduleId} View - {moduleName} (Feature enabled: {featureEnabled ? "Yes" : "No"})</p>
+    </div>
+  );
+};
+
+const AppCentral = () => {
+  const [match] = useRoute("/module/:id");
+  const modules = Array.from({ length: 10 }, (_, i) => i + 1);
+  const [moduleNames, setModuleNames] = useState(modules.map((num) => `Module ${num}`));
+
+  return (
+    <div className="flex h-screen">
+      <div className="w-1/4 bg-gray-800 text-white p-4">
+        <h2 className="text-xl mb-4">App Central</h2>
+        {modules.map((num) => (
+          <Link key={num} to={`/module/${num}`} className="block mb-2">
+            <button className="w-full text-left p-2 bg-gray-700 hover:bg-gray-600">
+              {moduleNames[num - 1]}
+            </button>
+          </Link>
+        ))}
+      </div>
+      <div className="w-3/4 p-4">
+        {match ? <ModuleView moduleId={match.params.id} /> : <><h1>Welcome to App Central</h1><p>Select a module to begin.</p></>}
+      </div>
+    </div>
+  );
+};
+
+export default AppCentral;
+
+// Update /client/src/index.tsx
+import { Router } from "wouter";
+import AppCentral from "./App.tsx";
+import ModuleView from "./App.tsx";
+
+const App = () => (
+  <Router>
+    <AppCentral path="/" />
+    <ModuleView path="/module/:id" />
+  </Router>
+);
+
+export default App;

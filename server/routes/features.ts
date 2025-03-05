@@ -5,6 +5,55 @@ import { eq, and } from "drizzle-orm";
 
 const router = express.Router();
 
+// Public route: Check if a feature is enabled for a user
+router.get("/:featureId", async (req, res) => {
+  try {
+    const { featureId } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    // Get user's subscription
+    const subscription = await db.query.userSubscriptions.findFirst({
+      where: eq(userSubscriptions.userId, userId),
+      with: {
+        plan: {
+          with: {
+            planFeatures: {
+              where: eq(planFeatures.featureId, parseInt(featureId))
+            }
+          }
+        }
+      }
+    });
+
+    if (!subscription) {
+      return res.json({ isEnabled: false });
+    }
+
+    // Check custom overrides first
+    const customFeatures = subscription.customFeatures ?
+      JSON.parse(subscription.customFeatures) : [];
+
+    if (customFeatures.includes(parseInt(featureId))) {
+      return res.json({ isEnabled: true });
+    }
+
+    // Check plan features
+    const planFeature = subscription.plan?.planFeatures[0];
+    const isEnabled = planFeature?.enabled ?? false;
+
+    res.json({ isEnabled });
+  } catch (error) {
+    console.error("Feature check error:", error);
+    res.status(500).json({ message: "Error checking feature access" });
+  }
+});
+
+// Admin routes: Feature management
+
 // Get all available features
 router.get("/", async (_req, res) => {
   try {
@@ -27,7 +76,7 @@ router.post("/", async (req, res) => {
 
     res.json(feature);
   } catch (error) {
-    res.status(400).json({ 
+    res.status(400).json({
       message: "Error creating feature",
       error: error instanceof Error ? error.message : String(error)
     });
@@ -49,28 +98,28 @@ router.post("/admin/override", async (req, res) => {
     }
 
     // Parse existing custom features or initialize empty array
-    const customFeatures = subscription.customFeatures ? 
+    const customFeatures = subscription.customFeatures ?
       JSON.parse(subscription.customFeatures) : [];
 
     // Update custom features
-    const updatedFeatures = enabled ? 
-      [...new Set([...customFeatures, featureId])] : 
+    const updatedFeatures = enabled ?
+      Array.from(new Set([...customFeatures, featureId])) :
       customFeatures.filter((id: number) => id !== featureId);
 
     // Update subscription with new custom features
     await db
       .update(userSubscriptions)
-      .set({ 
+      .set({
         customFeatures: JSON.stringify(updatedFeatures),
       })
       .where(eq(userSubscriptions.userId, userId));
 
-    res.json({ 
+    res.json({
       message: `Feature ${enabled ? 'enabled' : 'disabled'} for user`,
       customFeatures: updatedFeatures
     });
   } catch (error) {
-    res.status(400).json({ 
+    res.status(400).json({
       message: "Error updating user features",
       error: error instanceof Error ? error.message : String(error)
     });
@@ -85,7 +134,7 @@ router.get("/admin/user-features/:userId", async (req, res) => {
       where: eq(userSubscriptions.userId, parseInt(userId))
     });
 
-    const customFeatures = subscription?.customFeatures ? 
+    const customFeatures = subscription?.customFeatures ?
       JSON.parse(subscription.customFeatures) : [];
 
     res.json({ customFeatures });
@@ -95,7 +144,7 @@ router.get("/admin/user-features/:userId", async (req, res) => {
 });
 
 // Assign feature to a plan
-router.post("/assign", async (req, res) => {
+router.post("/admin/assign", async (req, res) => {
   try {
     const assignmentData = insertPlanFeatureSchema.parse(req.body);
     const [planFeature] = await db.insert(planFeatures)
@@ -104,7 +153,7 @@ router.post("/assign", async (req, res) => {
 
     res.json(planFeature);
   } catch (error) {
-    res.status(400).json({ 
+    res.status(400).json({
       message: "Error assigning feature to plan",
       error: error instanceof Error ? error.message : String(error)
     });
@@ -112,7 +161,7 @@ router.post("/assign", async (req, res) => {
 });
 
 // Get all features for a specific plan
-router.get("/plan/:planId", async (req, res) => {
+router.get("/admin/plan/:planId", async (req, res) => {
   try {
     const { planId } = req.params;
     const planFeaturesList = await db.query.planFeatures.findMany({
@@ -129,7 +178,7 @@ router.get("/plan/:planId", async (req, res) => {
 });
 
 // Toggle feature status for a plan
-router.patch("/toggle", async (req, res) => {
+router.patch("/admin/toggle", async (req, res) => {
   try {
     const { planId, featureId, enabled } = req.body;
     const [updated] = await db
@@ -145,7 +194,7 @@ router.patch("/toggle", async (req, res) => {
 
     res.json(updated);
   } catch (error) {
-    res.status(400).json({ 
+    res.status(400).json({
       message: "Error toggling feature status",
       error: error instanceof Error ? error.message : String(error)
     });

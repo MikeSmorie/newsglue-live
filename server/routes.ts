@@ -58,7 +58,11 @@ export function registerRoutes(app: Express) {
   app.use("/api/subscription", subscriptionRoutes);
   app.use("/api/webhook", webhookRoutes);
   app.use("/api/ai", aiRoutes);
-  app.use("/api/features", requireAdmin, featureRoutes);
+
+  // Split features routes into public and admin
+  app.use("/api/features/check", requireAuth, featureRoutes); // Public feature check route
+  app.use("/api/features/admin", requireAdmin, featureRoutes); // Admin-only routes
+
   app.use("/api/messages", messagesRoutes);
   app.use("/api/admin", requireAdmin, adminLogsRoutes);
   app.use("/api/payment", paymentRoutes);
