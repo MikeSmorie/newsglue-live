@@ -8,14 +8,13 @@ import AdminRegisterPage from "@/pages/admin-register";
 import AdminDashboard from "@/pages/admin-dashboard";
 import AdminCommunications from "@/pages/admin-communications";
 import LogsDashboard from "@/pages/admin/logs-dashboard";
-import PlaceholderApp from "@/pages/placeholder-app";
+import AppCentral from "@/pages/app-central";
 import MockDashboard from "@/pages/mock-dashboard";
 import MockSettings from "@/pages/mock-settings";
 import SubscriptionPage from "@/pages/subscriptions";
 import SubscriptionManager from "@/pages/subscription-manager";
 import SubscriptionFeatures from "@/pages/subscription-features";
 import SubscriptionManagement from "@/pages/subscription-management";
-import UserDashboard from "@/pages/user-dashboard";
 import { useUser } from "@/hooks/use-user";
 import { Loader2, LogOut } from "lucide-react";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -119,13 +118,12 @@ function Router() {
         <Route path="/admin/logs" component={() => <ProtectedAdminRoute component={LogsDashboard} />} />
         <Route path="/admin/subscription-manager" component={() => <ProtectedAdminRoute component={SubscriptionManager} />} />
         <Route path="/admin/communications" component={() => <ProtectedAdminRoute component={AdminCommunications} />} />
-        <Route path="/" component={UserDashboard} />
+        <Route path="/" component={AppCentral} />
         <Route path="/mock-dashboard" component={MockDashboard} />
         <Route path="/mock-settings" component={MockSettings} />
-        <Route path="/subscriptions" component={SubscriptionPage} />
         <Route path="/subscription" component={SubscriptionManagement} />
         <Route path="/subscription/plans" component={SubscriptionPlans} />
-        <Route path="/features" component={SubscriptionFeatures} />
+        <Route path="/subscription/features" component={SubscriptionFeatures} />
         <Route component={NotFound} />
       </Switch>
 
