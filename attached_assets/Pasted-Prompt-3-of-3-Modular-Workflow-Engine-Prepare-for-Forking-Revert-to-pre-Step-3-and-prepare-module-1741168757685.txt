@@ -1,0 +1,71 @@
+Prompt 3 of 3 – Modular Workflow Engine: Prepare for Forking
+Revert to pre-Step 3 and prepare modules for app-specific functions:
+
+// Update /client/src/App.tsx to remove execution logic
+import React, { useState } from "react";
+import { Link, Route, useRoute } from "wouter";
+
+const ModuleView = ({ moduleId }) => {
+  const [moduleName, setModuleName] = useState(`Module ${moduleId}`);
+  return (
+    <div>
+      <input
+        value={moduleName}
+        onChange={(e) => setModuleName(e.target.value)}
+        className="p-2 mb-2"
+      />
+      <p>Module {moduleId} View - {moduleName} (Add functions here when forking)</p>
+    </div>
+  );
+};
+
+const AppCentral = () => {
+  const [match] = useRoute("/module/:id");
+  const modules = Array.from({ length: 10 }, (_, i) => i + 1);
+  const [moduleNames, setModuleNames] = useState(modules.map((num) => `Module ${num}`));
+
+  return (
+    <div className="flex h-screen">
+      <div className="w-1/4 bg-gray-800 text-white p-4">
+        <h2 className="text-xl mb-4">App Central</h2>
+        {modules.map((num) => (
+          <Link key={num} to={`/module/${num}`} className="block mb-2">
+            <button className="w-full text-left p-2 bg-gray-700 hover:bg-gray-600">
+              {moduleNames[num - 1]}
+            </button>
+          </Link>
+        ))}
+      </div>
+      <div className="w-3/4 p-4">
+        {match ? <ModuleView moduleId={match.params.id} /> : <><h1>Welcome to App Central</h1><p>Select a module to begin.</p></>}
+      </div>
+    </div>
+  );
+};
+
+export default AppCentral;
+
+// Update /client/src/index.tsx
+import { Router } from "wouter";
+import AppCentral from "./App.tsx";
+import ModuleView from "./App.tsx"; // Adjust path if needed
+
+const App = () => (
+  <Router>
+    <AppCentral path="/" />
+    <ModuleView path="/module/:id" />
+  </Router>
+);
+
+export default App;
+
+// Update /server/index.ts to remove test endpoint
+import { ModuleManager } from "./moduleManager";
+import express from "express";
+const app = express();
+app.use(express.json());
+
+const moduleManager = new ModuleManager();
+// Keep ModuleManager empty for forking flexibility
+
+export default app;
