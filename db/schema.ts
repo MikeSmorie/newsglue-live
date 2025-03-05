@@ -124,9 +124,12 @@ export const payments = pgTable("payments", {
 export const clientPaymentGateways = pgTable("client_payment_gateways", {
   id: serial("id").primaryKey(),
   clientId: integer("client_id").notNull().references(() => users.id),
+  gatewayType: text("gateway_type").notNull().default("mock"),
   gatewayProvider: text("gateway_provider").notNull(),
   apiKey: text("api_key").notNull(),
   secretKey: text("secret_key").notNull(),
+  isActive: boolean("is_active").default(false),
+  configJson: jsonb("config_json"),
   status: text("status").notNull().default("inactive"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at")

@@ -9,6 +9,7 @@ import aiRoutes from "./routes/ai";
 import featureRoutes from "./routes/features";
 import messagesRoutes from "./routes/announcements";
 import adminLogsRoutes from "./routes/admin-logs";
+import paymentRoutes from "./routes/payment";
 import { logError } from "./utils/logger";
 
 // Simple auth checks
@@ -60,6 +61,7 @@ export function registerRoutes(app: Express) {
   app.use("/api/features", requireAdmin, featureRoutes);
   app.use("/api/messages", messagesRoutes);
   app.use("/api/admin", requireAdmin, adminLogsRoutes);
+  app.use("/api/payment", paymentRoutes);
 
   // Error handler must be last
   app.use(errorHandler);
