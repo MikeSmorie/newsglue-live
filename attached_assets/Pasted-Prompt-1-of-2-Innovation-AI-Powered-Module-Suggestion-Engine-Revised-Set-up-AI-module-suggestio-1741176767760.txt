@@ -1,0 +1,90 @@
+Prompt 1 of 2 – Innovation: AI-Powered Module Suggestion Engine (Revised)
+Set up AI module suggestion as a developer tool for Omega:
+
+// Update /server/index.ts
+import { ModuleManager } from "./moduleManager";
+import express from "express";
+import axios from "axios"; // Ensure axios is installed (npm install axios)
+const app = express();
+app.use(express.json());
+
+const moduleManager = new ModuleManager();
+
+app.post("/api/suggest-modules", async (req, res) => {
+  try {
+    const { description } = req.body;
+    const response = await axios.post("https://api.openai.com/v1/chat/completions", {
+      model: "gpt-3.5-turbo",
+      messages: [{ role: "user", content: `Suggest a module workflow for app: ${description}. Return as JSON with names and purposes.` }],
+      max_tokens: 100,
+    }, {
+      headers: { Authorization: "Bearer YOUR_OPENAI_API_KEY" }, // Replace with your key
+    });
+    const suggestions = response.data.choices[0].message.content;
+    console.log("[DEBUG] AI Suggestions:", suggestions);
+    res.json(JSON.parse(suggestions));
+  } catch (error) {
+    console.error("[ERROR] AI suggestion failed:", error);
+    res.status(500).json({ error: "AI suggestion failed" });
+  }
+});
+
+export default app;
+
+// Revert /client/src/App.tsx to remove AI UI
+import React, { useState } from "react";
+import { Link, Route, useRoute } from "wouter";
+
+const ModuleView = ({ moduleId }) => {
+  const [moduleName, setModuleName] = useState(`Module ${moduleId}`);
+  return (
+    <div>
+      <input
+        value={moduleName}
+        onChange={(e) => setModuleName(e.target.value)}
+        className="p-2 mb-2"
+      />
+      <p>Module {moduleId} View - {moduleName} (Add functions here when forking)</p>
+    </div>
+  );
+};
+
+const AppCentral = () => {
+  const [match] = useRoute("/module/:id");
+  const modules = Array.from({ length: 10 }, (_, i) => i + 1);
+  const [moduleNames, setModuleNames] = useState(modules.map((num) => `Module ${num}`));
+
+  return (
+    <div className="flex h-screen">
+      <div className="w-1/4 bg-gray-800 text-white p-4">
+        <h2 className="text-xl mb-4">App Central</h2>
+        {modules.map((num) => (
+          <Link key={num} to={`/module/${num}`} className="block mb-2">
+            <button className="w-full text-left p-2 bg-gray-700 hover:bg-gray-600">
+              {moduleNames[num - 1]}
+            </button>
+          </Link>
+        ))}
+      </div>
+      <div className="w-3/4 p-4">
+        {match ? <ModuleView moduleId={match.params.id} /> : <><h1>Welcome to App Central</h1><p>Select a module to begin.</p></>}
+      </div>
+    </div>
+  );
+};
+
+export default AppCentral;
+
+// Update /client/src/index.tsx
+import { Router } from "wouter";
+import AppCentral from "./App.tsx";
+import ModuleView from "./App.tsx";
+
+const App = () => (
+  <Router>
+    <AppCentral path="/" />
+    <ModuleView path="/module/:id" />
+  </Router>
+);
+
+export default App;

@@ -1,19 +1,9 @@
 import express from "express";
-import { OpenAI } from "openai";
+import axios from "axios";
 import { db } from "@db";
-import { errorLogs, activityLogs } from "@db/schema";
-import { sql } from "drizzle-orm";
+import { activityLogs } from "@db/schema";
 
 const router = express.Router();
-const openai = new OpenAI();
-
-// Middleware to check if user can access admin-level AI
-const canAccessAdminAI = (req: any, res: any, next: any) => {
-  if (req.isAuthenticated() && req.user.role === "admin") {
-    return next();
-  }
-  res.status(403).json({ message: "Admin access required for admin AI features" });
-};
 
 // Handle module suggestions
 router.post("/suggest-modules", async (req, res) => {
@@ -24,25 +14,22 @@ router.post("/suggest-modules", async (req, res) => {
       return res.status(400).json({ error: "Description is required" });
     }
 
-    const response = await openai.chat.completions.create({
+    const response = await axios.post("https://api.openai.com/v1/chat/completions", {
       model: "gpt-3.5-turbo",
-      messages: [
-        {
-          role: "system",
-          content: "You are a helpful assistant that suggests module names for a modular application. Return exactly 10 short, clear module names based on the app description."
-        },
-        {
-          role: "user",
-          content: `Suggest 10 module names for this app: ${description}`
-        }
-      ],
-      max_tokens: 150
+      messages: [{ 
+        role: "user", 
+        content: `Suggest a module workflow for app: ${description}. Return as JSON with names and purposes.` 
+      }],
+      max_tokens: 100,
+    }, {
+      headers: { 
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json'
+      }
     });
 
-    const suggestions = response.choices[0]?.message?.content
-      ?.split('\n')
-      .filter(line => line.trim())
-      .slice(0, 10) || [];
+    const suggestions = response.data.choices[0].message.content;
+    console.log("[DEBUG] AI Suggestions:", suggestions);
 
     // Log activity
     await db.insert(activityLogs).values({
@@ -52,72 +39,10 @@ router.post("/suggest-modules", async (req, res) => {
       timestamp: new Date()
     });
 
-    res.json({ suggestions });
+    res.json(JSON.parse(suggestions));
   } catch (error) {
-    console.error("AI module suggestion error:", error);
-
-    // Log error
-    await db.insert(errorLogs).values({
-      message: error instanceof Error ? error.message : "Unknown error",
-      source: "AI Module Suggestion",
-      stackTrace: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date(),
-      userId: req.user?.id || 0
-    });
-
-    res.status(500).json({ 
-      error: "Failed to get module suggestions",
-      details: error instanceof Error ? error.message : String(error)
-    });
-  }
-});
-
-// Handle AI queries
-router.post("/query", async (req, res) => {
-  try {
-    const { query, type = "user" } = req.body;
-
-    // Check permissions for admin queries
-    if (type === "admin" && (!req.isAuthenticated() || req.user.role !== "admin")) {
-      return res.status(403).json({ message: "Admin access required for admin-level queries" });
-    }
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: query }],
-      max_tokens: 150
-    });
-
-    res.json({ response: response.choices[0]?.message?.content });
-  } catch (error) {
-    console.error("AI query error:", error);
-
-    // Log error
-    await db.insert(errorLogs).values({
-      message: error instanceof Error ? error.message : "Unknown error",
-      source: "AI Query",
-      stackTrace: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date(),
-      userId: req.user?.id || 0
-    });
-
-    res.status(500).json({ error: "Failed to process AI query" });
-  }
-});
-
-// Get AI interaction history (admin only)
-router.get("/history", canAccessAdminAI, async (req, res) => {
-  try {
-    const interactions = await db.select()
-      .from(activityLogs)
-      .where(sql`${activityLogs.action} ILIKE 'ai_%'`)
-      .orderBy(activityLogs.timestamp)
-      .limit(50);
-
-    res.json(interactions);
-  } catch (error) {
-    console.error("AI history error:", error);
-    res.status(500).json({ message: "Error fetching AI interaction history" });
+    console.error("[ERROR] AI suggestion failed:", error);
+    res.status(500).json({ error: "AI suggestion failed" });
   }
 });
 

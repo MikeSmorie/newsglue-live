@@ -26,7 +26,7 @@ export default function AppCentral() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Please enter a description of your app",
+        description: "Please enter a description for your app",
       });
       return;
     }
@@ -44,11 +44,11 @@ export default function AppCentral() {
       }
 
       const data = await response.json();
-      const suggestions = data.suggestions || [];
 
-      // Update module names with suggestions
+      // Extract module names from the suggestions
+      const suggestions = Object.keys(data).map(key => data[key].name || key);
       const newNames = [...moduleNames];
-      suggestions.forEach((suggestion: string, index: number) => {
+      suggestions.forEach((suggestion, index) => {
         if (index < newNames.length) {
           newNames[index] = suggestion;
         }
