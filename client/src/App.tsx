@@ -9,6 +9,7 @@ import AdminDashboard from "@/pages/admin-dashboard";
 import AdminCommunications from "@/pages/admin-communications";
 import LogsDashboard from "@/pages/admin/logs-dashboard";
 import AppCentral from "@/pages/app-central";
+import ModuleView from "@/pages/module-view";
 import MockDashboard from "@/pages/mock-dashboard";
 import MockSettings from "@/pages/mock-settings";
 import SubscriptionPage from "@/pages/subscriptions";
@@ -119,6 +120,7 @@ function Router() {
         <Route path="/admin/subscription-manager" component={() => <ProtectedAdminRoute component={SubscriptionManager} />} />
         <Route path="/admin/communications" component={() => <ProtectedAdminRoute component={AdminCommunications} />} />
         <Route path="/" component={AppCentral} />
+        <Route path="/module/:id" component={ModuleView} />
         <Route path="/mock-dashboard" component={MockDashboard} />
         <Route path="/mock-settings" component={MockSettings} />
         <Route path="/subscription" component={SubscriptionManagement} />
