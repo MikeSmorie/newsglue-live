@@ -1,0 +1,101 @@
+Prompt 3 of 3 – Modular Workflow Engine: Add Function Execution
+Add basic function execution to modules:
+
+// Update /client/src/App.tsx
+import React, { useState } from "react";
+import { Link, Route, useRoute } from "wouter";
+
+const ModuleView = ({ moduleId }) => {
+  const [moduleName, setModuleName] = useState(`Module ${moduleId}`);
+  const [input, setInput] = useState("");
+  const [output, setOutput] = useState("");
+
+  const executeModule = async () => {
+    const response = await fetch(`/api/module/${moduleId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ data: input }),
+    });
+    const result = await response.json();
+    setOutput(result.result || "Error");
+  };
+
+  return (
+    <div>
+      <input
+        value={moduleName}
+        onChange={(e) => setModuleName(e.target.value)}
+        className="p-2 mb-2"
+      />
+      <input
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        placeholder="Enter data"
+        className="p-2 mb-2"
+      />
+      <button onClick={executeModule} className="p-2 bg-blue-500 text-white">
+        Execute
+      </button>
+      <p>Output: {output}</p>
+    </div>
+  );
+};
+
+const AppCentral = () => {
+  const [match] = useRoute("/module/:id");
+  const modules = Array.from({ length: 10 }, (_, i) => i + 1);
+  const [moduleNames, setModuleNames] = useState(modules.map((num) => `Module ${num}`));
+
+  return (
+    <div className="flex h-screen">
+      <div className="w-1/4 bg-gray-800 text-white p-4">
+        <h2 className="text-xl mb-4">App Central</h2>
+        {modules.map((num) => (
+          <Link key={num} to={`/module/${num}`} className="block mb-2">
+            <button className="w-full text-left p-2 bg-gray-700 hover:bg-gray-600">
+              {moduleNames[num - 1]}
+            </button>
+          </Link>
+        ))}
+      </div>
+      <div className="w-3/4 p-4">
+        {match ? <ModuleView moduleId={match.params.id} /> : <><h1>Welcome to App Central</h1><p>Select a module to begin.</p></>}
+      </div>
+    </div>
+  );
+};
+
+export default AppCentral;
+
+// Update /server/index.ts
+import { ModuleManager } from "./moduleManager";
+import express from "express";
+const app = express();
+app.use(express.json());
+
+const moduleManager = new ModuleManager();
+
+// Register existing test module
+const testModule = {
+  name: "testModule",
+  inputSchema: { data: "string" },
+  outputSchema: { result: "string" },
+  async process(input: any) {
+    console.log(`[DEBUG] Processing input: ${input.data}`);
+    return { result: `Processed: ${input.data}` };
+  }
+};
+moduleManager.registerModule(testModule);
+
+app.post("/api/module/:id", async (req, res) => {
+  try {
+    const result = await moduleManager.runModule("testModule", req.body);
+    console.log("[DEBUG] Module execution result:", result);
+    res.json(result);
+  } catch (error) {
+    console.error("[ERROR] Module execution failed:", error);
+    res.status(500).json({ error: "Module execution failed" });
+  }
+});
+
+export default app;
