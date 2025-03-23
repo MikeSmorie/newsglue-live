@@ -41,8 +41,14 @@ function ProtectedAdminRoute({ component: Component }: { component: React.Compon
     );
   }
 
-  if (!user || user.role !== "admin") {
+  if (!user || (user.role !== "admin" && user.role !== "supergod")) {
     return <AuthPage />;
+  }
+  
+  // Log role information
+  console.log("[DEBUG] Current user role:", user.role);
+  if (user.role === "supergod") {
+    console.log("[DEBUG] Super-God privileges unlocked");
   }
 
   return <Component />;

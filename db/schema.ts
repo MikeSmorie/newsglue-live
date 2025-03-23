@@ -3,7 +3,7 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
 
-export const userRoleEnum = z.enum(["user", "admin"]);
+export const userRoleEnum = z.enum(["user", "admin", "supergod"]);
 export type UserRole = z.infer<typeof userRoleEnum>;
 
 export const users = pgTable("users", {
