@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import AdminRegisterPage from "@/pages/admin-register";
+import SupergodRegisterPage from "@/pages/supergod-register";
+import SupergodDashboard from "@/pages/supergod-dashboard";
 import AdminDashboard from "@/pages/admin-dashboard";
 import AdminCommunications from "@/pages/admin-communications";
 import LogsDashboard from "@/pages/admin/logs-dashboard";
@@ -54,6 +56,34 @@ function ProtectedAdminRoute({ component: Component }: { component: React.Compon
   return <Component />;
 }
 
+function ProtectedSupergodRoute({ component: Component }: { component: React.ComponentType }) {
+  const { user, isLoading } = useUser();
+  const { toast } = useToast();
+  
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-border" />
+      </div>
+    );
+  }
+
+  if (!user || user.role !== "supergod") {
+    // For security, don't even show this route exists to non-supergods
+    toast({
+      title: "Access Denied",
+      description: "This area requires Super-God privileges.",
+      variant: "destructive"
+    });
+    
+    return <NotFound />;
+  }
+  
+  console.log("[DEBUG] Super-God exclusive route accessed");
+  
+  return <Component />;
+}
+
 function Router() {
   const { user, isLoading, logout } = useUser();
   const { toast } = useToast();
@@ -91,6 +121,7 @@ function Router() {
     return (
       <Switch>
         <Route path="/admin-register" component={AdminRegisterPage} />
+        <Route path="/supergod-register" component={SupergodRegisterPage} />
         <Route path="*" component={AuthPage} />
       </Switch>
     );
@@ -126,12 +157,18 @@ function Router() {
       </nav>
 
       <Switch>
+        {/* Admin routes */}
         <Route path="/admin" component={() => <ProtectedAdminRoute component={AdminDashboard} />} />
         <Route path="/admin/logs" component={() => <ProtectedAdminRoute component={LogsDashboard} />} />
         <Route path="/admin/subscription-manager" component={() => <ProtectedAdminRoute component={SubscriptionManager} />} />
         <Route path="/admin/communications" component={() => <ProtectedAdminRoute component={AdminCommunications} />} />
+        
+        {/* Supergod exclusive routes (high-security) */}
+        <Route path="/supergod" component={() => <ProtectedSupergodRoute component={SupergodDashboard} />} />
+        
+        {/* Normal routes */}
         <Route path="/" component={AppCentral} />
-        <Route path="/module/:id" component={ModuleView} />
+        <Route path="/module/:id" component={(params) => <ModuleView moduleId={params.id} />} />
         <Route path="/mock-dashboard" component={MockDashboard} />
         <Route path="/mock-settings" component={MockSettings} />
         <Route path="/subscription" component={SubscriptionManagement} />
@@ -148,12 +185,12 @@ function Router() {
 function App() {
   return (
     <ThemeProvider defaultTheme="system">
-      <AdminProvider>
-        <QueryClientProvider client={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <AdminProvider>
           <Router />
           <Toaster />
-        </QueryClientProvider>
-      </AdminProvider>
+        </AdminProvider>
+      </QueryClientProvider>
     </ThemeProvider>
   );
 }

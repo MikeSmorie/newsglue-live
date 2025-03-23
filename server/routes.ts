@@ -10,7 +10,9 @@ import featureRoutes from "./routes/features";
 import messagesRoutes from "./routes/announcements";
 import adminLogsRoutes from "./routes/admin-logs";
 import paymentRoutes from "./routes/payment";
+import { registerSupergodRoutes } from "./routes/supergod";
 import { logError } from "./utils/logger";
+import { requireRole, requireSupergod } from "./middleware/rbac";
 
 // Simple auth checks
 const requireAuth = (req: any, res: any, next: any) => {
@@ -66,6 +68,9 @@ export function registerRoutes(app: Express) {
   app.use("/api/messages", messagesRoutes);
   app.use("/api/admin", requireAdmin, adminLogsRoutes);
   app.use("/api/payment", paymentRoutes);
+  
+  // Register supergod-only routes
+  registerSupergodRoutes(app); // These routes have their own middleware checks
 
   // Error handler must be last
   app.use(errorHandler);

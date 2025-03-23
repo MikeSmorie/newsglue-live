@@ -3,9 +3,6 @@ import { Request, Response, NextFunction } from "express";
 // Role hierarchy from highest to lowest privilege
 const roleHierarchy = ["supergod", "admin", "user"];
 
-// Log supergod role registration
-console.log("[DEBUG] Super-God Mode role registered");
-
 /**
  * Check if a user has a required role or higher
  * @param requiredRole Minimum role required
@@ -21,6 +18,50 @@ export function hasRole(requiredRole: string, userRole: string): boolean {
   
   // Lower index means higher privilege
   return userRoleIndex <= requiredRoleIndex;
+}
+
+/**
+ * Check if a user has supergod role
+ * @param userRole User's current role
+ * @returns Boolean indicating if user has supergod privileges
+ */
+export function isSupergod(userRole: string): boolean {
+  return userRole === "supergod";
+}
+
+/**
+ * Check if a user has admin or higher privileges
+ * @param userRole User's current role
+ * @returns Boolean indicating if user has admin or higher privileges
+ */
+export function isAdminOrHigher(userRole: string): boolean {
+  return hasRole("admin", userRole);
+}
+
+/**
+ * Middleware to restrict access to supergod only
+ * @returns Express middleware function
+ */
+export function requireSupergod() {
+  return (req: Request, res: Response, next: NextFunction) => {
+    // Check if user is authenticated
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    
+    const userRole = req.user?.role;
+    
+    // Check if user has supergod role
+    if (userRole !== "supergod") {
+      return res.status(403).json({ 
+        message: "Super-God privileges required",
+        userRole
+      });
+    }
+    
+    console.log("[DEBUG] Super-God privileges confirmed");
+    next();
+  };
 }
 
 /**
