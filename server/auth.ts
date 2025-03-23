@@ -218,6 +218,70 @@ export function setupAuth(app: Express) {
       });
     }
   });
+  
+  // Register a supergod user (highest privilege)
+  app.post("/api/register-supergod", async (req, res) => {
+    try {
+      const result = insertUserSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({
+          message: "Invalid input: " + result.error.issues.map(i => i.message).join(", ")
+        });
+      }
+
+      const { username, password } = result.data;
+
+      // Check if user already exists
+      const [existingUser] = await db
+        .select()
+        .from(users)
+        .where(eq(users.username, username))
+        .limit(1);
+
+      if (existingUser) {
+        return res.status(400).json({
+          message: "Username already exists"
+        });
+      }
+
+      // Hash the password
+      const hashedPassword = await crypto.hash(password);
+
+      // Create the new supergod user
+      const [newUser] = await db
+        .insert(users)
+        .values({
+          username,
+          password: hashedPassword,
+          role: "supergod", // Set role as supergod
+          lastLogin: new Date() // Set initial login time
+        })
+        .returning();
+        
+      console.log("[DEBUG] Super-God Mode role registered");
+
+      req.login(newUser, (err) => {
+        if (err) {
+          return res.status(500).json({
+            message: "Error during login after registration"
+          });
+        }
+        
+        console.log("[DEBUG] Current user role:", newUser.role);
+        console.log("[DEBUG] Super-God privileges unlocked");
+        
+        return res.json({
+          message: "Super-God registration successful",
+          user: { id: newUser.id, username: newUser.username, role: newUser.role },
+        });
+      });
+    } catch (error: any) {
+      return res.status(500).json({
+        message: "Internal server error",
+        error: error.message
+      });
+    }
+  });
 
   app.post("/api/login", (req, res, next) => {
     const result = insertUserSchema.safeParse(req.body);

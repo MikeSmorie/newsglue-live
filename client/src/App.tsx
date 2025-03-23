@@ -106,6 +106,11 @@ function Router() {
             <span className="text-sm text-muted-foreground">
               {user.username}
             </span>
+            {user.role === "supergod" && (
+              <span className="text-sm font-bold text-red-500">
+                👑 Super-God Mode Active
+              </span>
+            )}
             <FontSizeControls />
             <ThemeToggle />
             <Button

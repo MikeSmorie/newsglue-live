@@ -12,9 +12,12 @@ export function AdminToggle() {
     return <Loader2 className="h-4 w-4 animate-spin" />;
   }
 
-  if (user?.role !== "admin") {
+  if (user?.role !== "admin" && user?.role !== "supergod") {
     return null;
   }
+  
+  // Log current user role for debugging
+  console.log("[DEBUG] Current user role:", user.role);
 
   return (
     <TooltipProvider>
