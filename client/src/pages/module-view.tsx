@@ -24,9 +24,9 @@ export default function ModuleView({ moduleId }: ModuleViewProps) {
           />
         </div>
 
-        <Card>
+        <Card className="bg-black border-blue-500">
           <CardContent className="pt-6">
-            <p className="text-muted-foreground">
+            <p className="text-white font-medium" style={{ color: '#FFFFFF' }}>
               Module {id} View - {moduleName} (Add functions here when forking)
             </p>
           </CardContent>
