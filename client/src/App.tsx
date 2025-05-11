@@ -1,4 +1,3 @@
-import React from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -21,14 +20,14 @@ import SubscriptionFeatures from "@/pages/subscription-features";
 import SubscriptionManagement from "@/pages/subscription-management";
 
 import { useUser } from "@/hooks/use-user";
-import { Loader2 } from "lucide-react";
+import { Loader2, LogOut, ArrowLeft, ArrowRight, Home } from "lucide-react";
 import { ThemeProvider } from "@/components/theme-provider";
-import { HighContrastThemeToggle } from "@/components/high-contrast-theme-toggle";
-import { HighContrastFontControls } from "@/components/high-contrast-font-controls";
-import { HighContrastAIButton } from "@/components/high-contrast-ai-button";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { FontSizeControls } from "@/components/font-size-controls";
 import { AdminToggle } from "@/components/admin-toggle";
-import { HighContrastNavigation } from "@/components/high-contrast-navigation";
+import { AIAssistant } from "@/components/ai-assistant";
 import { AdminProvider } from "@/contexts/admin-context";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import SubscriptionPlans from "@/pages/subscription-plans";
@@ -129,32 +128,55 @@ function Router() {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#000000' }}>
-      <nav className="border-b" style={{ 
-        backgroundColor: '#000000', 
-        borderBottom: '2px solid #007BFF',
-        padding: '8px 0'
-      }}>
+    <div className="min-h-screen">
+      <nav className="border-b">
         <div className="container flex h-16 items-center px-4">
-          <HighContrastNavigation onLogout={handleLogout} />
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => window.history.back()}
+              className="h-8 w-8"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/")}
+              className="h-8 w-8"
+            >
+              <Home className="h-4 w-4" />
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => window.history.forward()}
+              className="h-8 w-8"
+            >
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
           
           <div className="flex items-center gap-4 ml-auto">
-            <HighContrastAIButton />
+            <AIAssistant />
             {user.role === "supergod" && (
-              <span style={{
-                fontSize: '14px',
-                fontWeight: 'bold',
-                color: '#FF0000',
-                backgroundColor: 'rgba(255, 0, 0, 0.1)',
-                padding: '5px 10px',
-                borderRadius: '4px',
-                border: '1px solid #FF0000'
-              }}>
+              <span className="text-sm font-bold text-red-500">
                 👑 Super-God Mode Active
               </span>
             )}
-            <HighContrastFontControls />
-            <HighContrastThemeToggle />
+            <FontSizeControls />
+            <ThemeToggle />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleLogout}
+              className="h-8 w-8"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </nav>
@@ -188,11 +210,6 @@ function Router() {
 }
 
 function App() {
-  // Set default theme classes on mount
-  React.useEffect(() => {
-    document.documentElement.classList.add("custom-dark-mode");
-  }, []);
-  
   return (
     <ThemeProvider defaultTheme="dark">
       <QueryClientProvider client={queryClient}>

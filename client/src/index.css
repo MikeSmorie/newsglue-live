@@ -10,36 +10,12 @@
   }
 
   body {
-    @apply antialiased;
+    @apply antialiased bg-background text-foreground;
     font-family: 'Inter', sans-serif;
     font-size: 1rem;
     font-weight: normal;
     line-height: 1.6;
-    /* Default styling */
-    background-color: #121212 !important;
-    color: #FFFFFF !important;
-  }
-
-  /* Custom theme classes that won't be overridden by shadcn */
-  :root.custom-dark-mode {
-    --background-color: #121212;
-    --text-color: #FFFFFF;
-  }
-
-  :root.custom-light-mode {
-    --background-color: #121212; /* Always keep dark background */
-    --text-color: #FFFFFF;
-  }
-
-  /* Apply our custom variables */
-  body {
-    background-color: var(--background-color) !important;
-    color: var(--text-color) !important;
-  }
-
-  /* Force dark mode for main UI container */
-  .min-h-screen {
-    background-color: #121212 !important;
+    color: #1A1A1A;
   }
 
   h1, h2, h3, h4, h5, h6 {
