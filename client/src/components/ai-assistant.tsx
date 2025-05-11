@@ -57,11 +57,8 @@ export function AIAssistant() {
         userId: user?.id
       };
       
-      // Validate the input data
-      const validatedInput = validateInput(inputData);
-      if (!validatedInput) {
-        throw new Error("Invalid input data");
-      }
+      // We're now directly sending the query rather than validating JSON
+      // This simplifies the input processing
       
       // Send to the improved API endpoint using the new direct query format
       const res = await fetch("/api/ai/ai-assistant", {
