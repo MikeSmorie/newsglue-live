@@ -22,10 +22,10 @@ import SubscriptionManagement from "@/pages/subscription-management";
 import { useUser } from "@/hooks/use-user";
 import { Loader2 } from "lucide-react";
 import { ThemeProvider } from "@/components/theme-provider";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { FontSizeControls } from "@/components/font-size-controls";
+import { HighContrastThemeToggle } from "@/components/high-contrast-theme-toggle";
+import { HighContrastFontControls } from "@/components/high-contrast-font-controls";
+import { HighContrastAIButton } from "@/components/high-contrast-ai-button";
 import { AdminToggle } from "@/components/admin-toggle";
-import { AIAssistant } from "@/components/ai-assistant";
 import { HighContrastNavigation } from "@/components/high-contrast-navigation";
 import { AdminProvider } from "@/contexts/admin-context";
 import { useToast } from "@/hooks/use-toast";
@@ -138,7 +138,7 @@ function Router() {
           <HighContrastNavigation onLogout={handleLogout} />
           
           <div className="flex items-center gap-4 ml-auto">
-            <AIAssistant />
+            <HighContrastAIButton />
             {user.role === "supergod" && (
               <span style={{
                 fontSize: '14px',
@@ -152,8 +152,8 @@ function Router() {
                 👑 Super-God Mode Active
               </span>
             )}
-            <FontSizeControls />
-            <ThemeToggle />
+            <HighContrastFontControls />
+            <HighContrastThemeToggle />
           </div>
         </div>
       </nav>
