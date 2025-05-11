@@ -34,7 +34,7 @@ export default function AppCentral() {
               onClick={() => setLocation(`/module/${module.id}`)}
             >
               <div className="p-4">
-                <span className="text-lg text-white">{module.name}</span>
+                <span className="text-lg font-semibold" style={{ color: '#FFFFFF' }}>{module.name}</span>
               </div>
             </Card>
           ))}
