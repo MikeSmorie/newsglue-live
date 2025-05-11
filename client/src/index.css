@@ -55,6 +55,28 @@
     color: #111 !important;
   }
   
+  /* Fix for navigation buttons in light mode */
+  .light-mode .nav-button {
+    background-color: #fff !important;
+    color: #111 !important;
+    border: 1px solid #ddd !important;
+  }
+  
+  .light-mode .nav-button svg {
+    color: #007BFF !important;
+  }
+  
+  /* Specific fix for light mode theme toggle button */
+  .light-mode .border-blue-600,
+  .light-mode .theme-toggle {
+    background-color: #fff !important;
+    border-color: #007BFF !important;
+  }
+  
+  .light-mode .theme-toggle svg {
+    color: #007BFF !important;
+  }
+  
   /* Fix for paragraph text in light mode */
   .light-mode p, 
   .light-mode .explanatory-text {

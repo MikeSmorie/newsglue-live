@@ -136,7 +136,7 @@ function Router() {
               variant="ghost"
               size="icon"
               onClick={() => window.history.back()}
-              className="h-8 w-8"
+              className="h-8 w-8 nav-button"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -145,7 +145,7 @@ function Router() {
               variant="ghost"
               size="icon"
               onClick={() => navigate("/")}
-              className="h-8 w-8"
+              className="h-8 w-8 nav-button"
             >
               <Home className="h-4 w-4" />
             </Button>
@@ -154,7 +154,7 @@ function Router() {
               variant="ghost"
               size="icon"
               onClick={() => window.history.forward()}
-              className="h-8 w-8"
+              className="h-8 w-8 nav-button"
             >
               <ArrowRight className="h-4 w-4" />
             </Button>
@@ -180,7 +180,7 @@ function Router() {
               variant="ghost"
               size="icon"
               onClick={handleLogout}
-              className="h-8 w-8"
+              className="h-8 w-8 nav-button"
             >
               <LogOut className="h-4 w-4" />
             </Button>

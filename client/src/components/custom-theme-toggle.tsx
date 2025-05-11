@@ -25,7 +25,7 @@ export function CustomThemeToggle() {
   };
 
   return (
-    <Button variant="outline" size="icon" onClick={toggleTheme} className="border-blue-600">
+    <Button variant="outline" size="icon" onClick={toggleTheme} className="border-blue-600 nav-button theme-toggle">
       {isDarkMode ? (
         <Moon className="h-[1.2rem] w-[1.2rem] text-white" />
       ) : (
