@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { HighContrastModule } from "@/components/high-contrast-module";
 import { HighContrastContent } from "@/components/high-contrast-content";
 import { getLayoutStyles } from "@/lib/layout-utils";
+import { ExplanatoryText } from "@/components/explanatory-text";
+import { StyledHeading } from "@/components/styled-heading";
 
 interface ModuleViewProps {
   moduleId?: string;
@@ -62,7 +64,7 @@ export default function ModuleView({ moduleId }: ModuleViewProps) {
   return (
     <div style={pageStyles.container}>
       <div style={pageStyles.header}>
-        <h1 style={pageStyles.title}>{moduleName}</h1>
+        <StyledHeading level="h1" customColor="#FFFFFF">{moduleName}</StyledHeading>
         
         <Button 
           variant="outline" 
@@ -102,14 +104,16 @@ export default function ModuleView({ moduleId }: ModuleViewProps) {
           </span>
         </div>
         
-        <p style={{ color: '#FFFFFF', marginTop: '16px', lineHeight: '1.6' }}>
+        <ExplanatoryText isDark={true}>
           This is Module {id}. Add your custom functionality here when forking this project.
-        </p>
+        </ExplanatoryText>
         
         <div style={{ marginTop: '2rem', padding: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-          <p style={{ color: '#FFFFFF', fontStyle: 'italic' }}>
-            Module placeholder area - Ready for customization.
-          </p>
+          <ExplanatoryText isDark={true}>
+            <span style={{ fontStyle: 'italic' }}>
+              Module placeholder area - Ready for customization.
+            </span>
+          </ExplanatoryText>
         </div>
       </HighContrastContent>
     </div>
