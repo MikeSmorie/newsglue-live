@@ -12,15 +12,16 @@ interface StyledHeadingProps {
 export function StyledHeading({ children, level, customColor }: StyledHeadingProps) {
   const levelStyle = textStyles.heading[level];
   
+  // Remove color from inline style to allow our theme toggle to work
   const headingStyle = {
     ...levelStyle,
-    color: customColor || levelStyle.color,
+    // No color here - will be handled by CSS
   };
 
   const HeadingTag = level as keyof JSX.IntrinsicElements;
 
   return (
-    <HeadingTag style={headingStyle}>
+    <HeadingTag style={headingStyle} className="styled-heading">
       {children}
     </HeadingTag>
   );

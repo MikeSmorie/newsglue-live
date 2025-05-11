@@ -7,13 +7,16 @@ interface ExplanatoryTextProps {
 }
 
 export function ExplanatoryText({ children, isDark = false }: ExplanatoryTextProps) {
+  // Add a special class for our theme toggle
+  const className = "explanatory-text";
+  
   const textStyle = {
     ...textStyles.explanatory,
-    color: isDark ? '#FFFFFF' : textStyles.explanatory.color,
+    // No inline color styling to allow CSS to handle it
   };
 
   return (
-    <p style={textStyle}>
+    <p style={textStyle} className={className}>
       {children}
     </p>
   );
