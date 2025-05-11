@@ -2,78 +2,50 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useLocation } from "wouter";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Shield, LockKeyhole, BarChart3, Bell, Settings } from "lucide-react";
 
 export default function AppCentral() {
   const [, setLocation] = useLocation();
-  const [moduleNames, setModuleNames] = useState<string[]>(
-    Array.from({ length: 10 }, (_, i) => `Module ${i + 1}`)
-  );
-  const [suggestion, setSuggestion] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
 
-  const modules = Array.from({ length: 10 }, (_, i) => ({
-    id: i + 1,
-    name: moduleNames[i],
-    path: `/module/${i + 1}`
-  }));
-
-  const getSuggestion = async () => {
-    if (!suggestion.trim()) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Please enter a description for your app",
-      });
-      return;
+  // Predefined security modules
+  const modules = [
+    {
+      id: 1,
+      name: "Security Dashboard",
+      icon: <Shield className="h-5 w-5 text-newsBlue" />,
+      description: "Overview of system security status"
+    },
+    {
+      id: 2,
+      name: "Access Control",
+      icon: <LockKeyhole className="h-5 w-5 text-newsBlue" />,
+      description: "Manage user permissions and access"
+    },
+    {
+      id: 3,
+      name: "Threat Analytics",
+      icon: <BarChart3 className="h-5 w-5 text-newsBlue" />,
+      description: "Advanced threat detection and analysis"
+    },
+    {
+      id: 4,
+      name: "Alert Center",
+      icon: <Bell className="h-5 w-5 text-newsBlue" />,
+      description: "Security alerts and notifications"
+    },
+    {
+      id: 5,
+      name: "System Configuration",
+      icon: <Settings className="h-5 w-5 text-newsBlue" />,
+      description: "Configure security settings"
     }
-
-    setIsLoading(true);
-    try {
-      const response = await fetch("/api/suggest-modules", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ description: suggestion }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to get suggestions");
-      }
-
-      const data = await response.json();
-
-      // Extract module names from the suggestions
-      const suggestions = Object.keys(data).map(key => data[key].name || key);
-      const newNames = [...moduleNames];
-      suggestions.forEach((suggestion, index) => {
-        if (index < newNames.length) {
-          newNames[index] = suggestion;
-        }
-      });
-      setModuleNames(newNames);
-
-      toast({
-        title: "Success",
-        description: "Module suggestions updated",
-      });
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to get suggestions",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  ];
 
   return (
     <div className="container mx-auto py-6">
       <div className="flex flex-col gap-6">
-        <div className="flex justify-end">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold">Security Modules</h1>
           <Button 
             variant="outline" 
             onClick={() => setLocation("/subscription")}
@@ -83,39 +55,19 @@ export default function AppCentral() {
           </Button>
         </div>
 
-        <div className="space-y-4 max-w-xl">
-          <div className="flex gap-2">
-            <Input
-              value={suggestion}
-              onChange={(e) => setSuggestion(e.target.value)}
-              placeholder="Describe your app to get module suggestions"
-              className="flex-1"
-            />
-            <Button 
-              onClick={getSuggestion}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Thinking...
-                </>
-              ) : (
-                'Suggest Modules'
-              )}
-            </Button>
-          </div>
-        </div>
-
-        <div className="w-64">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {modules.map((module) => (
             <Card 
               key={module.id}
-              className="mb-2 hover:shadow-lg transition-shadow cursor-pointer"
+              className="hover:shadow-lg transition-shadow cursor-pointer"
               onClick={() => setLocation(`/module/${module.id}`)}
             >
               <div className="p-4">
-                <span className="text-lg">{module.name}</span>
+                <div className="flex items-center gap-3 mb-2">
+                  {module.icon}
+                  <span className="text-lg font-medium">{module.name}</span>
+                </div>
+                <p className="text-sm text-muted-foreground">{module.description}</p>
               </div>
             </Card>
           ))}
