@@ -20,15 +20,13 @@ import SubscriptionFeatures from "@/pages/subscription-features";
 import SubscriptionManagement from "@/pages/subscription-management";
 
 import { useUser } from "@/hooks/use-user";
-import { Loader2, LogOut } from "lucide-react";
+import { Loader2, LogOut, ArrowLeft, ArrowRight, Home } from "lucide-react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { FontSizeControls } from "@/components/font-size-controls";
-import { NavigationControls } from "@/components/navigation-controls";
 import { AdminToggle } from "@/components/admin-toggle";
 import { AIAssistant } from "@/components/ai-assistant";
 import { AdminProvider } from "@/contexts/admin-context";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import SubscriptionPlans from "@/pages/subscription-plans";
@@ -129,30 +127,92 @@ function Router() {
   }
 
   return (
-    <div className="min-h-screen">
-      <nav className="border-b">
+    <div className="min-h-screen" style={{ backgroundColor: '#000000' }}>
+      <nav className="border-b" style={{ 
+        backgroundColor: '#000000', 
+        borderBottom: '2px solid #007BFF',
+        padding: '8px 0'
+      }}>
         <div className="container flex h-16 items-center px-4">
-          <NavigationControls />
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => window.history.back()}
+              style={{
+                backgroundColor: '#F9FAFB',
+                border: '2px solid #007BFF',
+                borderRadius: '5px',
+                padding: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer'
+              }}
+            >
+              <ArrowLeft size="20" color="#007BFF" />
+            </button>
+            <button 
+              onClick={() => navigate("/")}
+              style={{
+                backgroundColor: '#F9FAFB',
+                border: '2px solid #007BFF',
+                borderRadius: '5px',
+                padding: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer'
+              }}
+            >
+              <Home size="20" color="#007BFF" />
+            </button>
+            <button 
+              onClick={() => window.history.forward()}
+              style={{
+                backgroundColor: '#F9FAFB',
+                border: '2px solid #007BFF',
+                borderRadius: '5px',
+                padding: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer'
+              }}
+            >
+              <ArrowRight size="20" color="#007BFF" />
+            </button>
+          </div>
           <div className="flex items-center gap-4 ml-auto">
             <AIAssistant />
-            <span className="text-sm text-muted-foreground">
-              {user.username}
-            </span>
             {user.role === "supergod" && (
-              <span className="text-sm font-bold text-red-500">
+              <span style={{
+                fontSize: '14px',
+                fontWeight: 'bold',
+                color: '#FF0000',
+                backgroundColor: 'rgba(255, 0, 0, 0.1)',
+                padding: '5px 10px',
+                borderRadius: '4px',
+                border: '1px solid #FF0000'
+              }}>
                 👑 Super-God Mode Active
               </span>
             )}
             <FontSizeControls />
             <ThemeToggle />
-            <Button
-              variant="ghost"
-              size="icon"
+            <button
               onClick={handleLogout}
-              className="h-8 w-8"
+              style={{
+                backgroundColor: '#F9FAFB',
+                border: '2px solid #FF0000',
+                borderRadius: '5px',
+                padding: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer'
+              }}
             >
-              <LogOut className="h-4 w-4" />
-            </Button>
+              <LogOut size="20" color="#FF0000" />
+            </button>
           </div>
         </div>
       </nav>
