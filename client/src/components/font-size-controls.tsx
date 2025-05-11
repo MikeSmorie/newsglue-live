@@ -23,7 +23,7 @@ export function FontSizeControls() {
               variant="outline"
               size="icon"
               onClick={() => adjustFontSize(-1)}
-              className="h-8 w-8"
+              className="h-8 w-8 nav-button"
             >
               <Minus className="h-4 w-4" />
             </Button>
@@ -41,7 +41,7 @@ export function FontSizeControls() {
               variant="outline"
               size="icon"
               onClick={() => adjustFontSize(1)}
-              className="h-8 w-8"
+              className="h-8 w-8 nav-button"
             >
               <Plus className="h-4 w-4" />
             </Button>

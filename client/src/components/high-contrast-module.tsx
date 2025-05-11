@@ -36,7 +36,7 @@ export function HighContrastModule({ id, name }: HighContrastModuleProps) {
     container: {
       display: 'flex',
       alignItems: 'center',
-      backgroundColor: '#000000',
+      // No backgroundColor - will be controlled by CSS
       border: '2px solid #007BFF',
       borderRadius: '6px',
       padding: '12px 16px',
@@ -49,12 +49,11 @@ export function HighContrastModule({ id, name }: HighContrastModuleProps) {
       boxShadow: isHovered ? '0 4px 8px rgba(0, 123, 255, 0.3)' : 'none'
     },
     text: {
-      color: '#FFFFFF',
+      // No color - will be controlled by CSS
       fontSize: '16px',
       fontWeight: 'bold',
       fontFamily: 'Inter, sans-serif',
       letterSpacing: '0.5px',
-      textShadow: '0 1px 2px rgba(0,0,0,0.8)',
       marginLeft: '12px'
     }
   };
@@ -65,9 +64,10 @@ export function HighContrastModule({ id, name }: HighContrastModuleProps) {
       onClick={() => setLocation(`/module/${id}`)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      className="module-button"
     >
       <StyledIcon icon={Icon} size="1.5rem" customColor="#007BFF" />
-      <span style={moduleStyles.text}>{name}</span>
+      <span style={moduleStyles.text} className="module-text">{name}</span>
     </div>
   );
 }

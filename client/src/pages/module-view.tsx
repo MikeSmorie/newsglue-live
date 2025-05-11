@@ -67,6 +67,7 @@ export default function ModuleView({ moduleId }: ModuleViewProps) {
         <Button 
           variant="outline" 
           onClick={() => navigate("/")}
+          className="nav-button module-button"
         >
           Back to Modules
         </Button>

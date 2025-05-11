@@ -56,14 +56,35 @@
   }
   
   /* Fix for navigation buttons in light mode */
-  .light-mode .nav-button {
+  .light-mode .nav-button,
+  .light-mode .module-button {
     background-color: #fff !important;
     color: #111 !important;
     border: 1px solid #ddd !important;
   }
   
-  .light-mode .nav-button svg {
+  .light-mode .nav-button svg,
+  .light-mode .module-button svg {
     color: #007BFF !important;
+  }
+  
+  /* Fix for module buttons in light/dark mode */
+  .light-mode .module-button {
+    background-color: #fff !important;
+    color: #111 !important;
+  }
+  
+  .dark-mode .module-button {
+    background-color: #000 !important;
+    color: #fff !important;
+  }
+  
+  .light-mode .module-text {
+    color: #111 !important;
+  }
+  
+  .dark-mode .module-text {
+    color: #fff !important;
   }
   
   /* Specific fix for light mode theme toggle button */
