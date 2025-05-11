@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { useLocation } from "wouter";
+import { ModuleCard } from "@/components/module-card";
 
 export default function AppCentral() {
   const [, setLocation] = useLocation();
@@ -9,8 +9,7 @@ export default function AppCentral() {
   // Create 10 empty modules
   const modules = Array.from({ length: 10 }, (_, i) => ({
     id: i + 1,
-    name: `Module ${i + 1}`,
-    path: `/module/${i + 1}`
+    name: `Module ${i + 1}`
   }));
 
   return (
@@ -28,15 +27,11 @@ export default function AppCentral() {
 
         <div className="w-64">
           {modules.map((module) => (
-            <Card 
+            <ModuleCard 
               key={module.id}
-              className="mb-2 hover:shadow-lg transition-shadow cursor-pointer bg-slate-800"
-              onClick={() => setLocation(`/module/${module.id}`)}
-            >
-              <div className="p-4">
-                <span className="text-lg font-semibold" style={{ color: '#FFFFFF' }}>{module.name}</span>
-              </div>
-            </Card>
+              id={module.id}
+              name={module.name}
+            />
           ))}
         </div>
       </div>
