@@ -20,6 +20,7 @@ import SubscriptionFeatures from "@/pages/subscription-features";
 import SubscriptionManagement from "@/pages/subscription-management";
 import TypographyDemoPage from "@/pages/typography-demo-page";
 import ButtonDemoPage from "@/pages/button-demo-page";
+import InputOutputDemoPage from "@/pages/input-output-demo-page";
 import { useUser } from "@/hooks/use-user";
 import { Loader2, LogOut } from "lucide-react";
 import { ThemeProvider } from "@/components/theme-provider";
