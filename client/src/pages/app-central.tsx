@@ -2,7 +2,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { HighContrastModule } from "@/components/high-contrast-module";
-import { getLayoutStyles } from "@/lib/layout-utils";
+import { getLayoutStyles, textStyles } from "@/lib/layout-utils";
+import { ExplanatoryText } from "@/components/explanatory-text";
+import { StyledHeading } from "@/components/styled-heading";
 
 export default function AppCentral() {
   const [, setLocation] = useLocation();
@@ -44,7 +46,7 @@ export default function AppCentral() {
   return (
     <div style={pageStyles.container}>
       <div style={pageStyles.header}>
-        <h1 style={pageStyles.title}>Omega Module System</h1>
+        <StyledHeading level="h1" customColor="#FFFFFF">Omega Module System</StyledHeading>
         <Button 
           variant="outline" 
           onClick={() => setLocation("/subscription")}
@@ -54,7 +56,20 @@ export default function AppCentral() {
         </Button>
       </div>
 
+      <div style={{ marginBottom: '2rem' }}>
+        <ExplanatoryText isDark={true}>
+          Welcome to the Omega Module System. This foundational framework provides 10 empty module slots 
+          that can be customized and populated when forking this project. Select any module to view or edit its details.
+        </ExplanatoryText>
+      </div>
+
       <div style={pageStyles.moduleSection}>
+        <StyledHeading level="h3" customColor="#FFFFFF">Available Modules</StyledHeading>
+        
+        <ExplanatoryText isDark={true}>
+          The following modules are ready for customization. Each module serves as an independent container for your code.
+        </ExplanatoryText>
+        
         <div style={pageStyles.moduleList}>
           {modules.map((module) => (
             <HighContrastModule 
