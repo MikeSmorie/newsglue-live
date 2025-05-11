@@ -1,0 +1,36 @@
+/* High-contrast module styling */
+.high-contrast-module {
+  background-color: #000000 !important;
+  border: 2px solid #007BFF !important;
+  border-radius: 8px !important;
+  margin-bottom: 8px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 10px 15px !important;
+}
+
+.high-contrast-module:hover {
+  background-color: #111111 !important;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.5) !important;
+}
+
+.high-contrast-module__indicator {
+  width: 12px !important;
+  height: 12px !important;
+  border-radius: 50% !important;
+  background-color: #007BFF !important;
+  margin-right: 12px !important;
+  flex-shrink: 0 !important;
+}
+
+.high-contrast-module__text {
+  color: #FFFFFF !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  font-family: 'Inter', sans-serif !important;
+  line-height: 1.5 !important;
+  letter-spacing: 0.5px !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important; 
+}
