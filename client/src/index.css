@@ -13,6 +13,65 @@
     font-weight: normal;
     line-height: 1.6;
   }
+  
+  /* Custom theme styles */
+  body.dark-mode {
+    background-color: #111 !important;
+    color: #fff !important;
+  }
+  
+  body.light-mode {
+    background-color: #fff !important;
+    color: #000 !important;
+  }
+  
+  /* Input fields in dark mode */
+  .dark-mode input {
+    background-color: #333 !important;
+    color: #fff !important;
+  }
+  
+  .dark-mode input::placeholder {
+    color: #ddd !important;
+  }
+  
+  /* Input fields in light mode */
+  .light-mode input {
+    background-color: #fff !important;
+    color: #000 !important;
+  }
+  
+  /* Module container in dark mode */
+  .dark-mode .border-blue-600 {
+    border-color: #007BFF !important;
+  }
+  
+  /* Better visibility for elements in different modes */
+  .dark-mode button {
+    color: #fff !important;
+  }
+  
+  .light-mode button {
+    color: #111 !important;
+  }
+  
+  /* Special elements in dark mode */
+  .dark-mode nav {
+    border-bottom: 2px solid #007BFF !important;
+  }
+  
+  /* High contrast content */
+  .dark-mode h1, 
+  .dark-mode h2, 
+  .dark-mode h3 {
+    color: #FFFFFF !important;
+  }
+  
+  .light-mode h1,
+  .light-mode h2,
+  .light-mode h3 {
+    color: #111111 !important;
+  }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Poppins', sans-serif;

@@ -22,7 +22,7 @@ import SubscriptionManagement from "@/pages/subscription-management";
 import { useUser } from "@/hooks/use-user";
 import { Loader2, LogOut, ArrowLeft, ArrowRight, Home, Settings } from "lucide-react";
 import { ThemeProvider } from "@/components/theme-provider";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { CustomThemeToggle } from "@/components/custom-theme-toggle";
 import { FontSizeControls } from "@/components/font-size-controls";
 import { AdminToggle } from "@/components/admin-toggle";
 import { AIAssistant } from "@/components/ai-assistant";
@@ -174,7 +174,7 @@ function Router() {
             )}
             
             <FontSizeControls />
-            <ThemeToggle />
+            <CustomThemeToggle />
 
             <Button
               variant="ghost"
