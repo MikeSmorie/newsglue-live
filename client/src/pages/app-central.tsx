@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { ModuleCard } from "@/components/module-card";
+import { HighContrastModule } from "@/components/high-contrast-module";
 
 export default function AppCentral() {
   const [, setLocation] = useLocation();
@@ -27,7 +27,7 @@ export default function AppCentral() {
 
         <div className="w-64">
           {modules.map((module) => (
-            <ModuleCard 
+            <HighContrastModule 
               key={module.id}
               id={module.id}
               name={module.name}
