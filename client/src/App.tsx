@@ -20,12 +20,13 @@ import SubscriptionFeatures from "@/pages/subscription-features";
 import SubscriptionManagement from "@/pages/subscription-management";
 
 import { useUser } from "@/hooks/use-user";
-import { Loader2, LogOut, ArrowLeft, ArrowRight, Home } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { FontSizeControls } from "@/components/font-size-controls";
 import { AdminToggle } from "@/components/admin-toggle";
 import { AIAssistant } from "@/components/ai-assistant";
+import { HighContrastNavigation } from "@/components/high-contrast-navigation";
 import { AdminProvider } from "@/contexts/admin-context";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
@@ -134,53 +135,8 @@ function Router() {
         padding: '8px 0'
       }}>
         <div className="container flex h-16 items-center px-4">
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={() => window.history.back()}
-              style={{
-                backgroundColor: '#F9FAFB',
-                border: '2px solid #007BFF',
-                borderRadius: '5px',
-                padding: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer'
-              }}
-            >
-              <ArrowLeft size="20" color="#007BFF" />
-            </button>
-            <button 
-              onClick={() => navigate("/")}
-              style={{
-                backgroundColor: '#F9FAFB',
-                border: '2px solid #007BFF',
-                borderRadius: '5px',
-                padding: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer'
-              }}
-            >
-              <Home size="20" color="#007BFF" />
-            </button>
-            <button 
-              onClick={() => window.history.forward()}
-              style={{
-                backgroundColor: '#F9FAFB',
-                border: '2px solid #007BFF',
-                borderRadius: '5px',
-                padding: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer'
-              }}
-            >
-              <ArrowRight size="20" color="#007BFF" />
-            </button>
-          </div>
+          <HighContrastNavigation onLogout={handleLogout} />
+          
           <div className="flex items-center gap-4 ml-auto">
             <AIAssistant />
             {user.role === "supergod" && (
@@ -198,21 +154,6 @@ function Router() {
             )}
             <FontSizeControls />
             <ThemeToggle />
-            <button
-              onClick={handleLogout}
-              style={{
-                backgroundColor: '#F9FAFB',
-                border: '2px solid #FF0000',
-                borderRadius: '5px',
-                padding: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer'
-              }}
-            >
-              <LogOut size="20" color="#FF0000" />
-            </button>
           </div>
         </div>
       </nav>
