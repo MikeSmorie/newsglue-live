@@ -20,7 +20,7 @@ import SubscriptionFeatures from "@/pages/subscription-features";
 import SubscriptionManagement from "@/pages/subscription-management";
 
 import { useUser } from "@/hooks/use-user";
-import { Loader2, LogOut, ArrowLeft, ArrowRight, Home } from "lucide-react";
+import { Loader2, LogOut, ArrowLeft, ArrowRight, Home, Settings } from "lucide-react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { FontSizeControls } from "@/components/font-size-controls";
@@ -128,55 +128,61 @@ function Router() {
   }
 
   return (
-    <div className="min-h-screen">
-      <nav className="border-b">
+    <div className="min-h-screen bg-black">
+      <nav className="border-b border-blue-600">
         <div className="container flex h-16 items-center px-4">
           <div className="flex items-center gap-4">
             <Button
-              variant="ghost"
+              variant="outline"
               size="icon"
               onClick={() => window.history.back()}
-              className="h-8 w-8"
+              className="h-8 w-8 border-blue-600"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-4 w-4 text-blue-600" />
             </Button>
             
             <Button
-              variant="ghost"
+              variant="outline"
               size="icon"
               onClick={() => navigate("/")}
-              className="h-8 w-8"
+              className="h-8 w-8 border-blue-600"
             >
-              <Home className="h-4 w-4" />
+              <Home className="h-4 w-4 text-blue-600" />
             </Button>
             
             <Button
-              variant="ghost"
+              variant="outline"
               size="icon"
               onClick={() => window.history.forward()}
-              className="h-8 w-8"
+              className="h-8 w-8 border-blue-600"
             >
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-4 w-4 text-blue-600" />
             </Button>
+            
+            <span className="ml-4 text-white font-bold">
+              {user?.username || "User1#*User1$"}
+            </span>
           </div>
           
           <div className="flex items-center gap-4 ml-auto">
+            <Button variant="outline" size="icon" className="h-8 w-8 border-blue-600">
+              <Settings className="h-4 w-4 text-blue-600" />
+            </Button>
+            
+            <Button variant="outline" size="icon" className="h-8 w-8 border-red-600">
+              <LogOut className="h-4 w-4 text-red-600" />
+            </Button>
+            
             <AIAssistant />
-            {user.role === "supergod" && (
+            
+            {user?.role === "supergod" && (
               <span className="text-sm font-bold text-red-500">
                 👑 Super-God Mode Active
               </span>
             )}
+            
             <FontSizeControls />
             <ThemeToggle />
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleLogout}
-              className="h-8 w-8"
-            >
-              <LogOut className="h-4 w-4" />
-            </Button>
           </div>
         </div>
       </nav>
