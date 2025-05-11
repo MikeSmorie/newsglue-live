@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { HighContrastModule } from "@/components/high-contrast-module";
 import { getLayoutStyles, textStyles } from "@/lib/layout-utils";
 import { ExplanatoryText } from "@/components/explanatory-text";
 import { StyledHeading } from "@/components/styled-heading";
+import { StyledButton } from "@/components/styled-button";
+import { Settings } from "lucide-react";
 
 export default function AppCentral() {
   const [, setLocation] = useLocation();

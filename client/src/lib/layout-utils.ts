@@ -51,6 +51,23 @@ export const textStyles = {
   }
 };
 
+export const iconStyles = {
+  icon: {
+    color: '#007BFF',  // NewsBlue for icons
+    size: '2rem',
+    marginRight: '0.5rem'
+  },
+  iconButton: {
+    backgroundColor: '#F9FAFB',  // Light background for icon buttons
+    padding: '1rem',
+    borderRadius: '5px',
+    border: '2px solid #007BFF',
+    hover: {
+      backgroundColor: '#E0E0E0'  // Light gray on hover
+    }
+  }
+};
+
 // These styles can be applied inline or used within CSS-in-JS solutions
 export const getLayoutStyles = () => {
   return {
@@ -76,5 +93,13 @@ export const getTextStyles = () => {
   return {
     explanatory: textStyles.explanatory,
     heading: textStyles.heading
+  };
+};
+
+// Get icon styling for consistent icon appearance
+export const getIconStyles = () => {
+  return {
+    icon: iconStyles.icon,
+    iconButton: iconStyles.iconButton
   };
 };
