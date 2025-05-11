@@ -128,51 +128,43 @@ function Router() {
   }
 
   return (
-    <div className="min-h-screen bg-black">
-      <nav className="border-b border-blue-600">
+    <div className="min-h-screen">
+      <nav className="border-b">
         <div className="container flex h-16 items-center px-4">
           <div className="flex items-center gap-4">
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
               onClick={() => window.history.back()}
-              className="h-8 w-8 border-blue-600"
+              className="h-8 w-8"
             >
-              <ArrowLeft className="h-4 w-4 text-blue-600" />
+              <ArrowLeft className="h-4 w-4" />
             </Button>
             
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
               onClick={() => navigate("/")}
-              className="h-8 w-8 border-blue-600"
+              className="h-8 w-8"
             >
-              <Home className="h-4 w-4 text-blue-600" />
+              <Home className="h-4 w-4" />
             </Button>
             
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
               onClick={() => window.history.forward()}
-              className="h-8 w-8 border-blue-600"
+              className="h-8 w-8"
             >
-              <ArrowRight className="h-4 w-4 text-blue-600" />
+              <ArrowRight className="h-4 w-4" />
             </Button>
             
-            <span className="ml-4 text-white font-bold">
+            <span className="ml-4 font-bold">
               {user?.username || "User1#*User1$"}
             </span>
           </div>
           
           <div className="flex items-center gap-4 ml-auto">
-            <Button variant="outline" size="icon" className="h-8 w-8 border-blue-600">
-              <Settings className="h-4 w-4 text-blue-600" />
-            </Button>
-            
-            <Button variant="outline" size="icon" className="h-8 w-8 border-red-600">
-              <LogOut className="h-4 w-4 text-red-600" />
-            </Button>
-            
             <AIAssistant />
             
             {user?.role === "supergod" && (
@@ -183,6 +175,15 @@ function Router() {
             
             <FontSizeControls />
             <ThemeToggle />
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleLogout}
+              className="h-8 w-8"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </nav>

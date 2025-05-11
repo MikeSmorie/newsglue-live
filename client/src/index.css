@@ -10,53 +10,11 @@
   }
 
   body {
-    @apply antialiased;
+    @apply antialiased bg-background text-foreground;
     font-family: 'Inter', sans-serif;
     font-size: 1rem;
     font-weight: normal;
     line-height: 1.6;
-    background-color: #121212 !important; 
-    color: #FFFFFF !important;
-  }
-
-  /* Custom CSS to improve text visibility in dark mode for input fields */
-  input::placeholder {
-    color: #ddd !important; /* Light grey color for better contrast */
-  }
-
-  input {
-    background-color: #333 !important; /* Dark background for input fields */
-    color: #fff !important; /* White text for better readability */
-  }
-
-  input:focus {
-    outline: none;
-    border-color: #007BFF !important; /* Highlight border on focus for better UX */
-  }
-  
-  /* Force consistent colors in all UI elements */
-  .min-h-screen {
-    background-color: #121212 !important;
-  }
-  
-  nav {
-    background-color: #121212 !important;
-    border-bottom: 2px solid #007BFF !important;
-  }
-  
-  /* Ensure proper contrast for common elements */
-  button {
-    border-color: #007BFF !important;
-  }
-  
-  /* Ensure theme buttons are properly styled */
-  .dark\\:rotate-0 {
-    color: #FFFFFF !important;
-  }
-  
-  /* Ensure button text is visible */
-  button span {
-    color: #FFFFFF !important;
   }
 
   h1, h2, h3, h4, h5, h6 {
