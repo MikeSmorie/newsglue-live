@@ -61,6 +61,9 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Adding custom color palette for Omega 7 UI
+        newsBlue: '#007BFF',
+        glueCharcoal: '#1A1A1A',
       },
       keyframes: {
         "accordion-down": {
@@ -83,6 +86,36 @@ export default {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+      },
+      fontFamily: {
+        poppins: ['Poppins', 'sans-serif'],
+        inter: ['Inter', 'sans-serif'],
+      },
+      typography: {
+        DEFAULT: {
+          css: {
+            'h1, h2, h3': {
+              fontFamily: 'Poppins, sans-serif',
+              fontWeight: 'bold',
+              color: '#007BFF',
+              marginBottom: '1.5rem',
+            },
+            'h4, h5, h6': {
+              fontFamily: 'Poppins, sans-serif',
+              fontWeight: '600',
+              color: '#1A1A1A',
+              marginBottom: '1rem',
+            },
+            p: {
+              fontFamily: 'Inter, sans-serif',
+              fontWeight: 'normal',
+              fontSize: '1rem',
+              lineHeight: '1.6',
+              color: '#1A1A1A',
+              marginBottom: '1rem',
+            },
+          },
+        },
       },
     },
   },
