@@ -18,6 +18,7 @@ import SubscriptionPage from "@/pages/subscriptions";
 import SubscriptionManager from "@/pages/subscription-manager";
 import SubscriptionFeatures from "@/pages/subscription-features";
 import SubscriptionManagement from "@/pages/subscription-management";
+import TypographyDemoPage from "@/pages/typography-demo-page";
 import { useUser } from "@/hooks/use-user";
 import { Loader2, LogOut } from "lucide-react";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -174,6 +175,7 @@ function Router() {
         <Route path="/subscription" component={SubscriptionManagement} />
         <Route path="/subscription/plans" component={SubscriptionPlans} />
         <Route path="/subscription/features" component={SubscriptionFeatures} />
+        <Route path="/typography" component={TypographyDemoPage} />
         <Route component={NotFound} />
       </Switch>
 

@@ -1,6 +1,6 @@
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, Home, Settings, Users, Shield, ShieldAlert } from "lucide-react";
+import { ArrowLeft, ArrowRight, Home, Settings, Users, Shield, ShieldAlert, Type } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useUser } from "@/hooks/use-user";
 import { useAdmin } from "@/contexts/admin-context";
@@ -80,6 +80,24 @@ export function NavigationControls() {
             </TooltipTrigger>
             <TooltipContent>
               <p>Go forward</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate("/typography")}
+                className="h-8 w-8"
+              >
+                <Type className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Typography Demo</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
