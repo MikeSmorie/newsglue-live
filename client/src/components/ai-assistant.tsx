@@ -29,23 +29,52 @@ export function AIAssistant() {
   const { user } = useUser();
   const { toast } = useToast();
 
+  // Function to validate JSON before sending to the server
+  const validateInput = (inputData: any): string | null => {
+    try {
+      // Make sure all required fields are present
+      if (!inputData.query || !inputData.userId) {
+        throw new Error("Missing required fields");
+      }
+      
+      // Convert to JSON string for validation
+      return JSON.stringify(inputData);
+    } catch (error) {
+      console.error("Invalid input data:", error);
+      return null;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const res = await fetch("/api/ai/query", {
+      // Prepare the input data
+      const inputData = {
+        type: user?.role === "admin" ? "admin" : "user",
+        query,
+        userId: user?.id
+      };
+      
+      // Validate the input data
+      const validatedInput = validateInput(inputData);
+      if (!validatedInput) {
+        throw new Error("Invalid input data");
+      }
+      
+      // Send to the new validation-enabled endpoint
+      const res = await fetch("/api/ai/ai-assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          type: user?.role === "admin" ? "admin" : "user",
-          query,
-          userId: user?.id
+          input: validatedInput
         })
       });
 
       if (!res.ok) {
-        throw new Error(await res.text());
+        const errorText = await res.text();
+        throw new Error(errorText);
       }
 
       const data = await res.json();

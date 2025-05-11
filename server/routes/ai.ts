@@ -2,6 +2,7 @@ import express from "express";
 import axios from "axios";
 import { db } from "@db";
 import { activityLogs } from "@db/schema";
+import { validateJsonInput, validateRequiredProps } from "../utils/validation";
 
 const router = express.Router();
 
@@ -45,5 +46,70 @@ router.post("/suggest-modules", async (req, res) => {
     res.status(500).json({ error: "AI suggestion failed" });
   }
 });
+
+// AI Assistant API endpoint with input validation
+router.post("/ai-assistant", async (req, res) => {
+  console.log("[DEBUG] AI Assistant request received:", req.body);
+  
+  try {
+    // Check if inputData is a string that can be parsed
+    const inputData = req.body.input;
+    console.log("[DEBUG] Input data:", inputData, typeof inputData);
+    
+    if (typeof inputData !== 'string') {
+      console.log("[DEBUG] Invalid input type:", typeof inputData);
+      return res.status(400).json({ message: 'Input must be a JSON string' });
+    }
+    
+    // Validate and parse the input
+    const validatedData = validateJsonInput(inputData);
+    if (!validatedData) {
+      return res.status(400).json({ message: 'Invalid input format' });
+    }
+    
+    // Check for required properties
+    const requiredProps = ['query', 'userId'];
+    if (!validateRequiredProps(validatedData, requiredProps)) {
+      return res.status(400).json({ 
+        message: 'Missing required properties',
+        requiredProps
+      });
+    }
+
+    // Process the validated input
+    const response = await processAIRequest(validatedData);
+    
+    // Log the AI assistant usage
+    await db.insert(activityLogs).values({
+      action: "ai_assistant_query",
+      userId: validatedData.userId || 0,
+      details: validatedData.query,
+      timestamp: new Date()
+    });
+    
+    res.json(response);
+  } catch (error) {
+    console.error("[ERROR] AI assistant request failed:", error);
+    res.status(500).json({ error: "AI processing failed" });
+  }
+});
+
+// Process the AI request (mock implementation)
+async function processAIRequest(data: any) {
+  try {
+    // Here we would process the request with your AI service
+    // This is a placeholder implementation
+    console.log("[INFO] Processing AI request:", data);
+    
+    return {
+      success: true,
+      answer: `Response to query: ${data.query}`,
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error("[ERROR] AI processing error:", error);
+    throw error;
+  }
+}
 
 export default router;
