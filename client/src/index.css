@@ -10,13 +10,16 @@
   }
 
   body {
-    @apply antialiased bg-background text-foreground;
+    @apply antialiased;
     font-family: 'Inter', sans-serif;
     font-size: 1rem;
     font-weight: normal;
     line-height: 1.6;
+    /* Default styling */
+    background-color: #121212 !important;
+    color: #FFFFFF !important;
   }
-  
+
   /* Custom CSS to improve text visibility in dark mode for input fields */
   input::placeholder {
     color: #ddd !important; /* Light grey color for better contrast */
@@ -30,22 +33,6 @@
   input:focus {
     outline: none;
     border-color: #007BFF; /* Highlight border on focus for better UX */
-  }
-  
-  /* Dark mode core body/text styles */
-  .dark body {
-    background-color: #121212;
-    color: #ffffff;
-  }
-  
-  /* Light mode adjustments for module container */
-  .light .module-container {
-    color: #121212;
-  }
-  
-  /* Force dark blue border on all bordered elements */
-  .border-blue-600 {
-    border-color: #007BFF !important;
   }
 
   h1, h2, h3, h4, h5, h6 {
