@@ -47,12 +47,47 @@ router.post("/suggest-modules", async (req, res) => {
   }
 });
 
-// AI Assistant API endpoint with input validation
+// AI Assistant API endpoint with improved input validation
 router.post("/ai-assistant", async (req, res) => {
   console.log("[DEBUG] AI Assistant request received:", req.body);
   
   try {
-    // Check if inputData is a string that can be parsed
+    // Handle direct query from request body (new approach)
+    if (req.body.query !== undefined) {
+      const userQuery = req.body.query;
+      
+      if (!userQuery || userQuery.trim() === "") {
+        return res.status(400).json({ message: 'Query cannot be empty' });
+      }
+      
+      console.log("[INFO] Processing direct query:", userQuery);
+      
+      // Get user ID from request or use default
+      const userId = req.user?.id || 0;
+      
+      // Process the query and provide a response
+      const aiResponse = await processAIRequest({
+        query: userQuery,
+        userId,
+        type: req.user?.role || 'user'
+      });
+      
+      if (!aiResponse) {
+        return res.status(500).json({ message: 'Error processing your query' });
+      }
+      
+      // Log the AI assistant usage
+      await db.insert(activityLogs).values({
+        action: "ai_assistant_query",
+        userId,
+        details: userQuery,
+        timestamp: new Date()
+      });
+      
+      return res.json(aiResponse);
+    }
+    
+    // Handle JSON string in input field (backward compatibility)
     const inputData = req.body.input;
     console.log("[DEBUG] Input data:", inputData, typeof inputData);
     

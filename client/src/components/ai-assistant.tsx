@@ -63,12 +63,13 @@ export function AIAssistant() {
         throw new Error("Invalid input data");
       }
       
-      // Send to the new validation-enabled endpoint
+      // Send to the improved API endpoint using the new direct query format
       const res = await fetch("/api/ai/ai-assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          input: validatedInput
+          query: query,
+          userId: user?.id
         })
       });
 
