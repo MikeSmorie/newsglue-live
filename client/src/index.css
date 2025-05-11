@@ -16,6 +16,37 @@
     font-weight: normal;
     line-height: 1.6;
   }
+  
+  /* Custom CSS to improve text visibility in dark mode for input fields */
+  input::placeholder {
+    color: #ddd !important; /* Light grey color for better contrast */
+  }
+
+  input {
+    background-color: #333 !important; /* Dark background for input fields */
+    color: #fff !important; /* White text for better readability */
+  }
+
+  input:focus {
+    outline: none;
+    border-color: #007BFF; /* Highlight border on focus for better UX */
+  }
+  
+  /* Dark mode core body/text styles */
+  .dark body {
+    background-color: #121212;
+    color: #ffffff;
+  }
+  
+  /* Light mode adjustments for module container */
+  .light .module-container {
+    color: #121212;
+  }
+  
+  /* Force dark blue border on all bordered elements */
+  .border-blue-600 {
+    border-color: #007BFF !important;
+  }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Poppins', sans-serif;
