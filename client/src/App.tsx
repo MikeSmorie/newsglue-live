@@ -19,6 +19,7 @@ import SubscriptionManager from "@/pages/subscription-manager";
 import SubscriptionFeatures from "@/pages/subscription-features";
 import SubscriptionManagement from "@/pages/subscription-management";
 import TypographyDemoPage from "@/pages/typography-demo-page";
+import ButtonDemoPage from "@/pages/button-demo-page";
 import { useUser } from "@/hooks/use-user";
 import { Loader2, LogOut } from "lucide-react";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -169,13 +170,14 @@ function Router() {
         
         {/* Normal routes */}
         <Route path="/" component={AppCentral} />
-        <Route path="/module/:id" component={(params) => <ModuleView moduleId={params.id} />} />
+        <Route path="/module/:id" component={(params) => <ModuleView moduleId={params.id || ''} />} />
         <Route path="/mock-dashboard" component={MockDashboard} />
         <Route path="/mock-settings" component={MockSettings} />
         <Route path="/subscription" component={SubscriptionManagement} />
         <Route path="/subscription/plans" component={SubscriptionPlans} />
         <Route path="/subscription/features" component={SubscriptionFeatures} />
         <Route path="/typography" component={TypographyDemoPage} />
+        <Route path="/buttons" component={ButtonDemoPage} />
         <Route component={NotFound} />
       </Switch>
 
