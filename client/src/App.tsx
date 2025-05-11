@@ -128,8 +128,8 @@ function Router() {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#121212' }}>
-      <nav className="border-b" style={{ backgroundColor: '#121212', borderBottom: '2px solid #007BFF' }}>
+    <div className="min-h-screen">
+      <nav className="border-b">
         <div className="container flex h-16 items-center px-4">
           <div className="flex items-center gap-4">
             <Button

@@ -23,8 +23,7 @@ export default function ModuleView({ moduleId }: ModuleViewProps) {
     container: {
       padding: `${layoutStyles.section.paddingTop} ${layoutStyles.content.paddingRight} ${layoutStyles.section.paddingBottom} ${layoutStyles.content.paddingLeft}`,
       maxWidth: '1200px',
-      margin: '0 auto',
-      backgroundColor: '#121212'
+      margin: '0 auto'
     },
     header: {
       paddingTop: layoutStyles.header.paddingTop,
@@ -36,8 +35,7 @@ export default function ModuleView({ moduleId }: ModuleViewProps) {
     },
     title: {
       fontSize: '24px',
-      fontWeight: 'bold',
-      color: '#FFFFFF'
+      fontWeight: 'bold'
     },
     moduleSection: {
       marginBottom: layoutStyles.section.marginBottom
@@ -52,7 +50,6 @@ export default function ModuleView({ moduleId }: ModuleViewProps) {
       marginBottom: '1.5rem'
     },
     inputLabel: {
-      color: '#FFFFFF',
       fontWeight: 'bold',
       marginBottom: '0.5rem',
       display: 'block'
@@ -63,9 +60,9 @@ export default function ModuleView({ moduleId }: ModuleViewProps) {
   };
 
   return (
-    <div style={pageStyles.container} className="module-container">
+    <div style={pageStyles.container}>
       <div style={pageStyles.header}>
-        <StyledHeading level="h1" customColor="#FFFFFF">{moduleName}</StyledHeading>
+        <StyledHeading level="h1">{moduleName}</StyledHeading>
         
         <Button 
           variant="outline" 
