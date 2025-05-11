@@ -93,7 +93,7 @@ export function AIAssistant() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" size="icon" className="h-8 w-8">
+        <Button variant="outline" size="icon" className="h-8 w-8 nav-button">
           {user?.role === "admin" ? <Sparkles className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
         </Button>
       </DialogTrigger>

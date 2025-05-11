@@ -7,16 +7,15 @@ interface HighContrastContentProps {
 }
 
 export function HighContrastContent({ children, isDark = true }: HighContrastContentProps) {
+  // We'll use a className instead of inline styles for theme support
   const contentStyles = {
     container: {
-      backgroundColor: isDark ? '#000000' : '#FFFFFF',
       border: '2px solid #007BFF',
       borderRadius: '6px',
       padding: '20px',
       width: '100%'
     },
     content: {
-      color: isDark ? '#FFFFFF' : textStyles.explanatory.color,
       fontSize: textStyles.explanatory.fontSize,
       fontWeight: textStyles.explanatory.fontWeight as any,
       fontFamily: textStyles.explanatory.fontFamily,
@@ -26,8 +25,8 @@ export function HighContrastContent({ children, isDark = true }: HighContrastCon
   };
 
   return (
-    <div style={contentStyles.container}>
-      <div style={contentStyles.content}>
+    <div style={contentStyles.container} className="high-contrast-container">
+      <div style={contentStyles.content} className="high-contrast-content">
         {children}
       </div>
     </div>

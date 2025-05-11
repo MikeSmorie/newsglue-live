@@ -48,13 +48,15 @@ export default function AppCentral() {
     <div style={pageStyles.container}>
       <div style={pageStyles.header}>
         <StyledHeading level="h1" customColor="#FFFFFF">Omega Module System</StyledHeading>
-        <StyledButton 
-          icon={Settings}
-          variant="outline" 
-          onClick={() => setLocation("/subscription")}
-          label="Manage Subscription"
-          size="small"
-        />
+        <div className="subscription-button">
+          <StyledButton 
+            icon={Settings}
+            variant="outline" 
+            onClick={() => setLocation("/subscription")}
+            label="Manage Subscription"
+            size="small"
+          />
+        </div>
       </div>
 
       <div style={{ marginBottom: '2rem' }}>

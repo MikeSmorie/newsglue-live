@@ -98,6 +98,7 @@ export function StyledButton({
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      className="styled-button"
     >
       {icon && <StyledIcon icon={icon} size={sizeStyles.fontSize} customColor={variantStyles.color} />}
       <span style={{ marginLeft: icon ? "0.5rem" : "0" }}>{label}</span>

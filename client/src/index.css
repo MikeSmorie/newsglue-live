@@ -68,12 +68,17 @@
   
   /* Specific fix for light mode theme toggle button */
   .light-mode .border-blue-600,
-  .light-mode .theme-toggle {
+  .light-mode .theme-toggle,
+  .light-mode .subscription-button button,
+  .light-mode .styled-button {
     background-color: #fff !important;
     border-color: #007BFF !important;
+    color: #111 !important;
   }
   
-  .light-mode .theme-toggle svg {
+  .light-mode .theme-toggle svg,
+  .light-mode .subscription-button svg,
+  .light-mode .styled-button svg {
     color: #007BFF !important;
   }
   
@@ -92,6 +97,34 @@
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
+  }
+  
+  /* Fix for high-contrast container */
+  .light-mode .high-contrast-container {
+    background-color: #fff !important;
+    color: #111 !important;
+  }
+  
+  .dark-mode .high-contrast-container {
+    background-color: #000 !important;
+    color: #fff !important;
+  }
+  
+  .light-mode .high-contrast-content {
+    color: #111 !important;
+  }
+  
+  .dark-mode .high-contrast-content {
+    color: #fff !important;
+  }
+  
+  /* Fix for span elements in module details */
+  .light-mode span {
+    color: #111 !important;
+  }
+  
+  .dark-mode span {
+    color: #fff !important;
   }
   
   /* Special elements in dark mode */
