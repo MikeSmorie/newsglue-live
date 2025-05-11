@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { useParams } from "wouter";
+import { useParams, useLocation } from "wouter";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { HighContrastModule } from "@/components/high-contrast-module";
 import { HighContrastContent } from "@/components/high-contrast-content";
+import { getLayoutStyles } from "@/lib/layout-utils";
 
 interface ModuleViewProps {
   moduleId?: string;
@@ -10,30 +12,76 @@ interface ModuleViewProps {
 
 export default function ModuleView({ moduleId }: ModuleViewProps) {
   const params = useParams();
+  const [, navigate] = useLocation();
   const id = moduleId || params.id;
   const [moduleName, setModuleName] = useState(`Module ${id}`);
+  const layoutStyles = getLayoutStyles();
 
-  // Custom styling for the input with high contrast
-  const inputContainerStyle = {
-    marginBottom: '20px'
-  };
-
-  const inputLabelStyle = {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    marginBottom: '8px'
+  const pageStyles = {
+    container: {
+      padding: `${layoutStyles.section.paddingTop} ${layoutStyles.content.paddingRight} ${layoutStyles.section.paddingBottom} ${layoutStyles.content.paddingLeft}`,
+      maxWidth: '1200px',
+      margin: '0 auto'
+    },
+    header: {
+      paddingTop: layoutStyles.header.paddingTop,
+      paddingBottom: layoutStyles.header.paddingBottom,
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: '2rem'
+    },
+    title: {
+      fontSize: '24px',
+      fontWeight: 'bold',
+      color: '#FFFFFF'
+    },
+    moduleSection: {
+      marginBottom: layoutStyles.section.marginBottom
+    },
+    contentArea: {
+      marginTop: '2rem'
+    },
+    formSection: {
+      marginBottom: '2rem'
+    },
+    inputContainer: {
+      marginBottom: '1.5rem'
+    },
+    inputLabel: {
+      color: '#FFFFFF',
+      fontWeight: 'bold',
+      marginBottom: '0.5rem',
+      display: 'block'
+    },
+    backButton: {
+      marginBottom: '2rem'
+    }
   };
 
   return (
-    <div className="container mx-auto py-6">
-      <div style={inputContainerStyle}>
-        <div style={inputLabelStyle}>Module Name:</div>
-        <Input
-          value={moduleName}
-          onChange={(e) => setModuleName(e.target.value)}
-          className="max-w-xs"
-          placeholder="Enter module name"
-        />
+    <div style={pageStyles.container}>
+      <div style={pageStyles.header}>
+        <h1 style={pageStyles.title}>{moduleName}</h1>
+        
+        <Button 
+          variant="outline" 
+          onClick={() => navigate("/")}
+        >
+          Back to Modules
+        </Button>
+      </div>
+
+      <div style={pageStyles.formSection}>
+        <div style={pageStyles.inputContainer}>
+          <label style={pageStyles.inputLabel}>Module Name:</label>
+          <Input
+            value={moduleName}
+            onChange={(e) => setModuleName(e.target.value)}
+            className="max-w-xs"
+            placeholder="Enter module name"
+          />
+        </div>
       </div>
 
       <HighContrastContent>
@@ -50,13 +98,19 @@ export default function ModuleView({ moduleId }: ModuleViewProps) {
             fontSize: '18px', 
             fontWeight: 'bold' 
           }}>
-            {moduleName}
+            Module {id} Details
           </span>
         </div>
         
-        <p style={{ color: '#FFFFFF', marginTop: '16px' }}>
+        <p style={{ color: '#FFFFFF', marginTop: '16px', lineHeight: '1.6' }}>
           This is Module {id}. Add your custom functionality here when forking this project.
         </p>
+        
+        <div style={{ marginTop: '2rem', padding: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+          <p style={{ color: '#FFFFFF', fontStyle: 'italic' }}>
+            Module placeholder area - Ready for customization.
+          </p>
+        </div>
       </HighContrastContent>
     </div>
   );
