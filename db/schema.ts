@@ -38,6 +38,9 @@ export const users = pgTable("users", {
   email: text("email").unique().notNull(),
   referredBy: text("referred_by"), // stores referral_code used during registration
   tokens: integer("tokens").notNull().default(0), // user token balance for referral rewards
+  status: text("status").notNull().default("active"), // active, suspended, banned
+  notes: text("notes"), // admin-only notes
+  isTestAccount: boolean("is_test_account").notNull().default(false),
   trialActive: boolean("trial_active").notNull().default(true),
   trialStartDate: timestamp("trial_start_date").defaultNow(),
   trialExpiresAt: timestamp("trial_expires_at"),
