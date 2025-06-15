@@ -36,6 +36,7 @@ export const users = pgTable("users", {
   twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
   twoFactorSecret: text("two_factor_secret"),
   email: text("email").unique().notNull(),
+  referredBy: text("referred_by"), // stores referral_code used during registration
   trialActive: boolean("trial_active").notNull().default(true),
   trialStartDate: timestamp("trial_start_date").defaultNow(),
   trialExpiresAt: timestamp("trial_expires_at"),
@@ -456,3 +457,50 @@ export const selectTokenSchema = createSelectSchema(tokens);
 
 export type InsertToken = typeof tokens.$inferInsert;
 export type SelectToken = typeof tokens.$inferSelect;
+
+// Referral tables for referral engine
+export const referrals = pgTable("referrals", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  referralCode: text("referral_code").unique().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const referralRedemptions = pgTable("referral_redemptions", {
+  id: serial("id").primaryKey(),
+  referrerId: integer("referrer_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  refereeId: integer("referee_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  redeemedAt: timestamp("redeemed_at").defaultNow().notNull(),
+  rewardAmount: integer("reward_amount").notNull().default(50), // tokens
+});
+
+// Relations for referral tables
+export const referralsRelations = relations(referrals, ({ one, many }) => ({
+  user: one(users, {
+    fields: [referrals.userId],
+    references: [users.id],
+  }),
+  redemptions: many(referralRedemptions, { relationName: "referrer" }),
+}));
+
+export const referralRedemptionsRelations = relations(referralRedemptions, ({ one }) => ({
+  referrer: one(users, {
+    fields: [referralRedemptions.referrerId],
+    references: [users.id],
+  }),
+  referee: one(users, {
+    fields: [referralRedemptions.refereeId],
+    references: [users.id],
+  }),
+}));
+
+// Schemas for referral tables
+export const insertReferralSchema = createInsertSchema(referrals);
+export const selectReferralSchema = createSelectSchema(referrals);
+export const insertReferralRedemptionSchema = createInsertSchema(referralRedemptions);
+export const selectReferralRedemptionSchema = createSelectSchema(referralRedemptions);
+
+export type InsertReferral = typeof referrals.$inferInsert;
+export type SelectReferral = typeof referrals.$inferSelect;
+export type InsertReferralRedemption = typeof referralRedemptions.$inferInsert;
+export type SelectReferralRedemption = typeof referralRedemptions.$inferSelect;
