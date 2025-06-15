@@ -38,8 +38,8 @@ router.get("/pdf", async (req, res) => {
       sql`SELECT * FROM omega_audit_log ORDER BY created_at DESC LIMIT 100`
     );
 
-    // Transform logs to match expected format
-    const formattedLogs = logs.map((log: any) => ({
+    // Transform logs to match expected format  
+    const formattedLogs = (logs as any).map((log: any) => ({
       id: log.id,
       timestamp: log.created_at,
       actor: log.actor,

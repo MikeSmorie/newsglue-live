@@ -74,6 +74,37 @@ export function registerRoutes(app: Express) {
   app.use("/api/admin/audit-logs", auditRoutes);
   app.use("/api/payment", paymentRoutes);
 
+  // User profile export route
+  app.get("/api/user/export", requireAuth, async (req, res) => {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const userRecord = {
+        id: user.id,
+        username: user.username,
+        email: user.email || '',
+        role: user.role,
+        createdAt: user.createdAt || new Date().toISOString(),
+        updatedAt: user.updatedAt || new Date().toISOString(),
+        subscriptionPlan: 'free',
+        twoFactorEnabled: false
+      };
+
+      const { generateUserPdf } = await import("./utils/pdf");
+      const pdfBuffer = await generateUserPdf(userRecord);
+      
+      res.setHeader("Content-Type", "text/plain");
+      res.setHeader("Content-Disposition", "attachment; filename=omega-user-profile.txt");
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error("Error generating user profile export:", error);
+      res.status(500).json({ message: "Failed to generate user profile export" });
+    }
+  });
+
   // Subscription management routes
   app.post("/api/subscription/change", requireAuth, async (req, res) => {
     try {
