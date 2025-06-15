@@ -1,12 +1,38 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useUser } from "@/hooks/use-user";
 import { AuditTable } from "@/components/admin/AuditTable";
 import { AuditLogEntry } from "@/lib/types";
-import { Shield, Lock } from "lucide-react";
+import { Shield, Lock, Download } from "lucide-react";
 
 export default function AuditPage() {
   const { user } = useUser();
+
+  const handleExportLogs = async () => {
+    try {
+      const response = await fetch("/api/admin/audit-logs/pdf", {
+        method: "GET",
+        credentials: "include"
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "omega-audit-logs.txt";
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        console.error("Failed to export audit logs");
+      }
+    } catch (error) {
+      console.error("Error exporting audit logs:", error);
+    }
+  };
 
   // Access control - only supergod can view audit logs
   if (!user || user.role !== "supergod") {
@@ -59,13 +85,24 @@ export default function AuditPage() {
       {/* Audit Logs Table */}
       <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
-            <Shield className="h-5 w-5" />
-            System Audit Trail
-          </CardTitle>
-          <CardDescription className="text-gray-600 dark:text-gray-400">
-            Complete log of system actions and user activities (Last 100 entries)
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+                <Shield className="h-5 w-5" />
+                System Audit Trail
+              </CardTitle>
+              <CardDescription className="text-gray-600 dark:text-gray-400">
+                Complete log of system actions and user activities (Last 100 entries)
+              </CardDescription>
+            </div>
+            <Button 
+              onClick={handleExportLogs}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Export Logs to PDF
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <AuditTable logs={logs} />

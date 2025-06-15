@@ -12,7 +12,8 @@ import {
   LogOut,
   Crown,
   Shield,
-  Users
+  Users,
+  Download
 } from "lucide-react";
 
 interface Plan {
@@ -44,6 +45,31 @@ export default function Dashboard() {
   const { user } = useUser();
   const [, navigate] = useLocation();
 
+  const handleExportProfile = async () => {
+    try {
+      const response = await fetch("/api/user/export", {
+        method: "GET",
+        credentials: "include"
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "omega-user-profile.txt";
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        console.error("Failed to export user profile");
+      }
+    } catch (error) {
+      console.error("Error exporting user profile:", error);
+    }
+  };
+
   const { data: currentPlan } = useQuery<Plan>({
     queryKey: ["/api/subscription/current-plan"],
     enabled: !!user,
@@ -64,6 +90,14 @@ export default function Dashboard() {
           </p>
         </div>
         <div className="flex items-center space-x-3">
+          <Button 
+            onClick={handleExportProfile}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Download My Profile (PDF)
+          </Button>
           <Badge variant="outline" className="flex items-center gap-2">
             {getRoleIcon(user.role)}
             {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
