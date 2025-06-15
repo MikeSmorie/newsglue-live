@@ -21,6 +21,7 @@ import LockedModule from "@/pages/locked-module";
 import TwoFactorAuth from "@/pages/two-factor-auth";
 import AuditModule from "@/pages/audit-module";
 import AuditPage from "@/pages/admin/audit";
+import ReferralsPage from "@/pages/referrals";
 
 import { useUser } from "@/hooks/use-user";
 import { useToast } from "@/hooks/use-toast";
@@ -123,6 +124,7 @@ function Router() {
         </Route>
         <Route path="/subscription" component={SubscriptionManagement} />
         <Route path="/subscription/plans" component={SubscriptionPlans} />
+        <Route path="/referrals" component={ReferralsPage} />
         <Route path="/locked-module" component={LockedModule} />
         <Route path="/2fa" component={TwoFactorAuth} />
         <Route path="/module/omega-10" component={AuditModule} />

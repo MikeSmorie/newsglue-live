@@ -19,6 +19,7 @@ import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./payp
 import { logError } from "./utils/logger";
 import { requireRole, requireSupergod } from "./middleware/rbac";
 import { getTokenBalance, consumeTokens, giftTokens, modifyTokens, getAllTokenBalances } from "./routes/tokens";
+import referralRouter from "../modules/3.ReferralEngine/api";
 import { db } from "../db";
 import { users } from "../db/schema";
 import { eq } from "drizzle-orm";
@@ -132,6 +133,13 @@ export function registerRoutes(app: Express) {
    * Role: User/Admin/Supergod (Admin/Supergod bypass payment restrictions)
    */
   app.use("/api/payment", paymentRoutes);
+
+  /**
+   * REFERRAL ROUTES
+   * Auth: Required
+   * Role: User/Admin/Supergod
+   */
+  app.use("/api/referrals", referralRouter);
 
   // User profile export route
   app.get("/api/user/export", requireAuth, async (req, res) => {
