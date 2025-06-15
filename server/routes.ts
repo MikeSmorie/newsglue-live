@@ -22,7 +22,7 @@ import { getTokenBalance, consumeTokens, giftTokens, modifyTokens, getAllTokenBa
 import referralRouter from "../modules/3.ReferralEngine/api";
 import { db } from "../db";
 import { users } from "../db/schema";
-import { eq, sql } from "drizzle-orm";
+import { eq, and, or, desc, asc, sql } from "drizzle-orm";
 import { logEvent } from "../lib/logs";
 
 // Simple auth checks using passport
@@ -120,10 +120,95 @@ export function registerRoutes(app: Express) {
    * Auth: Required
    * Role: Admin/Supergod only
    */
-  // Get all users
+  // Get all users with search and filtering
   app.get("/api/admin/users", requireAuth, requireAdmin, async (req, res) => {
     try {
-      const allUsers = await db
+      const { 
+        q, 
+        status, 
+        role, 
+        minTokens, 
+        maxTokens, 
+        page = '1', 
+        limit = '50',
+        sortBy = 'createdAt',
+        sortOrder = 'desc'
+      } = req.query;
+
+      // Build where conditions
+      const conditions = [];
+      
+      // Search by username or email
+      if (q && typeof q === 'string') {
+        const searchTerm = `%${q.toLowerCase()}%`;
+        conditions.push(
+          or(
+            sql`LOWER(${users.username}) LIKE ${searchTerm}`,
+            sql`LOWER(${users.email}) LIKE ${searchTerm}`
+          )
+        );
+      }
+
+      // Filter by status
+      if (status && typeof status === 'string' && status !== 'all') {
+        if (status === 'active') {
+          conditions.push(or(
+            eq(users.status, 'active'),
+            sql`${users.status} IS NULL`
+          ));
+        } else {
+          conditions.push(eq(users.status, status));
+        }
+      }
+
+      // Filter by role
+      if (role && typeof role === 'string' && role !== 'all') {
+        conditions.push(eq(users.role, role));
+      }
+
+      // Filter by token range
+      if (minTokens && typeof minTokens === 'string') {
+        const min = parseInt(minTokens);
+        if (!isNaN(min)) {
+          conditions.push(sql`${users.tokens} >= ${min}`);
+        }
+      }
+
+      if (maxTokens && typeof maxTokens === 'string') {
+        const max = parseInt(maxTokens);
+        if (!isNaN(max)) {
+          conditions.push(sql`${users.tokens} <= ${max}`);
+        }
+      }
+
+      // Combine conditions
+      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+      // Determine sort column and order
+      const sortColumn = sortBy === 'username' ? users.username :
+                        sortBy === 'email' ? users.email :
+                        sortBy === 'role' ? users.role :
+                        sortBy === 'tokens' ? users.tokens :
+                        sortBy === 'lastLogin' ? users.lastLogin :
+                        users.createdAt;
+
+      const sortDirection = sortOrder === 'asc' ? asc : desc;
+
+      // Calculate pagination
+      const pageNum = parseInt(page as string) || 1;
+      const limitNum = Math.min(parseInt(limit as string) || 50, 100); // Max 100 per page
+      const offset = (pageNum - 1) * limitNum;
+
+      // Get total count for pagination
+      const [totalResult] = await db
+        .select({ count: sql`COUNT(*)` })
+        .from(users)
+        .where(whereClause);
+
+      const total = Number(totalResult.count);
+
+      // Get filtered and paginated users
+      const filteredUsers = await db
         .select({
           id: users.id,
           username: users.username,
@@ -132,12 +217,25 @@ export function registerRoutes(app: Express) {
           status: sql`COALESCE(${users.status}, 'active')`.as('status'),
           tokens: users.tokens,
           lastLogin: users.lastLogin,
-          createdAt: users.createdAt
+          createdAt: users.createdAt,
+          trialActive: users.trialActive,
+          trialExpiresAt: users.trialExpiresAt
         })
         .from(users)
-        .orderBy(users.createdAt);
+        .where(whereClause)
+        .orderBy(sortDirection(sortColumn))
+        .limit(limitNum)
+        .offset(offset);
 
-      res.json(allUsers);
+      res.json({
+        users: filteredUsers,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          totalPages: Math.ceil(total / limitNum)
+        }
+      });
     } catch (error) {
       console.error('Error fetching users:', error);
       res.status(500).json({ message: 'Failed to fetch users' });
