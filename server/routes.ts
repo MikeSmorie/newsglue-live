@@ -32,8 +32,23 @@ const requireAuth = (req: any, res: any, next: any) => {
 };
 
 const requireAdmin = (req: any, res: any, next: any) => {
-  if (req.isAuthenticated() && (req.user.role === "admin" || req.user.role === "supergod")) return next();
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+  if (req.user.role === "admin" || req.user.role === "supergod") {
+    return next();
+  }
   res.status(403).json({ message: "Not authorized" });
+};
+
+const requireSupergodLocal = (req: any, res: any, next: any) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+  if (req.user.role === "supergod") {
+    return next();
+  }
+  res.status(403).json({ message: "Supergod access required" });
 };
 
 // Global error handler
