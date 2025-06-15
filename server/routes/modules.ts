@@ -1,10 +1,16 @@
 import { Router, Response } from "express";
-import { db } from "@db/index";
-import { modules } from "@db/schema";
+import { db } from "../../db";
+import { modules } from "../../db/schema";
 import { eq } from "drizzle-orm";
-import { requireAuth, requireRole } from "../middleware/rbac";
+import { requireRole } from "../middleware/rbac";
 import { requireTier, TierRequest, getUserAccessibleModules, canUserAccessModule } from "../middleware/tierAccess";
-import { logEvent } from "@/lib/logs";
+import { logEvent } from "../../lib/logs";
+
+// Simple auth check
+const requireAuth = (req: any, res: any, next: any) => {
+  if (req.isAuthenticated()) return next();
+  res.status(401).json({ message: "Not authenticated" });
+};
 
 export const modulesRouter = Router();
 

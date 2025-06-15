@@ -13,6 +13,7 @@ import paymentRoutes from "./routes/payment";
 import logsRoutes from "./routes/logs";
 import { registerSupergodRoutes } from "./routes/supergod";
 import auditRoutes from "./routes/admin/audit";
+import { modulesRouter } from "./routes/modules";
 import { logError } from "./utils/logger";
 import { requireRole, requireSupergod } from "./middleware/rbac";
 import { db } from "../db";
@@ -377,6 +378,9 @@ export function registerRoutes(app: Express) {
       res.status(500).json({ message: "Failed to log error" });
     }
   });
+
+  // Module access control routes
+  app.use("/api/modules", modulesRouter);
 
   // Register supergod-only routes
   registerSupergodRoutes(app); // These routes have their own middleware checks

@@ -132,11 +132,14 @@ export async function getUserAccessibleModules(userTier: string) {
   try {
     const userTierLevel = TIER_HIERARCHY[userTier as keyof typeof TIER_HIERARCHY] ?? 0;
     
-    const accessibleModules = await db.query.modules.findMany({
-      where: (modules, { eq, and, lte }) => and(
-        eq(modules.isActive, true),
-        lte(TIER_HIERARCHY[modules.requiredTier as keyof typeof TIER_HIERARCHY] ?? 0, userTierLevel)
-      )
+    const allModules = await db.query.modules.findMany({
+      where: eq(modules.isActive, true)
+    });
+
+    // Filter accessible modules based on tier
+    const accessibleModules = allModules.filter(module => {
+      const requiredTierLevel = TIER_HIERARCHY[module.requiredTier as keyof typeof TIER_HIERARCHY] ?? 0;
+      return userTierLevel >= requiredTierLevel;
     });
 
     return accessibleModules;
