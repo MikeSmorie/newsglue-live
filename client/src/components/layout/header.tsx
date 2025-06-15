@@ -2,59 +2,18 @@ import { useLocation } from "wouter";
 import { useUser } from "@/hooks/use-user";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { FontSizeControls } from "@/components/font-size-controls";
+import { CustomThemeToggle } from "@/components/custom-theme-toggle";
 import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { 
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { 
-  LogOut, 
-  User, 
-  Settings,
-  ChevronDown,
+  ArrowLeft, 
+  ArrowRight, 
+  Home, 
+  LogOut,
   Crown,
-  Shield
+  Shield,
+  User
 } from "lucide-react";
-
-function getBreadcrumbs(location: string) {
-  const segments = location.split('/').filter(Boolean);
-  const breadcrumbs = [{ name: 'Dashboard', href: '/' }];
-
-  if (segments.length === 0) return breadcrumbs;
-
-  if (segments[0] === 'module' && segments[1]) {
-    breadcrumbs.push({
-      name: `Module ${segments[1]}`,
-      href: `/module/${segments[1]}`
-    });
-  } else if (segments[0] === 'admin') {
-    breadcrumbs.push({ name: 'Admin', href: '/admin' });
-    if (segments[1] === 'logs') {
-      breadcrumbs.push({ name: 'Logs', href: '/admin/logs' });
-    }
-  } else if (segments[0] === 'supergod') {
-    breadcrumbs.push({ name: 'Supergod', href: '/supergod' });
-  } else if (segments[0] === 'subscription') {
-    breadcrumbs.push({ name: 'Subscription', href: '/subscription' });
-  } else if (segments[0] === 'profile') {
-    breadcrumbs.push({ name: 'Profile', href: '/profile' });
-  }
-
-  return breadcrumbs;
-}
 
 function getRoleIcon(role: string) {
   switch (role) {
@@ -79,10 +38,9 @@ function getRoleVariant(role: string) {
 }
 
 export function Header() {
-  const [location, navigate] = useLocation();
+  const [, navigate] = useLocation();
   const { user, logout } = useUser();
   const { toast } = useToast();
-  const breadcrumbs = getBreadcrumbs(location);
 
   const handleLogout = async () => {
     try {
@@ -105,69 +63,70 @@ export function Header() {
   };
 
   return (
-    <header className="flex h-14 items-center justify-between border-b bg-background px-6">
-      <div className="flex items-center space-x-4">
-        <Breadcrumb>
-          <BreadcrumbList>
-            {breadcrumbs.map((crumb, index) => (
-              <div key={crumb.href} className="flex items-center">
-                {index > 0 && <BreadcrumbSeparator />}
-                <BreadcrumbItem>
-                  {index === breadcrumbs.length - 1 ? (
-                    <BreadcrumbPage>{crumb.name}</BreadcrumbPage>
-                  ) : (
-                    <BreadcrumbLink href={crumb.href}>
-                      {crumb.name}
-                    </BreadcrumbLink>
-                  )}
-                </BreadcrumbItem>
-              </div>
-            ))}
-          </BreadcrumbList>
-        </Breadcrumb>
-      </div>
-
-      <div className="flex items-center space-x-4">
-        {user && (
-          <>
-            <div className="flex items-center space-x-2">
+    <nav className="border-b">
+      <div className="container flex h-16 items-center px-4">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => window.history.back()}
+            className="h-8 w-8 nav-button"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/")}
+            className="h-8 w-8 nav-button"
+          >
+            <Home className="h-4 w-4" />
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => window.history.forward()}
+            className="h-8 w-8 nav-button"
+          >
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </div>
+        
+        <div className="flex items-center gap-4 ml-auto">
+          {user && (
+            <>
+              <span className="font-bold">
+                {user.username || "User1#*User1$"}
+              </span>
+              
               <Badge variant={getRoleVariant(user.role)} className="flex items-center gap-1">
                 {getRoleIcon(user.role)}
                 {user.role}
               </Badge>
-            </div>
+              
+              {user.role === "supergod" && (
+                <span className="text-sm font-bold text-red-500">
+                  👑 Super-God Mode Active
+                </span>
+              )}
+            </>
+          )}
+          
+          <FontSizeControls />
+          <CustomThemeToggle />
 
-            <Separator orientation="vertical" className="h-6" />
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center space-x-2">
-                  <User className="h-4 w-4" />
-                  <span className="font-medium">{user.username}</span>
-                  <ChevronDown className="h-3 w-3" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate('/profile')}>
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/subscription')}>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Subscription</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </>
-        )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleLogout}
+            className="h-8 w-8 nav-button"
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
-    </header>
+    </nav>
   );
 }
