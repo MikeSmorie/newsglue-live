@@ -18,6 +18,7 @@ import { checkTrialStatus, resetUserTrial } from "./routes/trial";
 import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
 import { logError } from "./utils/logger";
 import { requireRole, requireSupergod } from "./middleware/rbac";
+import { getTokenBalance, consumeTokens, giftTokens, modifyTokens, getAllTokenBalances } from "./routes/tokens";
 import { db } from "../db";
 import { users } from "../db/schema";
 import { eq } from "drizzle-orm";

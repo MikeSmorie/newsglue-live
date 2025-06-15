@@ -64,6 +64,18 @@ export function requireTier(moduleName: string) {
         });
       }
 
+      // Admin/Supergod bypass: Skip all tier restrictions
+      if (req.user.role === "admin" || req.user.role === "supergod") {
+        await logEvent("user_action", `Executive access granted to module: ${moduleName}`, {
+          userId: req.user.id,
+          userRole: req.user.role,
+          endpoint: req.path,
+          severity: "info",
+          metadata: { moduleName, executiveBypass: true }
+        });
+        return next();
+      }
+
       // Get user's current tier level with trial override
       let effectiveTier = req.user.subscriptionPlan as keyof typeof TIER_HIERARCHY;
       

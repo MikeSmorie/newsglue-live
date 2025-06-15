@@ -5,11 +5,7 @@ import { eq, and } from "drizzle-orm";
 import { logEvent } from "../../lib/logs";
 
 interface AuthenticatedRequest extends Request {
-  user?: {
-    id: number;
-    username: string;
-    role: string;
-  };
+  user?: any;
 }
 
 // Get user's token balance
@@ -28,7 +24,7 @@ export async function getTokenBalance(req: AuthenticatedRequest, res: Response) 
     const expiresAt = userTokens?.expiresAt;
     const lastUsedAt = userTokens?.lastUsedAt;
 
-    await logEvent("token_balance_check", "Token balance checked", {
+    await logEvent("user_action", "Token balance checked", {
       userId,
       userRole: req.user?.role,
       endpoint: "/api/tokens/balance"
@@ -91,7 +87,7 @@ export async function consumeTokens(req: AuthenticatedRequest, res: Response) {
         .where(eq(tokens.userId, userId));
     }
 
-    await logEvent("token_consumption", `Consumed ${amount} tokens for ${feature}`, {
+    await logEvent("user_action", `Consumed ${amount} tokens for ${feature}`, {
       userId,
       userRole: req.user?.role,
       endpoint: "/api/tokens/consume",
@@ -163,7 +159,7 @@ export async function giftTokens(req: AuthenticatedRequest, res: Response) {
       });
     }
 
-    await logEvent("token_gift", `Admin gifted ${amount} tokens to user ${targetUserId}`, {
+    await logEvent("user_action", `Admin gifted ${amount} tokens to user ${targetUserId}`, {
       userId: adminId,
       userRole: req.user?.role,
       endpoint: "/api/admin/tokens/gift",
@@ -236,7 +232,7 @@ export async function modifyTokens(req: AuthenticatedRequest, res: Response) {
       });
     }
 
-    await logEvent("token_modification", `Admin set user ${targetUserId} tokens to ${newBalance}`, {
+    await logEvent("user_action", `Admin set user ${targetUserId} tokens to ${newBalance}`, {
       userId: adminId,
       userRole: req.user?.role,
       endpoint: "/api/admin/tokens/modify",
@@ -277,7 +273,7 @@ export async function getAllTokenBalances(req: AuthenticatedRequest, res: Respon
       }
     });
 
-    await logEvent("token_admin_view", "Admin viewed all token balances", {
+    await logEvent("user_action", "Admin viewed all token balances", {
       userId: adminId,
       userRole: req.user?.role,
       endpoint: "/api/admin/tokens/all"
