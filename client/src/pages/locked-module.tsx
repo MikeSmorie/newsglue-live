@@ -1,4 +1,4 @@
-import { Link, useSearch } from "wouter";
+import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,7 @@ const TIER_INFO = {
 };
 
 export default function LockedModule() {
-  const [searchParams] = useSearchParams();
+  const searchParams = new URLSearchParams(window.location.search);
   const moduleName = searchParams.get("name") || "Unknown Module";
 
   const { data: userData } = useQuery<UserData>({

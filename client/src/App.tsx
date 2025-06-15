@@ -17,6 +17,7 @@ import Dashboard from "@/pages/dashboard";
 import ModuleView from "@/pages/module-view";
 import SubscriptionManagement from "@/pages/subscription-management";
 import SubscriptionPlans from "@/pages/subscription-plans";
+import LockedModule from "@/pages/locked-module";
 import TwoFactorAuth from "@/pages/two-factor-auth";
 import AuditModule from "@/pages/audit-module";
 import AuditPage from "@/pages/admin/audit";
@@ -122,6 +123,7 @@ function Router() {
         </Route>
         <Route path="/subscription" component={SubscriptionManagement} />
         <Route path="/subscription/plans" component={SubscriptionPlans} />
+        <Route path="/locked-module" component={() => import("@/pages/locked-module").then(m => m.default)} />
         <Route path="/2fa" component={TwoFactorAuth} />
         <Route path="/module/omega-10" component={AuditModule} />
         <Route path="/profile" component={Dashboard} />

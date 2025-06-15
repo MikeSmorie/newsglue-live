@@ -200,7 +200,7 @@ modulesRouter.post("/:moduleName/execute", requireAuth, requireTier("moduleName"
 /**
  * Admin: Get all modules for management
  */
-modulesRouter.get("/admin/all", requireAuth, requireRole(["supergod"]), async (req: TierRequest, res: Response) => {
+modulesRouter.get("/admin/all", requireAuth, requireRole("supergod"), async (req: TierRequest, res: Response) => {
   try {
     const allModules = await db.query.modules.findMany({
       orderBy: (modules, { asc }) => [asc(modules.id)]
@@ -228,7 +228,7 @@ modulesRouter.get("/admin/all", requireAuth, requireRole(["supergod"]), async (r
 /**
  * Admin: Update module tier requirements
  */
-modulesRouter.patch("/admin/:moduleId/tier", requireAuth, requireRole(["supergod"]), async (req: TierRequest, res: Response) => {
+modulesRouter.patch("/admin/:moduleId/tier", requireAuth, requireRole("supergod"), async (req: TierRequest, res: Response) => {
   const { moduleId } = req.params;
   const { requiredTier } = req.body;
 
@@ -287,7 +287,7 @@ modulesRouter.patch("/admin/:moduleId/tier", requireAuth, requireRole(["supergod
 /**
  * Admin: Create new module
  */
-modulesRouter.post("/admin/create", requireAuth, requireRole(["supergod"]), async (req: TierRequest, res: Response) => {
+modulesRouter.post("/admin/create", requireAuth, requireRole("supergod"), async (req: TierRequest, res: Response) => {
   const { name, description, requiredTier = "free" } = req.body;
 
   if (!name) {
