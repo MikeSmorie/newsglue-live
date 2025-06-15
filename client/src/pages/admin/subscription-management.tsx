@@ -10,7 +10,9 @@ import {
   Zap,
   Crown,
   Shield,
-  Wallet
+  Wallet,
+  KeyRound,
+  X
 } from "lucide-react";
 
 interface UserSubscription {
@@ -22,6 +24,7 @@ interface UserSubscription {
   lastPaymentStatus?: string;
   lastPaymentDate?: string;
   email?: string;
+  twoFactorEnabled?: boolean;
 }
 
 function PlanIcon({ plan }: { plan: string }) {
@@ -193,6 +196,7 @@ export default function AdminSubscriptionManagement() {
                   <TableHead className="text-gray-900 dark:text-white">User</TableHead>
                   <TableHead className="text-gray-900 dark:text-white">Role</TableHead>
                   <TableHead className="text-gray-900 dark:text-white">Plan</TableHead>
+                  <TableHead className="text-gray-900 dark:text-white">2FA</TableHead>
                   <TableHead className="text-gray-900 dark:text-white">Wallet</TableHead>
                   <TableHead className="text-gray-900 dark:text-white">Last Payment</TableHead>
                   <TableHead className="text-gray-900 dark:text-white">Status</TableHead>

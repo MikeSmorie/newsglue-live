@@ -1,6 +1,7 @@
 import { useLocation } from "wouter";
 import { useUser } from "@/hooks/use-user";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FontSizeControls } from "@/components/font-size-controls";
@@ -42,6 +43,12 @@ export function Header() {
   const [, navigate] = useLocation();
   const { user, logout } = useUser();
   const { toast } = useToast();
+  
+  // Fetch 2FA status for header indicator
+  const { data: twoFactorStatus } = useQuery<{ enabled: boolean; secret?: string }>({
+    queryKey: ["/api/2fa/status"],
+    enabled: !!user,
+  });
 
   const handleLogout = async () => {
     try {
@@ -111,6 +118,13 @@ export function Header() {
                 <span className="text-sm font-bold text-red-500 dark:text-red-400">
                   👑 Super-God Mode Active
                 </span>
+              )}
+              
+              {twoFactorStatus && twoFactorStatus.enabled && (
+                <Badge variant="default" className="flex items-center gap-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 border-green-300 dark:border-green-700">
+                  <KeyRound className="h-3 w-3" />
+                  2FA
+                </Badge>
               )}
             </>
           )}
