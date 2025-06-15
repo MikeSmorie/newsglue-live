@@ -37,6 +37,7 @@ export const users = pgTable("users", {
   twoFactorSecret: text("two_factor_secret"),
   email: text("email").unique().notNull(),
   referredBy: text("referred_by"), // stores referral_code used during registration
+  tokens: integer("tokens").notNull().default(0), // user token balance for referral rewards
   trialActive: boolean("trial_active").notNull().default(true),
   trialStartDate: timestamp("trial_start_date").defaultNow(),
   trialExpiresAt: timestamp("trial_expires_at"),

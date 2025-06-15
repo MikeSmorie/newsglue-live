@@ -13,7 +13,8 @@ import {
   Shield,
   Crown,
   KeyRound,
-  FileText
+  FileText,
+  Gift
 } from "lucide-react";
 
 const moduleItems = Array.from({ length: 9 }, (_, i) => ({
@@ -47,6 +48,11 @@ const navigationItems = [
     name: "Subscription",
     href: "/subscription",
     icon: CreditCard
+  },
+  {
+    name: "Refer & Earn",
+    href: "/referrals",
+    icon: Gift
   },
   {
     name: "Two-Factor Auth",

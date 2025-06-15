@@ -1,144 +1,142 @@
 import { db } from "../../db";
-import { referrals, referralRedemptions, users, tokens } from "../../db/schema";
-import { eq, and, desc } from "drizzle-orm";
-import type { ReferralRecord, RedemptionEntry, ReferralStats } from "./types";
+import { referrals, referralRedemptions, users } from "../../db/schema";
+import { eq, and, desc, count, sum } from "drizzle-orm";
+import type { ReferralStats, ReferralRedemption } from "./types";
 
-// Create a new referral code for a user
-export async function createReferral(userId: number, referralCode: string): Promise<ReferralRecord> {
-  const [referral] = await db
-    .insert(referrals)
-    .values({
-      userId,
-      referralCode,
-    })
-    .returning();
+/**
+ * Get or create a referral code for a user
+ */
+export async function getOrCreateReferralCode(userId: number, username: string): Promise<string> {
+  // Check if user already has a referral code
+  const existingReferral = await db.query.referrals.findFirst({
+    where: eq(referrals.userId, userId),
+  });
 
-  return referral;
+  if (existingReferral) {
+    return existingReferral.referralCode;
+  }
+
+  // Generate a unique referral code based on username + random suffix
+  const baseCode = username.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 8);
+  const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+  const referralCode = `${baseCode}${randomSuffix}`;
+
+  // Insert new referral code
+  await db.insert(referrals).values({
+    userId,
+    referralCode,
+    createdAt: new Date(),
+  });
+
+  return referralCode;
 }
 
-// Get referral by code
-export async function getReferralByCode(referralCode: string): Promise<ReferralRecord | null> {
-  const [referral] = await db
-    .select()
-    .from(referrals)
-    .where(eq(referrals.referralCode, referralCode))
-    .limit(1);
-
-  return referral || null;
+/**
+ * Find a referral by code
+ */
+export async function findReferralByCode(referralCode: string) {
+  return await db.query.referrals.findFirst({
+    where: eq(referrals.referralCode, referralCode),
+  });
 }
 
-// Get referral by user ID
-export async function getReferralByUserId(userId: number): Promise<ReferralRecord | null> {
-  const [referral] = await db
-    .select()
-    .from(referrals)
-    .where(eq(referrals.userId, userId))
-    .limit(1);
-
-  return referral || null;
-}
-
-// Check if user has already redeemed a referral
+/**
+ * Check if a user has already redeemed a referral code
+ */
 export async function hasUserRedeemedReferral(userId: number): Promise<boolean> {
-  const [redemption] = await db
-    .select()
-    .from(referralRedemptions)
-    .where(eq(referralRedemptions.refereeId, userId))
-    .limit(1);
+  const redemption = await db.query.referralRedemptions.findFirst({
+    where: eq(referralRedemptions.refereeId, userId),
+  });
 
   return !!redemption;
 }
 
-// Create a referral redemption
+/**
+ * Create a referral redemption record
+ */
 export async function createReferralRedemption(
   referrerId: number,
   refereeId: number,
   rewardAmount: number = 50
-): Promise<RedemptionEntry> {
-  const [redemption] = await db
-    .insert(referralRedemptions)
-    .values({
-      referrerId,
-      refereeId,
-      rewardAmount,
-    })
-    .returning();
-
-  return redemption;
-}
-
-// Get referral redemptions for a user (as referrer)
-export async function getReferralRedemptions(userId: number): Promise<RedemptionEntry[]> {
-  const redemptions = await db
-    .select()
-    .from(referralRedemptions)
-    .where(eq(referralRedemptions.referrerId, userId))
-    .orderBy(desc(referralRedemptions.redeemedAt));
-
-  return redemptions;
-}
-
-// Get referral statistics for a user
-export async function getReferralStats(userId: number): Promise<ReferralStats> {
-  const redemptions = await getReferralRedemptions(userId);
-  const totalRedemptions = redemptions.length;
-  const totalRewards = redemptions.reduce((sum, redemption) => sum + redemption.rewardAmount, 0);
-  const recentRedemptions = redemptions.slice(0, 5); // Last 5 redemptions
+): Promise<ReferralRedemption> {
+  const redemption = await db.insert(referralRedemptions).values({
+    referrerId,
+    refereeId,
+    rewardAmount,
+    redeemedAt: new Date(),
+  }).returning();
 
   return {
-    totalReferrals: 1, // Each user has one referral code
-    totalRedemptions,
-    totalRewards,
-    recentRedemptions,
+    id: redemption[0].id,
+    referrerId: redemption[0].referrerId,
+    refereeId: redemption[0].refereeId,
+    redeemedAt: redemption[0].redeemedAt,
+    rewardAmount: redemption[0].rewardAmount,
   };
 }
 
-// Add tokens to user balance
-export async function addTokensToUser(userId: number, amount: number): Promise<void> {
-  // Get or create token record for user
-  const [existingTokens] = await db
-    .select()
-    .from(tokens)
-    .where(eq(tokens.userId, userId))
-    .limit(1);
-
-  if (existingTokens) {
-    // Update existing balance
-    await db
-      .update(tokens)
-      .set({
-        balance: existingTokens.balance + amount,
-        updatedAt: new Date(),
-      })
-      .where(eq(tokens.userId, userId));
-  } else {
-    // Create new token record
-    await db
-      .insert(tokens)
-      .values({
-        userId,
-        balance: amount,
-      });
-  }
-}
-
-// Get user by referral code (for validation)
-export async function getUserByReferralCode(referralCode: string): Promise<{ id: number; username: string } | null> {
-  const [result] = await db
+/**
+ * Get referral statistics for a user
+ */
+export async function getReferralStats(userId: number): Promise<ReferralStats> {
+  // Get total redemptions count and total rewards
+  const statsQuery = await db
     .select({
-      id: users.id,
-      username: users.username,
+      totalRedemptions: count(referralRedemptions.id),
+      totalRewards: sum(referralRedemptions.rewardAmount),
     })
-    .from(users)
-    .innerJoin(referrals, eq(referrals.userId, users.id))
-    .where(eq(referrals.referralCode, referralCode))
-    .limit(1);
+    .from(referralRedemptions)
+    .where(eq(referralRedemptions.referrerId, userId));
 
-  return result || null;
+  const stats = statsQuery[0];
+  const totalRedemptions = stats.totalRedemptions || 0;
+  const totalRewards = Number(stats.totalRewards) || 0;
+
+  return {
+    totalReferrals: totalRedemptions, // Same as redemptions for now
+    totalRedemptions,
+    totalRewards,
+    recentRedemptions: [],
+  };
 }
 
-// Check if referral code exists and is valid
-export async function validateReferralCode(referralCode: string): Promise<boolean> {
-  const referral = await getReferralByCode(referralCode);
-  return !!referral;
+/**
+ * Get recent referral redemptions for a user
+ */
+export async function getReferralRedemptions(userId: number): Promise<Array<{
+  id: number;
+  redeemedAt: string;
+  rewardAmount: number;
+  refereeId: number;
+}>> {
+  const redemptions = await db.query.referralRedemptions.findMany({
+    where: eq(referralRedemptions.referrerId, userId),
+    orderBy: [desc(referralRedemptions.redeemedAt)],
+    limit: 10,
+  });
+
+  return redemptions.map(redemption => ({
+    id: redemption.id,
+    redeemedAt: redemption.redeemedAt.toISOString(),
+    rewardAmount: redemption.rewardAmount,
+    refereeId: redemption.refereeId,
+  }));
+}
+
+/**
+ * Award tokens to a user (integrates with existing token system)
+ */
+export async function awardTokens(userId: number, amount: number): Promise<void> {
+  // This function should integrate with your existing token system
+  // For now, we'll update the user's token balance directly
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, userId),
+  });
+
+  if (user) {
+    const currentTokens = user.tokens || 0;
+    await db.update(users)
+      .set({ tokens: currentTokens + amount })
+      .where(eq(users.id, userId));
+  }
 }
