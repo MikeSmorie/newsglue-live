@@ -13,13 +13,19 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Eye, EyeOff, HelpCircle, Loader2, Shield } from "lucide-react";
 import { Link } from "wouter";
 
-const authSchema = z.object({
+const loginSchema = z.object({
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+const registerSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
   email: z.string().email("Invalid email address").max(255, "Email must be less than 255 characters"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
-type AuthFormData = z.infer<typeof authSchema>;
+type LoginFormData = z.infer<typeof loginSchema>;
+type RegisterFormData = z.infer<typeof registerSchema>;
 
 export default function AuthPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -27,8 +33,16 @@ export default function AuthPage() {
   const { toast } = useToast();
   const { login, register } = useUser();
 
-  const form = useForm<AuthFormData>({
-    resolver: zodResolver(authSchema),
+  const loginForm = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      username: "",
+      password: "",
+    },
+  });
+
+  const registerForm = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
     defaultValues: {
       username: "",
       email: "",
@@ -36,21 +50,48 @@ export default function AuthPage() {
     },
   });
 
-  const onSubmit = async (data: AuthFormData, isLogin: boolean) => {
+  const onLoginSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
-      const result = await (isLogin ? login(data) : register(data));
+      // Convert login data to match expected InsertUser type
+      const loginData = {
+        ...data,
+        email: "", // Add required email field for API compatibility
+      };
+      const result = await login(loginData);
       if (!result.ok) {
         throw new Error(result.message);
       }
       toast({
-        title: isLogin ? "Logged in successfully" : "Registered successfully",
+        title: "Logged in successfully",
         description: `Welcome ${data.username}!`,
       });
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Error",
+        title: "Login failed",
+        description: error.message,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onRegisterSubmit = async (data: RegisterFormData) => {
+    setIsLoading(true);
+    try {
+      const result = await register(data);
+      if (!result.ok) {
+        throw new Error(result.message);
+      }
+      toast({
+        title: "Registered successfully",
+        description: `Welcome ${data.username}!`,
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Registration failed",
         description: error.message,
       });
     } finally {
@@ -59,28 +100,26 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900 dark:to-blue-900 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center bg-gradient-to-br from-foreground to-muted-foreground bg-clip-text text-transparent">
-            Welcome
-          </CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">Welcome to Omega V8.3</CardTitle>
           <CardDescription className="text-center">
             Sign in to your account or create a new one
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="login" className="space-y-4">
+          <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Login</TabsTrigger>
               <TabsTrigger value="register">Register</TabsTrigger>
             </TabsList>
 
             <TabsContent value="login">
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit((data) => onSubmit(data, true))} className="space-y-4">
+              <Form {...loginForm}>
+                <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
                   <FormField
-                    control={form.control}
+                    control={loginForm.control}
                     name="username"
                     render={({ field }) => (
                       <FormItem>
@@ -105,7 +144,7 @@ export default function AuthPage() {
                     )}
                   />
                   <FormField
-                    control={form.control}
+                    control={loginForm.control}
                     name="password"
                     render={({ field }) => (
                       <FormItem>
@@ -156,10 +195,10 @@ export default function AuthPage() {
             </TabsContent>
 
             <TabsContent value="register">
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit((data) => onSubmit(data, false))} className="space-y-4">
+              <Form {...registerForm}>
+                <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
                   <FormField
-                    control={form.control}
+                    control={registerForm.control}
                     name="username"
                     render={({ field }) => (
                       <FormItem>
@@ -184,7 +223,7 @@ export default function AuthPage() {
                     )}
                   />
                   <FormField
-                    control={form.control}
+                    control={registerForm.control}
                     name="email"
                     render={({ field }) => (
                       <FormItem>
@@ -202,14 +241,14 @@ export default function AuthPage() {
                           </TooltipProvider>
                         </div>
                         <FormControl>
-                          <Input type="email" placeholder="you@example.com" {...field} />
+                          <Input type="email" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                   <FormField
-                    control={form.control}
+                    control={registerForm.control}
                     name="password"
                     render={({ field }) => (
                       <FormItem>
@@ -261,12 +300,12 @@ export default function AuthPage() {
           </Tabs>
 
           <div className="mt-6 text-center">
-            <Link href="/admin-register">
-              <Button variant="outline" className="w-full">
-                <Shield className="mr-2 h-4 w-4" />
-                Register as Administrator
-              </Button>
-            </Link>
+            <p className="text-sm text-muted-foreground">
+              Need elevated access?{" "}
+              <Link href="/admin-access" className="text-primary hover:underline">
+                Admin Registration
+              </Link>
+            </p>
           </div>
         </CardContent>
       </Card>
