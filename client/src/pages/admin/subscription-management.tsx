@@ -226,6 +226,19 @@ export default function AdminSubscriptionManagement() {
                       </Badge>
                     </TableCell>
                     <TableCell>
+                      {subscription.twoFactorEnabled ? (
+                        <Badge variant="default" className="flex items-center gap-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 border-green-300 dark:border-green-700">
+                          <KeyRound className="h-3 w-3" />
+                          Enabled
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
+                          <X className="h-3 w-3" />
+                          Disabled
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
                       {subscription.walletAddress ? (
                         <div className="flex items-center gap-2">
                           <Wallet className="h-4 w-4 text-green-500" />

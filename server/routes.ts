@@ -13,6 +13,9 @@ import paymentRoutes from "./routes/payment";
 import { registerSupergodRoutes } from "./routes/supergod";
 import { logError } from "./utils/logger";
 import { requireRole, requireSupergod } from "./middleware/rbac";
+import { db } from "../db";
+import { users } from "../db/schema";
+import { eq } from "drizzle-orm";
 
 // Simple auth checks using passport
 const requireAuth = (req: any, res: any, next: any) => {
@@ -177,7 +180,8 @@ export function registerRoutes(app: Express) {
           walletAddress: "0x1234567890abcdef1234567890abcdef12345678",
           lastPaymentStatus: "completed",
           lastPaymentDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-          email: "test@example.com"
+          email: "test@example.com",
+          twoFactorEnabled: false
         },
         {
           id: 2,
@@ -187,7 +191,8 @@ export function registerRoutes(app: Express) {
           walletAddress: null,
           lastPaymentStatus: "pending",
           lastPaymentDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-          email: "admin@example.com"
+          email: "admin@example.com",
+          twoFactorEnabled: true
         },
         {
           id: 3,
@@ -197,7 +202,8 @@ export function registerRoutes(app: Express) {
           walletAddress: "0xabcdef1234567890abcdef1234567890abcdef12",
           lastPaymentStatus: "completed",
           lastPaymentDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-          email: "enterprise@example.com"
+          email: "enterprise@example.com",
+          twoFactorEnabled: true
         }
       ];
 
@@ -215,13 +221,25 @@ export function registerRoutes(app: Express) {
         return res.status(401).json({ message: "User not authenticated" });
       }
 
-      // Mock 2FA status - in real implementation, query user's 2FA settings
-      const mock2FAStatus = {
-        enabled: false, // Default to disabled
-        secret: "JBSWY3DPEHPK3PXP" // Mock TOTP secret
+      // Query database for user's 2FA settings
+      const user = await db.query.users.findFirst({
+        where: eq(users.id, userId),
+        columns: {
+          twoFactorEnabled: true,
+          twoFactorSecret: true
+        }
+      });
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const response = {
+        enabled: user.twoFactorEnabled || false,
+        secret: user.twoFactorSecret || undefined
       };
 
-      res.json(mock2FAStatus);
+      res.json(response);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
@@ -234,16 +252,23 @@ export function registerRoutes(app: Express) {
         return res.status(401).json({ message: "User not authenticated" });
       }
 
-      // Generate mock TOTP secret
-      const mockSecret = "JBSWY3DPEHPK3PXP" + Math.random().toString(36).substr(2, 9).toUpperCase();
+      // Generate TOTP secret for this user
+      const totpSecret = "JBSWY3DPEHPK3PXP" + Math.random().toString(36).substr(2, 9).toUpperCase();
       
-      // Mock enabling 2FA - in real implementation, update database
-      console.log(`[MOCK] Enabling 2FA for user ${userId} with secret: ${mockSecret}`);
+      // Update database to enable 2FA and store secret
+      await db.update(users)
+        .set({ 
+          twoFactorEnabled: true,
+          twoFactorSecret: totpSecret 
+        })
+        .where(eq(users.id, userId));
+
+      console.log(`[2FA] Enabled for user ${userId}`);
 
       res.json({
         success: true,
         message: "2FA enabled successfully",
-        secret: mockSecret
+        secret: totpSecret
       });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -257,8 +282,15 @@ export function registerRoutes(app: Express) {
         return res.status(401).json({ message: "User not authenticated" });
       }
 
-      // Mock disabling 2FA - in real implementation, update database
-      console.log(`[MOCK] Disabling 2FA for user ${userId}`);
+      // Update database to disable 2FA and clear secret
+      await db.update(users)
+        .set({ 
+          twoFactorEnabled: false,
+          twoFactorSecret: null 
+        })
+        .where(eq(users.id, userId));
+
+      console.log(`[2FA] Disabled for user ${userId}`);
 
       res.json({
         success: true,
