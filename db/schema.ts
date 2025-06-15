@@ -179,7 +179,8 @@ export const planFeatures = pgTable("plan_features", {
 export const usersRelations = relations(users, ({ many }) => ({
   activityLogs: many(activityLogs),
   subscriptions: many(userSubscriptions),
-  transactions: many(transactions)
+  transactions: many(transactions),
+  tokens: many(tokens)
 }));
 
 export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
@@ -431,3 +432,27 @@ export const selectModuleSchema = createSelectSchema(modules);
 
 export type InsertModule = typeof modules.$inferInsert;
 export type SelectModule = typeof modules.$inferSelect;
+
+// Tokens table for hybrid billing system
+export const tokens = pgTable("tokens", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  balance: integer("balance").notNull().default(0),
+  lastUsedAt: timestamp("last_used_at"),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const tokensRelations = relations(tokens, ({ one }) => ({
+  user: one(users, {
+    fields: [tokens.userId],
+    references: [users.id],
+  }),
+}));
+
+export const insertTokenSchema = createInsertSchema(tokens);
+export const selectTokenSchema = createSelectSchema(tokens);
+
+export type InsertToken = typeof tokens.$inferInsert;
+export type SelectToken = typeof tokens.$inferSelect;
