@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { useUser } from "../hooks/use-user";
+import { useUser } from "@/hooks/use-user";
 import { useToast } from "../hooks/use-toast";
 
 interface AdminContextType {
