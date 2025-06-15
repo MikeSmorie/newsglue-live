@@ -13,19 +13,13 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Eye, EyeOff, HelpCircle, Loader2, Shield } from "lucide-react";
 import { Link } from "wouter";
 
-const loginSchema = z.object({
-  username: z.string().min(3, "Username must be at least 3 characters"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-});
-
-const registerSchema = z.object({
+const authSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
   email: z.string().email("Invalid email address").max(255, "Email must be less than 255 characters"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
-type LoginFormData = z.infer<typeof loginSchema>;
-type RegisterFormData = z.infer<typeof registerSchema>;
+type AuthFormData = z.infer<typeof authSchema>;
 
 export default function AuthPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -33,16 +27,8 @@ export default function AuthPage() {
   const { toast } = useToast();
   const { login, register } = useUser();
 
-  const loginForm = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      username: "",
-      password: "",
-    },
-  });
-
-  const registerForm = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
+  const form = useForm<AuthFormData>({
+    resolver: zodResolver(authSchema),
     defaultValues: {
       username: "",
       email: "",
@@ -50,48 +36,21 @@ export default function AuthPage() {
     },
   });
 
-  const onLoginSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data: AuthFormData, isLogin: boolean) => {
     setIsLoading(true);
     try {
-      // Convert login data to match expected InsertUser type
-      const loginData = {
-        ...data,
-        email: "", // Add required email field for API compatibility
-      };
-      const result = await login(loginData);
+      const result = await (isLogin ? login(data) : register(data));
       if (!result.ok) {
         throw new Error(result.message);
       }
       toast({
-        title: "Logged in successfully",
+        title: isLogin ? "Logged in successfully" : "Registered successfully",
         description: `Welcome ${data.username}!`,
       });
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Login failed",
-        description: error.message,
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const onRegisterSubmit = async (data: RegisterFormData) => {
-    setIsLoading(true);
-    try {
-      const result = await register(data);
-      if (!result.ok) {
-        throw new Error(result.message);
-      }
-      toast({
-        title: "Registered successfully",
-        description: `Welcome ${data.username}!`,
-      });
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Registration failed",
+        title: "Error",
         description: error.message,
       });
     } finally {
@@ -116,10 +75,10 @@ export default function AuthPage() {
             </TabsList>
 
             <TabsContent value="login">
-              <Form {...loginForm}>
-                <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit((data) => onSubmit(data, true))} className="space-y-4">
                   <FormField
-                    control={loginForm.control}
+                    control={form.control}
                     name="username"
                     render={({ field }) => (
                       <FormItem>
@@ -144,7 +103,7 @@ export default function AuthPage() {
                     )}
                   />
                   <FormField
-                    control={loginForm.control}
+                    control={form.control}
                     name="password"
                     render={({ field }) => (
                       <FormItem>
@@ -195,10 +154,10 @@ export default function AuthPage() {
             </TabsContent>
 
             <TabsContent value="register">
-              <Form {...registerForm}>
-                <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit((data) => onSubmit(data, false))} className="space-y-4">
                   <FormField
-                    control={registerForm.control}
+                    control={form.control}
                     name="username"
                     render={({ field }) => (
                       <FormItem>
@@ -223,7 +182,7 @@ export default function AuthPage() {
                     )}
                   />
                   <FormField
-                    control={registerForm.control}
+                    control={form.control}
                     name="email"
                     render={({ field }) => (
                       <FormItem>
@@ -248,7 +207,7 @@ export default function AuthPage() {
                     )}
                   />
                   <FormField
-                    control={registerForm.control}
+                    control={form.control}
                     name="password"
                     render={({ field }) => (
                       <FormItem>
