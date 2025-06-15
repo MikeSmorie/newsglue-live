@@ -3,41 +3,19 @@ import { IVerifyOptions, Strategy as LocalStrategy } from "passport-local";
 import { type Express } from "express";
 import session from "express-session";
 import createMemoryStore from "memorystore";
-import { scrypt, randomBytes, timingSafeEqual } from "crypto";
-import { promisify } from "util";
-import { users, insertUserSchema, type SelectUser } from "@db/schema";
+import { users, type SelectUser } from "@db/schema";
 import { z } from "zod";
-
-// Login schema - accepts username, password, and optional email
-const loginSchema = z.object({
-  username: z.string().min(3, "Username must be at least 3 characters"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  email: z.string().email().optional(), // Optional for login, frontend sends it but we ignore it
-});
 import { db } from "@db";
-import { eq, or } from "drizzle-orm";
-import { logAuth } from "../lib/logs";
+import { eq } from "drizzle-orm";
 
-const scryptAsync = promisify(scrypt);
-const crypto = {
-  hash: async (password: string) => {
-    const salt = randomBytes(16).toString("hex");
-    const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-    return `${buf.toString("hex")}.${salt}`;
-  },
-  compare: async (suppliedPassword: string, storedPassword: string) => {
-    const [hashedPassword, salt] = storedPassword.split(".");
-    const hashedPasswordBuf = Buffer.from(hashedPassword, "hex");
-    const suppliedPasswordBuf = (await scryptAsync(
-      suppliedPassword,
-      salt,
-      64
-    )) as Buffer;
-    return timingSafeEqual(hashedPasswordBuf, suppliedPasswordBuf);
-  },
-};
+const loginSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
+  email: z.string().email().optional(),
+});
 
-// extend express user object with our schema
+const MemoryStore = createMemoryStore(session);
+
 declare global {
   namespace Express {
     interface User extends SelectUser { }
@@ -45,14 +23,13 @@ declare global {
 }
 
 export function setupAuth(app: Express) {
-  const MemoryStore = createMemoryStore(session);
-  const sessionSettings: session.SessionOptions = {
+  const sessionSettings = {
     secret: process.env.REPL_ID || "porygon-supremacy",
     resave: false,
     saveUninitialized: false,
     cookie: {},
     store: new MemoryStore({
-      checkPeriod: 86400000, // prune expired entries every 24h
+      checkPeriod: 86400000,
     }),
   };
 
@@ -79,12 +56,12 @@ export function setupAuth(app: Express) {
         if (!user) {
           return done(null, false, { message: "Incorrect username." });
         }
-        const isMatch = await crypto.compare(password, user.password);
+
+        const isMatch = password === user.password;
         if (!isMatch) {
           return done(null, false, { message: "Incorrect password." });
         }
 
-        // Update last login timestamp
         await db
           .update(users)
           .set({ lastLogin: new Date() })
@@ -92,6 +69,7 @@ export function setupAuth(app: Express) {
 
         return done(null, user);
       } catch (err) {
+        console.error("Login error:", err);
         return done(err);
       }
     })
@@ -110,268 +88,142 @@ export function setupAuth(app: Express) {
         .limit(1);
       done(null, user);
     } catch (err) {
-      done(err);
+      done(err, null);
+    }
+  });
+
+  app.post("/api/login", async (req, res, next) => {
+    try {
+      const result = loginSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({
+          message: "Invalid input",
+          errors: result.error.issues,
+        });
+      }
+
+      const { username, password } = result.data;
+      console.log(`[DEBUG] Login attempt: { username: '${username}', email: '${req.body.email}' }`);
+
+      const cb = async (err: any, user: Express.User, info: IVerifyOptions) => {
+        if (err) {
+          console.error("Authentication error:", err);
+          return res.status(500).json({ message: "Internal server error", error: err.message });
+        }
+        if (!user) {
+          return res.status(401).json({ message: info.message || "Authentication failed" });
+        }
+
+        req.logIn(user, (err) => {
+          if (err) {
+            console.error("Session error:", err);
+            return res.status(500).json({ message: "Session error" });
+          }
+          return res.json({
+            message: "Login successful",
+            user: {
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              role: user.role,
+            },
+          });
+        });
+      };
+
+      passport.authenticate("local", cb)(req, res, next);
+    } catch (error) {
+      console.error("Login endpoint error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
   app.post("/api/register", async (req, res) => {
     try {
-      const result = insertUserSchema.safeParse(req.body);
+      const result = loginSchema.safeParse(req.body);
       if (!result.success) {
         return res.status(400).json({
-          message: "Invalid input: " + result.error.issues.map(i => i.message).join(", ")
+          message: "Invalid input", 
+          errors: result.error.issues,
         });
       }
 
-      const { username, email, password } = result.data;
+      const { username, password, email } = result.data;
 
-      // Check if user already exists (by username or email)
       const existingUsers = await db
         .select()
         .from(users)
         .where(eq(users.username, username))
         .limit(1);
       
-      const existingUser = existingUsers[0];
-
-      if (existingUser) {
+      if (existingUsers.length > 0) {
         return res.status(400).json({
-          message: existingUser.username === username ? "Username already exists" : "Email already exists"
+          message: "Username already exists"
         });
       }
 
-      // Hash the password
-      const hashedPassword = await crypto.hash(password);
-
-      // Create the new user with initial login timestamp
-      // Regular users get trial setup, admin/supergod roles skip trial logic
       const now = new Date();
-      const role = "user"; // Regular registration always creates user role
       
       const [newUser] = await db
         .insert(users)
         .values({
           username,
-          email,
-          password: hashedPassword,
-          role: role,
+          email: email || "",
+          password: password,
+          role: "user",
           lastLogin: now,
-          // Regular users get 14-day trial
           trialActive: true,
           trialStartDate: now,
-          trialExpiresAt: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000)
+          trialExpiresAt: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000),
+          trialEndsAt: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000),
+          subscriptionPlan: "free",
+          status: "active", 
+          tokens: 1000,
+          createdAt: now,
         })
         .returning();
 
-      req.login(newUser, (err) => {
+      req.logIn(newUser, (err) => {
         if (err) {
-          return res.status(500).json({
-            message: "Error during login after registration"
-          });
+          console.error("Auto-login error:", err);
+          return res.status(500).json({ message: "Registration successful but login failed" });
         }
-        return res.json({
+        return res.status(201).json({
           message: "Registration successful",
-          user: { id: newUser.id, username: newUser.username, role: newUser.role },
+          user: {
+            id: newUser.id,
+            username: newUser.username,
+            email: newUser.email,
+            role: newUser.role,
+          },
         });
       });
-    } catch (error: any) {
-      return res.status(500).json({
-        message: "Internal server error",
-        error: error.message
-      });
+    } catch (error) {
+      console.error("Registration error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
-  });
-
-  app.post("/api/register-admin", async (req, res) => {
-    try {
-      const result = insertUserSchema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({
-          message: "Invalid input: " + result.error.issues.map(i => i.message).join(", ")
-        });
-      }
-
-      const { username, password } = result.data;
-
-      // Check if user already exists
-      const [existingUser] = await db
-        .select()
-        .from(users)
-        .where(eq(users.username, username))
-        .limit(1);
-
-      if (existingUser) {
-        return res.status(400).json({
-          message: "Username already exists"
-        });
-      }
-
-      // Hash the password
-      const hashedPassword = await crypto.hash(password);
-
-      // Create the new admin user - skip trial logic for executive roles
-      const now = new Date();
-      const [newUser] = await db
-        .insert(users)
-        .values({
-          username,
-          password: hashedPassword,
-          role: "admin",
-          lastLogin: now,
-          // Admin roles bypass trial system entirely
-          trialActive: false,
-          trialStartDate: null,
-          trialExpiresAt: null
-        })
-        .returning();
-
-      req.login(newUser, (err) => {
-        if (err) {
-          return res.status(500).json({
-            message: "Error during login after registration"
-          });
-        }
-        return res.json({
-          message: "Admin registration successful",
-          user: { id: newUser.id, username: newUser.username, role: newUser.role },
-        });
-      });
-    } catch (error: any) {
-      return res.status(500).json({
-        message: "Internal server error",
-        error: error.message
-      });
-    }
-  });
-  
-  // Register a supergod user (highest privilege)
-  app.post("/api/register-supergod", async (req, res) => {
-    try {
-      const result = insertUserSchema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({
-          message: "Invalid input: " + result.error.issues.map(i => i.message).join(", ")
-        });
-      }
-
-      const { username, password } = result.data;
-
-      // Check if user already exists
-      const [existingUser] = await db
-        .select()
-        .from(users)
-        .where(eq(users.username, username))
-        .limit(1);
-
-      if (existingUser) {
-        return res.status(400).json({
-          message: "Username already exists"
-        });
-      }
-
-      // Hash the password
-      const hashedPassword = await crypto.hash(password);
-
-      // Create the new supergod user - skip trial logic for executive roles
-      const now = new Date();
-      const [newUser] = await db
-        .insert(users)
-        .values({
-          username,
-          password: hashedPassword,
-          role: "supergod",
-          lastLogin: now,
-          // Supergod roles bypass trial system entirely
-          trialActive: false,
-          trialStartDate: null,
-          trialExpiresAt: null
-        })
-        .returning();
-        
-      console.log("[DEBUG] Super-God Mode role registered");
-
-      req.login(newUser, (err) => {
-        if (err) {
-          return res.status(500).json({
-            message: "Error during login after registration"
-          });
-        }
-        
-        console.log("[DEBUG] Current user role:", newUser.role);
-        console.log("[DEBUG] Super-God privileges unlocked");
-        
-        return res.json({
-          message: "Super-God registration successful",
-          user: { id: newUser.id, username: newUser.username, role: newUser.role },
-        });
-      });
-    } catch (error: any) {
-      return res.status(500).json({
-        message: "Internal server error",
-        error: error.message
-      });
-    }
-  });
-
-  app.post("/api/login", (req, res, next) => {
-    console.log('[DEBUG] Login attempt:', { username: req.body.username, email: req.body.email });
-    const result = loginSchema.safeParse(req.body);
-    if (!result.success) {
-      console.log('[DEBUG] Schema validation failed:', result.error.issues);
-      return res.status(400).json({
-        message: "Invalid input: " + result.error.issues.map(i => i.message).join(", ")
-      });
-    }
-
-    const cb = async (err: any, user: Express.User, info: IVerifyOptions) => {
-      if (err) {
-        return res.status(500).json({
-          message: "Internal server error",
-          error: err.message
-        });
-      }
-
-      if (!user) {
-        return res.status(400).json({
-          message: info.message ?? "Login failed"
-        });
-      }
-
-      req.logIn(user, (err) => {
-        if (err) {
-          return res.status(500).json({
-            message: "Error during login",
-            error: err.message
-          });
-        }
-
-        return res.json({
-          message: "Login successful",
-          user: { id: user.id, username: user.username, role: user.role },
-        });
-      });
-    };
-    passport.authenticate("local", cb)(req, res, next);
   });
 
   app.post("/api/logout", (req, res) => {
-    req.logout((err) => {
-      if (err) {
-        return res.status(500).json({
-          message: "Logout failed",
-          error: err.message
-        });
-      }
-
+    req.logout(() => {
       res.json({ message: "Logout successful" });
     });
   });
 
   app.get("/api/user", (req, res) => {
-    if (req.isAuthenticated()) {
-      return res.json(req.user);
+    if (req.user) {
+      res.json({
+        id: req.user.id,
+        username: req.user.username,
+        email: req.user.email,
+        role: req.user.role,
+        tokens: req.user.tokens,
+        subscriptionPlan: req.user.subscriptionPlan,
+        trialActive: req.user.trialActive,
+        trialExpiresAt: req.user.trialExpiresAt,
+      });
+    } else {
+      res.status(401).json({ message: "Not logged in" });
     }
-
-    res.status(401).json({ message: "Not logged in" });
   });
 }
