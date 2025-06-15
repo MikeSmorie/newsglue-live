@@ -49,7 +49,7 @@ router.get("/pdf", async (req, res) => {
       ipAddress: log.ip_address
     }));
 
-    const pdfBuffer = generateAuditPdf(formattedLogs);
+    const pdfBuffer = await generateAuditPdf(formattedLogs);
     
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", "attachment; filename=omega-audit-logs.pdf");

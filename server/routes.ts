@@ -87,8 +87,8 @@ export function registerRoutes(app: Express) {
         username: user.username,
         email: user.email || '',
         role: user.role,
-        createdAt: user.createdAt || new Date().toISOString(),
-        updatedAt: user.updatedAt || new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
         subscriptionPlan: 'free',
         twoFactorEnabled: false
       };
