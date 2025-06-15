@@ -102,7 +102,7 @@ function Router() {
     <MainLayout>
       <Switch>
         {/* Admin routes - must come before main routes */}
-        <Route path="/admin/analytics" component={() => <ProtectedSupergodRoute component={AnalyticsTest} />} />
+        <Route path="/admin/analytics" component={AnalyticsTest} />
         <Route path="/admin/audit" component={() => <ProtectedSupergodRoute component={AuditPage} />} />
         <Route path="/admin/users" component={() => <ProtectedAdminRoute component={AdminUsersPage} />} />
         <Route path="/admin/communications" component={() => <ProtectedAdminRoute component={AdminCommunications} />} />
