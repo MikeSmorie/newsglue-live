@@ -1,34 +1,98 @@
 import express from "express";
-import { MockPaymentGateway } from "../payment/gateway";
 import { db } from "@db";
-import { clientPaymentGateways } from "@db/schema";
+import { paymentProviders, transactions } from "@db/schema";
 import { eq } from "drizzle-orm";
 
 const router = express.Router();
-const paymentGateway = new MockPaymentGateway();
 
-// Test endpoint for payment gateway
-router.get("/test", async (_req, res) => {
+// Get all active payment providers
+router.get("/providers", async (_req, res) => {
   try {
-    await paymentGateway.initialize();
-    const result = await paymentGateway.processPayment(10.00, "test-user");
-    res.json({ message: "Payment test successful", result });
+    const providers = await db.query.paymentProviders.findMany({
+      where: eq(paymentProviders.isActive, true)
+    });
+    res.json(providers);
   } catch (error) {
-    console.error("[ERROR] Payment test failed:", error);
-    res.status(500).json({ error: "Payment test failed" });
+    res.status(500).json({ error: "Failed to fetch payment providers" });
   }
 });
 
-// Get available payment gateways for a client
-router.get("/gateways/:clientId", async (req, res) => {
+// Dynamic payment processing endpoint
+router.post("/:provider/pay", async (req, res) => {
   try {
-    const { clientId } = req.params;
-    const gateways = await db.query.clientPaymentGateways.findMany({
-      where: eq(clientPaymentGateways.clientId, parseInt(clientId))
+    const { provider } = req.params;
+    const { amount, currency = 'USD', userId, metadata } = req.body;
+
+    if (!amount || !userId) {
+      return res.status(400).json({ error: "Amount and userId are required" });
+    }
+
+    // Validate provider exists and is active
+    const providerRecord = await db.query.paymentProviders.findFirst({
+      where: eq(paymentProviders.name, provider.toLowerCase())
     });
-    res.json(gateways);
+
+    if (!providerRecord || !providerRecord.isActive) {
+      return res.status(404).json({ error: "Payment provider not found or inactive" });
+    }
+
+    // Dynamic import of payment provider module
+    let paymentModule;
+    try {
+      paymentModule = await import(`../../../lib/payments/${provider.toLowerCase()}/index.js`);
+    } catch (importError) {
+      console.error(`Failed to import provider ${provider}:`, importError);
+      return res.status(500).json({ error: "Payment provider module not available" });
+    }
+
+    // Process payment using the provider module
+    const paymentResult = await paymentModule.processPayment(amount, currency, userId, metadata);
+
+    // Record transaction in database
+    const [transaction] = await db.insert(transactions)
+      .values({
+        userId: parseInt(userId),
+        providerId: providerRecord.id,
+        type: "payment",
+        amount: amount.toString(),
+        currency,
+        status: paymentResult.status === 'success' ? 'completed' : 'failed',
+        txReference: paymentResult.txReference,
+        metadata: paymentResult.metadata || {}
+      })
+      .returning();
+
+    res.json({
+      status: paymentResult.status,
+      txReference: paymentResult.txReference,
+      transactionId: transaction.id,
+      provider: providerRecord.name
+    });
+
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch payment gateways" });
+    console.error("[ERROR] Payment processing failed:", error);
+    res.status(500).json({ error: "Payment processing failed" });
+  }
+});
+
+// Get transaction status
+router.get("/transaction/:txReference", async (req, res) => {
+  try {
+    const { txReference } = req.params;
+    const transaction = await db.query.transactions.findFirst({
+      where: eq(transactions.txReference, txReference),
+      with: {
+        provider: true
+      }
+    });
+
+    if (!transaction) {
+      return res.status(404).json({ error: "Transaction not found" });
+    }
+
+    res.json(transaction);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch transaction" });
   }
 });
 
