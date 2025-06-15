@@ -9,8 +9,22 @@ export type UserRole = z.infer<typeof userRoleEnum>;
 export const subscriptionPlanEnum = z.enum(["free", "pro", "enterprise"]);
 export type SubscriptionPlan = z.infer<typeof subscriptionPlanEnum>;
 
+export const tierEnum = z.enum(["free", "pro", "enterprise"]);
+export type Tier = z.infer<typeof tierEnum>;
+
 export const paymentMethodEnum = z.enum(["paypal", "stablecoin", "credit_card"]);
 export type PaymentMethod = z.infer<typeof paymentMethodEnum>;
+
+// Module access control table
+export const modules = pgTable("modules", {
+  id: serial("id").primaryKey(),
+  name: text("name").unique().notNull(),
+  description: text("description"),
+  requiredTier: text("required_tier").notNull().default("free"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -407,3 +421,10 @@ export const selectOmegaLogSchema = createSelectSchema(omegaLogs);
 
 export type InsertOmegaLog = typeof omegaLogs.$inferInsert;
 export type SelectOmegaLog = typeof omegaLogs.$inferSelect;
+
+// Module schema for validation
+export const insertModuleSchema = createInsertSchema(modules);
+export const selectModuleSchema = createSelectSchema(modules);
+
+export type InsertModule = typeof modules.$inferInsert;
+export type SelectModule = typeof modules.$inferSelect;
