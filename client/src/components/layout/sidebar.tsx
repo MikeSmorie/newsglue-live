@@ -49,6 +49,11 @@ const adminItems = [
     name: "Logs",
     href: "/admin/logs",
     icon: Settings
+  },
+  {
+    name: "Subscriptions",
+    href: "/admin/subscriptions",
+    icon: CreditCard
   }
 ];
 

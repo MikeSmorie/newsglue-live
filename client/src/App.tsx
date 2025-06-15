@@ -10,6 +10,7 @@ import SupergodDashboard from "@/pages/supergod-dashboard";
 import AdminDashboard from "@/pages/admin-dashboard";
 import AdminCommunications from "@/pages/admin-communications";
 import LogsDashboard from "@/pages/admin/logs-dashboard";
+import AdminSubscriptionManagement from "@/pages/admin/subscription-management";
 import Dashboard from "@/pages/dashboard";
 import ModuleView from "@/pages/module-view";
 import SubscriptionManagement from "@/pages/subscription-management";
@@ -101,6 +102,7 @@ function Router() {
         {/* Admin routes */}
         <Route path="/admin" component={() => <ProtectedAdminRoute component={AdminDashboard} />} />
         <Route path="/admin/logs" component={() => <ProtectedAdminRoute component={LogsDashboard} />} />
+        <Route path="/admin/subscriptions" component={() => <ProtectedAdminRoute component={AdminSubscriptionManagement} />} />
         <Route path="/admin/communications" component={() => <ProtectedAdminRoute component={AdminCommunications} />} />
         
         {/* Supergod exclusive routes */}
