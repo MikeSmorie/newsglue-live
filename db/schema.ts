@@ -1,7 +1,7 @@
 import { pgTable, text, varchar, serial, timestamp, integer, boolean, decimal, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 
 export const userRoleEnum = z.enum(["user", "admin", "supergod"]);
 export type UserRole = z.infer<typeof userRoleEnum>;
@@ -31,18 +31,23 @@ export const users = pgTable("users", {
   username: text("username").unique().notNull(),
   password: text("password").notNull(),
   role: text("role").notNull().default("user"),
-  subscriptionPlan: text("subscription_plan").notNull().default("free"),
+  email: text("email").unique().notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  lastLogin: timestamp("last_login"),
+  subscriptionPlan: text("subscription_plan").default("free"),
   walletAddress: text("wallet_address"),
   twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
   twoFactorSecret: text("two_factor_secret"),
-  email: text("email").unique().notNull(),
-  referredBy: text("referred_by"), // stores referral_code used during registration
-  tokens: integer("tokens").notNull().default(0), // user token balance for referral rewards
   trialActive: boolean("trial_active").notNull().default(true),
   trialStartDate: timestamp("trial_start_date").defaultNow(),
   trialExpiresAt: timestamp("trial_expires_at"),
-  createdAt: timestamp("created_at").defaultNow(),
-  lastLogin: timestamp("last_login")
+  trialEndsAt: timestamp("trial_ends_at").notNull(),
+  bonusTrialClaimed: boolean("bonus_trial_claimed").notNull().default(false),
+  status: text("status").default("active"),
+  notes: text("notes"),
+  isTestAccount: boolean("is_test_account").default(false),
+  referredBy: integer("referred_by"),
+  tokens: integer("tokens").notNull().default(0)
 });
 
 export const activityLogs = pgTable("activity_logs", {

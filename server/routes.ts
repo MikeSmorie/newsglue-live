@@ -22,7 +22,7 @@ import { getTokenBalance, consumeTokens, giftTokens, modifyTokens, getAllTokenBa
 import referralRouter from "../modules/3.ReferralEngine/api";
 import { db } from "../db";
 import { users } from "../db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { logEvent } from "../lib/logs";
 
 // Simple auth checks using passport
@@ -116,12 +116,236 @@ export function registerRoutes(app: Express) {
   app.use("/api/messages", messagesRoutes);
 
   /**
+   * ADMIN USER MANAGEMENT ROUTES
+   * Auth: Required
+   * Role: Admin/Supergod only
+   */
+  // Get all users
+  app.get("/api/admin/users", requireAuth, requireRole(['admin', 'supergod']), async (req, res) => {
+    try {
+      const allUsers = await db
+        .select({
+          id: users.id,
+          username: users.username,
+          email: users.email,
+          role: users.role,
+          status: users.status,
+          tokens: users.tokens,
+          lastLogin: users.lastLogin,
+          createdAt: users.createdAt,
+          notes: users.notes,
+          isTestAccount: users.isTestAccount,
+          referredBy: users.referredBy
+        })
+        .from(users)
+        .orderBy(sql`${users.createdAt} DESC`);
+
+      res.json(allUsers);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      res.status(500).json({ message: 'Failed to fetch users' });
+    }
+  });
+
+  // Get user statistics
+  app.get("/api/admin/users/stats", requireAuth, requireRole(['admin', 'supergod']), async (req, res) => {
+    try {
+      const stats: Record<number, { totalRequests: number; referralCount: number }> = {};
+      
+      // Get all users to initialize stats
+      const allUsers = await db.select({ id: users.id }).from(users);
+      allUsers.forEach(user => {
+        stats[user.id] = { totalRequests: 0, referralCount: 0 };
+      });
+
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching user stats:', error);
+      res.status(500).json({ message: 'Failed to fetch user stats' });
+    }
+  });
+
+  // Suspend user
+  app.post("/api/admin/users/:id/suspend", requireAuth, requireRole(['admin', 'supergod']), async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      
+      await db
+        .update(users)
+        .set({ status: 'suspended' })
+        .where(eq(users.id, userId));
+
+      await logEvent('user_suspended', `User ${userId} suspended by admin ${req.user?.id}`, {
+        userId: req.user?.id,
+        userRole: req.user?.role,
+        endpoint: '/api/admin/users/:id/suspend',
+        metadata: { targetUserId: userId }
+      });
+
+      res.json({ message: 'User suspended successfully' });
+    } catch (error) {
+      console.error('Error suspending user:', error);
+      res.status(500).json({ message: 'Failed to suspend user' });
+    }
+  });
+
+  // Ban user
+  app.post("/api/admin/users/:id/ban", requireAuth, requireRole(['admin', 'supergod']), async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      
+      await db
+        .update(users)
+        .set({ status: 'banned' })
+        .where(eq(users.id, userId));
+
+      await logEvent('user_banned', `User ${userId} banned by admin ${req.user?.id}`, {
+        userId: req.user?.id,
+        userRole: req.user?.role,
+        endpoint: '/api/admin/users/:id/ban',
+        metadata: { targetUserId: userId }
+      });
+
+      res.json({ message: 'User banned successfully' });
+    } catch (error) {
+      console.error('Error banning user:', error);
+      res.status(500).json({ message: 'Failed to ban user' });
+    }
+  });
+
+  // Delete user (supergod only)
+  app.delete("/api/admin/users/:id", requireAuth, requireRole(['supergod']), async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      
+      // Prevent deletion of supergod accounts by non-supergod users
+      const targetUser = await db
+        .select({ role: users.role })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+
+      if (targetUser[0]?.role === 'supergod' && req.user?.role !== 'supergod') {
+        return res.status(403).json({ message: 'Cannot delete supergod accounts' });
+      }
+
+      await db.delete(users).where(eq(users.id, userId));
+
+      await logEvent('user_deleted', `User ${userId} deleted by supergod ${req.user?.id}`, {
+        userId: req.user?.id,
+        userRole: req.user?.role,
+        endpoint: '/api/admin/users/:id',
+        metadata: { targetUserId: userId }
+      });
+
+      res.json({ message: 'User deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      res.status(500).json({ message: 'Failed to delete user' });
+    }
+  });
+
+  // Add credits to user
+  app.post("/api/admin/users/:id/credits", requireAuth, requireRole(['admin', 'supergod']), async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { amount } = req.body;
+
+      if (typeof amount !== 'number' || amount < 0) {
+        return res.status(400).json({ message: 'Invalid credit amount' });
+      }
+
+      await db
+        .update(users)
+        .set({ tokens: sql`${users.tokens} + ${amount}` })
+        .where(eq(users.id, userId));
+
+      await logEvent('credits_added', `${amount} credits added to user ${userId} by admin ${req.user?.id}`, {
+        userId: req.user?.id,
+        userRole: req.user?.role,
+        endpoint: '/api/admin/users/:id/credits',
+        metadata: { targetUserId: userId, amount }
+      });
+
+      res.json({ message: 'Credits added successfully' });
+    } catch (error) {
+      console.error('Error adding credits:', error);
+      res.status(500).json({ message: 'Failed to add credits' });
+    }
+  });
+
+  // Update user role (supergod only)
+  app.post("/api/admin/users/:id/role", requireAuth, requireRole(['supergod']), async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { role } = req.body;
+
+      if (!['user', 'admin', 'supergod'].includes(role)) {
+        return res.status(400).json({ message: 'Invalid role' });
+      }
+
+      // Prevent non-supergod from modifying supergod accounts
+      const targetUser = await db
+        .select({ role: users.role })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+
+      if (targetUser[0]?.role === 'supergod' && req.user?.role !== 'supergod') {
+        return res.status(403).json({ message: 'Cannot modify supergod accounts' });
+      }
+
+      await db
+        .update(users)
+        .set({ role })
+        .where(eq(users.id, userId));
+
+      await logEvent('role_changed', `User ${userId} role changed to ${role} by supergod ${req.user?.id}`, {
+        userId: req.user?.id,
+        userRole: req.user?.role,
+        endpoint: '/api/admin/users/:id/role',
+        metadata: { targetUserId: userId, newRole: role }
+      });
+
+      res.json({ message: 'Role updated successfully' });
+    } catch (error) {
+      console.error('Error updating role:', error);
+      res.status(500).json({ message: 'Failed to update role' });
+    }
+  });
+
+  // Update user notes and test account status
+  app.post("/api/admin/users/:id/label", requireAuth, requireRole(['admin', 'supergod']), async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { notes, isTestAccount } = req.body;
+
+      await db
+        .update(users)
+        .set({ 
+          notes: notes || null,
+          isTestAccount: Boolean(isTestAccount)
+        })
+        .where(eq(users.id, userId));
+
+      await logEvent('user_data_updated', `User ${userId} data updated by admin ${req.user?.id}`, {
+        userId: req.user?.id,
+        userRole: req.user?.role,
+        endpoint: '/api/admin/users/:id/label',
+        metadata: { targetUserId: userId, isTestAccount: Boolean(isTestAccount) }
+      });
+
+      res.json({ message: 'User data updated successfully' });
+    } catch (error) {
+      console.error('Error updating user data:', error);
+      res.status(500).json({ message: 'Failed to update user data' });
+    }
+  });
+
+  /**
    * ADMIN ROUTES
    * Auth: Required
    * Role: Admin/Supergod only
-   * GET /api/admin/users - List all users
-   * POST /api/admin/users/:id/role - Update user role
-   * DELETE /api/admin/users/:id - Delete user
    */
   app.use("/api/admin", requireAdmin, adminLogsRoutes);
   app.use("/api/admin/logs", logsRoutes);
