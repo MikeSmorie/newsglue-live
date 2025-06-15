@@ -6,6 +6,14 @@ import createMemoryStore from "memorystore";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { users, insertUserSchema, type SelectUser } from "@db/schema";
+import { z } from "zod";
+
+// Login schema - accepts username, password, and optional email
+const loginSchema = z.object({
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  email: z.string().email().optional(), // Optional for login, frontend sends it but we ignore it
+});
 import { db } from "@db";
 import { eq, or } from "drizzle-orm";
 import { logAuth } from "../lib/logs";
@@ -304,7 +312,7 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    const result = insertUserSchema.safeParse(req.body);
+    const result = loginSchema.safeParse(req.body);
     if (!result.success) {
       return res.status(400).json({
         message: "Invalid input: " + result.error.issues.map(i => i.message).join(", ")
