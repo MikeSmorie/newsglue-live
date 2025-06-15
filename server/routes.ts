@@ -522,7 +522,7 @@ export function registerRoutes(app: Express) {
    * Role: Admin/Supergod only
    * User oversight, moderation, account management
    */
-  app.get("/api/admin/users", requireRole(['admin', 'supergod']), async (req, res) => {
+  app.get("/api/admin/users", requireAdmin, async (req, res) => {
     try {
       const allUsers = await db
         .select({
@@ -548,7 +548,7 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  app.post("/api/admin/user/:id/suspend", requireRole(['admin', 'supergod']), async (req, res) => {
+  app.post("/api/admin/user/:id/suspend", requireAdmin, async (req, res) => {
     try {
       const userId = parseInt(req.params.id);
       const { value: reason } = req.body;
@@ -575,7 +575,7 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  app.post("/api/admin/user/:id/ban", requireRole(['admin', 'supergod']), async (req, res) => {
+  app.post("/api/admin/user/:id/ban", requireAdmin, async (req, res) => {
     try {
       const userId = parseInt(req.params.id);
       const { value: reason } = req.body;
@@ -600,7 +600,7 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  app.delete("/api/admin/user/:id", requireRole(['supergod']), async (req, res) => {
+  app.delete("/api/admin/user/:id", requireSupergod, async (req, res) => {
     try {
       const userId = parseInt(req.params.id);
 
