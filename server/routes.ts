@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { createServer } from "http";
-import { setupSimpleAuth } from "./simple-auth";
+import { setupAuth } from "./auth";
 import cors from "cors";
 import express from "express";
 import subscriptionRoutes from "./routes/subscription";
@@ -14,16 +14,14 @@ import { registerSupergodRoutes } from "./routes/supergod";
 import { logError } from "./utils/logger";
 import { requireRole, requireSupergod } from "./middleware/rbac";
 
-// Simple auth checks using session
+// Simple auth checks using passport
 const requireAuth = (req: any, res: any, next: any) => {
-  const sessionUser = (req.session as any).user;
-  if (sessionUser) return next();
+  if (req.isAuthenticated()) return next();
   res.status(401).json({ message: "Not authenticated" });
 };
 
 const requireAdmin = (req: any, res: any, next: any) => {
-  const sessionUser = (req.session as any).user;
-  if (sessionUser && (sessionUser.role === "admin" || sessionUser.role === "supergod")) return next();
+  if (req.isAuthenticated() && (req.user.role === "admin" || req.user.role === "supergod")) return next();
   res.status(403).json({ message: "Not authorized" });
 };
 
@@ -56,7 +54,7 @@ export function registerRoutes(app: Express) {
   }));
 
   // Setup auth
-  setupSimpleAuth(app);
+  setupAuth(app);
 
   // Register routes
   app.use("/api/subscription", subscriptionRoutes);

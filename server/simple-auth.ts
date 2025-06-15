@@ -3,7 +3,7 @@ import session from "express-session";
 import createMemoryStore from "memorystore";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
-import { users, insertUserSchema, type SelectUser } from "@db/schema";
+import { users, insertUserSchema } from "@db/schema";
 import { db } from "@db";
 import { eq } from "drizzle-orm";
 
@@ -67,20 +67,18 @@ export function setupSimpleAuth(app: Express) {
       console.log(`[DEBUG] Attempting login for user: ${username}`);
 
       // Find user in database
-      const userResults = await db
+      const [user] = await db
         .select()
         .from(users)
         .where(eq(users.username, username))
         .limit(1);
 
-      if (!userResults || userResults.length === 0) {
+      if (!user) {
         console.log("[DEBUG] User not found");
         return res.status(400).json({
           message: "Invalid username or password"
         });
       }
-
-      const user = userResults[0];
 
       // Verify password
       const isMatch = await crypto.compare(password, user.password);
@@ -136,13 +134,13 @@ export function setupSimpleAuth(app: Express) {
       console.log(`[DEBUG] Attempting registration for user: ${username}`);
 
       // Check if user already exists
-      const existingUserResults = await db
+      const [existingUser] = await db
         .select()
         .from(users)
         .where(eq(users.username, username))
         .limit(1);
 
-      if (existingUserResults && existingUserResults.length > 0) {
+      if (existingUser) {
         console.log("[DEBUG] Username already exists");
         return res.status(400).json({
           message: "Username already exists"
@@ -153,21 +151,15 @@ export function setupSimpleAuth(app: Express) {
       const hashedPassword = await crypto.hash(password);
 
       // Create the new user
-      const newUserResults = await db
+      const [newUser] = await db
         .insert(users)
         .values({
-          username: username,
+          username,
           password: hashedPassword,
           role: "user",
           lastLogin: new Date()
         })
         .returning();
-
-      if (!newUserResults || newUserResults.length === 0) {
-        throw new Error("Failed to create user");
-      }
-
-      const newUser = newUserResults[0];
 
       // Store user in session
       (req.session as any).user = {
