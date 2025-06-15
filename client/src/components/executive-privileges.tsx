@@ -68,13 +68,13 @@ export function ExecutivePrivileges() {
         </div>
         
         <div className="space-y-2">
-          <h4 className="text-sm font-medium flex items-center gap-2">
+          <h4 className="text-sm font-medium flex items-center gap-2 text-gray-800 dark:text-gray-200">
             <Users className="h-4 w-4" />
             Granted Privileges:
           </h4>
           <ul className="text-xs space-y-1 pl-6">
             {privileges.map((privilege, index) => (
-              <li key={index} className="flex items-center gap-2">
+              <li key={index} className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
                 <div className="h-1 w-1 bg-amber-500 rounded-full" />
                 {privilege}
               </li>
@@ -82,8 +82,8 @@ export function ExecutivePrivileges() {
           </ul>
         </div>
 
-        <div className="mt-4 p-3 bg-amber-100 rounded-lg">
-          <p className="text-xs text-amber-800">
+        <div className="mt-4 p-3 bg-amber-100 dark:bg-amber-900/20 rounded-lg">
+          <p className="text-xs text-amber-800 dark:text-amber-200">
             {isSupergod 
               ? "You have unrestricted access to all platform features and can manage other administrators."
               : "You have administrative access with the ability to manage users and platform features."

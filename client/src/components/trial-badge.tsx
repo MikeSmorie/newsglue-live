@@ -5,6 +5,7 @@ import { Clock, Unlock } from "lucide-react";
 interface User {
   id: number;
   username: string;
+  role: string;
   subscriptionPlan: string;
   trialActive: boolean;
   trialStartDate: string;
@@ -42,6 +43,11 @@ export function TrialBadge() {
   });
 
   if (isLoading || !user) {
+    return null;
+  }
+
+  // Admin and supergod users should never see trial badge
+  if (user.role === "admin" || user.role === "supergod") {
     return null;
   }
 
