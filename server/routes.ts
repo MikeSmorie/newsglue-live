@@ -256,6 +256,13 @@ export function registerRoutes(app: Express) {
     }
   });
 
+  // Token management routes
+  app.get("/api/tokens/balance", requireAuth, getTokenBalance);
+  app.post("/api/tokens/consume", requireAuth, consumeTokens);
+  app.post("/api/admin/tokens/gift", requireAdmin, giftTokens);
+  app.post("/api/admin/tokens/modify", requireAdmin, modifyTokens);
+  app.get("/api/admin/tokens/all", requireAdmin, getAllTokenBalances);
+
   // Get users with subscription info for subscription manager
   app.get("/api/users/with-subscriptions", requireAdmin, async (req, res) => {
     try {

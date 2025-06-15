@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useLocation } from "wouter";
 import { TrialBadge } from "@/components/trial-badge";
+import { TokenBalanceDisplay } from "@/components/token-balance-display";
+import { ExecutivePrivileges } from "@/components/executive-privileges";
 import { 
   Grid3X3, 
   User, 

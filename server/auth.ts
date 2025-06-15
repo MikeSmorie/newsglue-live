@@ -133,20 +133,22 @@ export function setupAuth(app: Express) {
       // Hash the password
       const hashedPassword = await crypto.hash(password);
 
-      // Create the new user with initial login timestamp and trial setup
+      // Create the new user with initial login timestamp
+      // Regular users get trial setup, admin/supergod roles skip trial logic
       const now = new Date();
-      const trialExpiry = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000); // 14 days from now
+      const role = "user"; // Regular registration always creates user role
       
       const [newUser] = await db
         .insert(users)
         .values({
           username,
           password: hashedPassword,
-          role: "user", // Explicitly set role as user
-          lastLogin: now, // Set initial login time
+          role: role,
+          lastLogin: now,
+          // Regular users get 14-day trial
           trialActive: true,
           trialStartDate: now,
-          trialExpiresAt: trialExpiry
+          trialExpiresAt: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000)
         })
         .returning();
 
@@ -196,14 +198,19 @@ export function setupAuth(app: Express) {
       // Hash the password
       const hashedPassword = await crypto.hash(password);
 
-      // Create the new admin user
+      // Create the new admin user - skip trial logic for executive roles
+      const now = new Date();
       const [newUser] = await db
         .insert(users)
         .values({
           username,
           password: hashedPassword,
-          role: "admin", // Set role as admin
-          lastLogin: new Date() // Set initial login time
+          role: "admin",
+          lastLogin: now,
+          // Admin roles bypass trial system entirely
+          trialActive: false,
+          trialStartDate: null,
+          trialExpiresAt: null
         })
         .returning();
 
@@ -254,14 +261,19 @@ export function setupAuth(app: Express) {
       // Hash the password
       const hashedPassword = await crypto.hash(password);
 
-      // Create the new supergod user
+      // Create the new supergod user - skip trial logic for executive roles
+      const now = new Date();
       const [newUser] = await db
         .insert(users)
         .values({
           username,
           password: hashedPassword,
-          role: "supergod", // Set role as supergod
-          lastLogin: new Date() // Set initial login time
+          role: "supergod",
+          lastLogin: now,
+          // Supergod roles bypass trial system entirely
+          trialActive: false,
+          trialStartDate: null,
+          trialExpiresAt: null
         })
         .returning();
         
