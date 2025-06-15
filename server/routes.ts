@@ -622,7 +622,7 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  app.post("/api/admin/user/:id/credits", requireRole(['admin', 'supergod']), async (req, res) => {
+  app.post("/api/admin/user/:id/credits", requireAdmin, async (req, res) => {
     try {
       const userId = parseInt(req.params.id);
       const { value } = req.body;
@@ -654,7 +654,7 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  app.post("/api/admin/user/:id/role", requireRole(['supergod']), async (req, res) => {
+  app.post("/api/admin/user/:id/role", requireSupergod, async (req, res) => {
     try {
       const userId = parseInt(req.params.id);
       const { value: newRole } = req.body;
@@ -680,7 +680,7 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  app.post("/api/admin/user/:id/test_account", requireRole(['admin', 'supergod']), async (req, res) => {
+  app.post("/api/admin/user/:id/test_account", requireAdmin, async (req, res) => {
     try {
       const userId = parseInt(req.params.id);
       const { value } = req.body;
