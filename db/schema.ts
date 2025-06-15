@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, boolean, decimal, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, serial, timestamp, integer, boolean, decimal, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -35,7 +35,7 @@ export const users = pgTable("users", {
   walletAddress: text("wallet_address"),
   twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
   twoFactorSecret: text("two_factor_secret"),
-  email: text("email").unique(),
+  email: text("email").unique().notNull(),
   trialActive: boolean("trial_active").notNull().default(true),
   trialStartDate: timestamp("trial_start_date").defaultNow(),
   trialExpiresAt: timestamp("trial_expires_at"),
@@ -326,7 +326,7 @@ export type SelectAnnouncementResponse = typeof announcementResponses.$inferSele
 // Schemas for validation
 export const insertUserSchema = createInsertSchema(users, {
   role: userRoleEnum.default("user"),
-  email: z.string().email("Invalid email address").optional(),
+  email: z.string().email("Invalid email address").max(255, "Email must be less than 255 characters"),
   lastLogin: z.date().optional()
 });
 
