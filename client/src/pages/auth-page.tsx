@@ -59,16 +59,18 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900 dark:to-blue-900 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Welcome to Omega V8.3</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center bg-gradient-to-br from-foreground to-muted-foreground bg-clip-text text-transparent">
+            Welcome
+          </CardTitle>
           <CardDescription className="text-center">
             Sign in to your account or create a new one
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="login" className="w-full">
+          <Tabs defaultValue="login" className="space-y-4">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Login</TabsTrigger>
               <TabsTrigger value="register">Register</TabsTrigger>
@@ -200,7 +202,7 @@ export default function AuthPage() {
                           </TooltipProvider>
                         </div>
                         <FormControl>
-                          <Input type="email" {...field} />
+                          <Input type="email" placeholder="you@example.com" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -259,12 +261,12 @@ export default function AuthPage() {
           </Tabs>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-muted-foreground">
-              Need elevated access?{" "}
-              <Link href="/admin-access" className="text-primary hover:underline">
-                Admin Registration
-              </Link>
-            </p>
+            <Link href="/admin-register">
+              <Button variant="outline" className="w-full">
+                <Shield className="mr-2 h-4 w-4" />
+                Register as Administrator
+              </Button>
+            </Link>
           </div>
         </CardContent>
       </Card>

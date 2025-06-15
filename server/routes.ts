@@ -13,7 +13,6 @@ import paymentRoutes from "./routes/payment";
 import logsRoutes from "./routes/logs";
 import { registerSupergodRoutes } from "./routes/supergod";
 import auditRoutes from "./routes/admin/audit";
-import userManagementRouter from "./routes/admin/user-management";
 import { modulesRouter } from "./routes/modules";
 import { checkTrialStatus, resetUserTrial } from "./routes/trial";
 import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
@@ -125,7 +124,6 @@ export function registerRoutes(app: Express) {
    * DELETE /api/admin/users/:id - Delete user
    */
   app.use("/api/admin", requireAdmin, adminLogsRoutes);
-  app.use("/api/admin", userManagementRouter);
   app.use("/api/admin/logs", logsRoutes);
   app.use("/api/admin/audit-logs", auditRoutes);
 
