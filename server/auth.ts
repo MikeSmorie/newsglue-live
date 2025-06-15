@@ -313,10 +313,11 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    const result = insertUserSchema.safeParse(req.body);
-    if (!result.success) {
+    // Login only requires username and password
+    const { username, password } = req.body;
+    if (!username || !password) {
       return res.status(400).json({
-        message: "Invalid input: " + result.error.issues.map(i => i.message).join(", ")
+        message: "Username and password are required"
       });
     }
 
