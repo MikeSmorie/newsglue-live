@@ -16,6 +16,7 @@ import SubscriptionManagement from "@/pages/subscription-management";
 import SubscriptionPlans from "@/pages/subscription-plans";
 
 import { useUser } from "@/hooks/use-user";
+import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AdminProvider } from "@/contexts/admin-context";
