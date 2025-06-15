@@ -111,6 +111,12 @@ export default function Dashboard() {
 
       <Separator />
 
+      {/* Executive Privileges for Admin/Supergod */}
+      <ExecutivePrivileges />
+
+      {/* Token Balance Display for Hybrid Billing */}
+      <TokenBalanceDisplay />
+
       {/* Account Overview */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
