@@ -66,6 +66,21 @@ router.get("/", async (_req, res) => {
   }
 });
 
+// Get feature assignments (plan-feature relationships)
+router.get("/assignments", async (_req, res) => {
+  try {
+    const assignments = await db.query.planFeatures.findMany({
+      with: {
+        plan: true,
+        feature: true
+      }
+    });
+    res.json(assignments);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching feature assignments" });
+  }
+});
+
 // Create a new feature
 router.post("/", async (req, res) => {
   try {

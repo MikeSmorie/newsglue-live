@@ -203,44 +203,58 @@ export function registerRoutes(app: Express) {
   // Admin route to get all user subscriptions
   app.get("/api/admin/subscriptions", requireAdmin, async (req, res) => {
     try {
-      // Mock subscription data - in real implementation, query database with joins
-      const mockSubscriptions = [
-        {
-          id: 1,
-          username: "OM-8Test",
-          role: "user",
-          subscriptionPlan: "free",
-          walletAddress: "0x1234567890abcdef1234567890abcdef12345678",
-          lastPaymentStatus: "completed",
-          lastPaymentDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-          email: "test@example.com",
-          twoFactorEnabled: false
-        },
-        {
-          id: 2,
-          username: "AdminUser",
-          role: "admin",
-          subscriptionPlan: "pro",
-          walletAddress: null,
-          lastPaymentStatus: "pending",
-          lastPaymentDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-          email: "admin@example.com",
-          twoFactorEnabled: true
-        },
-        {
-          id: 3,
-          username: "EnterpriseUser",
-          role: "user",
-          subscriptionPlan: "enterprise",
-          walletAddress: "0xabcdef1234567890abcdef1234567890abcdef12",
-          lastPaymentStatus: "completed",
-          lastPaymentDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-          email: "enterprise@example.com",
-          twoFactorEnabled: true
+      const allUsers = await db.query.users.findMany({
+        with: {
+          subscriptions: {
+            with: {
+              plan: true
+            }
+          }
         }
-      ];
+      });
 
-      res.json(mockSubscriptions);
+      const subscriptionsData = allUsers.map(user => ({
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        subscriptionPlan: user.subscriptionPlan,
+        walletAddress: user.walletAddress,
+        email: user.email,
+        twoFactorEnabled: user.twoFactorEnabled,
+        lastPaymentStatus: user.subscriptions?.[0] ? "active" : null,
+        lastPaymentDate: user.subscriptions?.[0]?.startDate || null
+      }));
+
+      res.json(subscriptionsData);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Get users with subscription info for subscription manager
+  app.get("/api/users/with-subscriptions", requireAdmin, async (req, res) => {
+    try {
+      const allUsers = await db.query.users.findMany({
+        with: {
+          subscriptions: {
+            with: {
+              plan: true
+            }
+          }
+        }
+      });
+
+      const usersData = allUsers.map(user => ({
+        id: user.id,
+        username: user.username,
+        subscription: user.subscriptions?.[0] ? {
+          id: user.subscriptions[0].id,
+          planId: user.subscriptions[0].planId,
+          status: user.subscriptions[0].status
+        } : undefined
+      }));
+
+      res.json(usersData);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
