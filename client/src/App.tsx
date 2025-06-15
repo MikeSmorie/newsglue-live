@@ -123,7 +123,7 @@ function Router() {
         </Route>
         <Route path="/subscription" component={SubscriptionManagement} />
         <Route path="/subscription/plans" component={SubscriptionPlans} />
-        <Route path="/locked-module" component={() => import("@/pages/locked-module").then(m => m.default)} />
+        <Route path="/locked-module" component={LockedModule} />
         <Route path="/2fa" component={TwoFactorAuth} />
         <Route path="/module/omega-10" component={AuditModule} />
         <Route path="/profile" component={Dashboard} />
