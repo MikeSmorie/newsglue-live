@@ -45,13 +45,13 @@ export function ExecutivePrivileges() {
   ];
 
   return (
-    <Card className="w-full border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50">
+    <Card className="w-full border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 dark:border-gray-700 dark:from-gray-900 dark:to-black">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
           {isSupergod ? (
-            <Crown className="h-5 w-5 text-amber-600" />
+            <Crown className="h-5 w-5 text-amber-600 dark:text-amber-400" />
           ) : (
-            <Shield className="h-5 w-5 text-blue-600" />
+            <Shield className="h-5 w-5 text-blue-600 dark:text-blue-400" />
           )}
           Executive Access
           <Badge variant={isSupergod ? "default" : "secondary"} className="ml-auto">
@@ -61,8 +61,8 @@ export function ExecutivePrivileges() {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center gap-2">
-          <Zap className="h-4 w-4 text-amber-500" />
-          <span className="text-sm font-medium">
+          <Zap className="h-4 w-4 text-amber-500 dark:text-amber-400" />
+          <span className="text-sm font-medium text-gray-900 dark:text-white">
             Trial and subscription restrictions bypassed
           </span>
         </div>
