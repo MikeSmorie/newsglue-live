@@ -10,6 +10,7 @@ import featureRoutes from "./routes/features";
 import messagesRoutes from "./routes/announcements";
 import adminLogsRoutes from "./routes/admin-logs";
 import paymentRoutes from "./routes/payment";
+import logsRoutes from "./routes/logs";
 import { registerSupergodRoutes } from "./routes/supergod";
 import auditRoutes from "./routes/admin/audit";
 import { logError } from "./utils/logger";
@@ -71,6 +72,7 @@ export function registerRoutes(app: Express) {
 
   app.use("/api/messages", messagesRoutes);
   app.use("/api/admin", requireAdmin, adminLogsRoutes);
+  app.use("/api/admin/logs", logsRoutes);
   app.use("/api/admin/audit-logs", auditRoutes);
   app.use("/api/payment", paymentRoutes);
 
