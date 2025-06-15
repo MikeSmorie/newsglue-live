@@ -363,3 +363,47 @@ export type InsertFeature = typeof features.$inferInsert;
 export type SelectFeature = typeof features.$inferSelect;
 export type InsertPlanFeature = typeof planFeatures.$inferInsert;
 export type SelectPlanFeature = typeof planFeatures.$inferSelect;
+
+// Omega Logs Table for Global Observability
+export const logSeverityEnum = z.enum(["info", "warning", "error"]);
+export type LogSeverity = z.infer<typeof logSeverityEnum>;
+
+export const logEventTypeEnum = z.enum([
+  "login",
+  "logout", 
+  "failed_request",
+  "subscription_change",
+  "payment_attempt",
+  "error_boundary",
+  "api_error",
+  "user_action",
+  "system_event"
+]);
+export type LogEventType = z.infer<typeof logEventTypeEnum>;
+
+export const omegaLogs = pgTable("omega_logs", {
+  id: serial("id").primaryKey(),
+  timestamp: timestamp("timestamp", { withTimezone: true }).defaultNow().notNull(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
+  userRole: text("user_role"),
+  endpoint: text("endpoint"),
+  eventType: text("event_type", { enum: logEventTypeEnum.options }).notNull(),
+  severity: text("severity", { enum: logSeverityEnum.options }).default("info").notNull(),
+  message: text("message").notNull(),
+  stackTrace: text("stack_trace"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+});
+
+export const omegaLogsRelations = relations(omegaLogs, ({ one }) => ({
+  user: one(users, {
+    fields: [omegaLogs.userId],
+    references: [users.id]
+  })
+}));
+
+export const insertOmegaLogSchema = createInsertSchema(omegaLogs);
+export const selectOmegaLogSchema = createSelectSchema(omegaLogs);
+
+export type InsertOmegaLog = typeof omegaLogs.$inferInsert;
+export type SelectOmegaLog = typeof omegaLogs.$inferSelect;

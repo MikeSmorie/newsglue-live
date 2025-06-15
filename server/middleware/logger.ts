@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { db } from "@db";
 import { activityLogs, errorLogs } from "@db/schema";
 import { eq } from "drizzle-orm";
+import { logEvent, logAPIError } from "../../lib/logs";
 
 export async function logActivity(userId: number, action: string, details?: string) {
   try {
@@ -19,8 +20,9 @@ export async function logActivity(userId: number, action: string, details?: stri
 export async function logError(error: Error, location: string) {
   try {
     await db.insert(errorLogs).values({
-      errorMessage: error.message,
-      location,
+      level: "ERROR",
+      message: error.message,
+      source: location,
       stackTrace: error.stack,
       timestamp: new Date()
     });
@@ -29,31 +31,58 @@ export async function logError(error: Error, location: string) {
   }
 }
 
-// Middleware to log all API requests
+/**
+ * Enhanced request logger with Omega-V8.3 observability
+ */
 export function requestLogger(req: Request, res: Response, next: NextFunction) {
   const start = Date.now();
-  const originalEnd = res.end;
-  const originalJson = res.json;
-
-  res.json = function (body: any) {
-    if (req.user) {
-      logActivity(req.user.id, `${req.method} ${req.path}`, 
-        `Status: ${res.statusCode}, Response: ${JSON.stringify(body).slice(0, 100)}`);
-    }
-    return originalJson.call(this, body);
-  };
-
-  res.end = function (...args) {
+  
+  res.on('finish', async () => {
     const duration = Date.now() - start;
-    console.log(`${req.method} ${req.path} ${res.statusCode} - ${duration}ms`);
-    return originalEnd.apply(this, args);
-  };
-
+    const endpoint = `${req.method} ${req.path}`;
+    const user = (req as any).user;
+    
+    // Log to console for development
+    const logMessage = `${endpoint} ${res.statusCode} in ${duration}ms`;
+    
+    if (req.body && Object.keys(req.body).length > 0) {
+      console.log(`${logMessage} :: ${JSON.stringify(req.body).substring(0, 200)}`);
+    } else {
+      console.log(logMessage);
+    }
+    
+    // Log failed requests to Omega logs
+    if (res.statusCode >= 400) {
+      await logEvent("failed_request", `${endpoint} failed with status ${res.statusCode}`, {
+        userId: user?.id,
+        userRole: user?.role,
+        endpoint,
+        severity: res.statusCode >= 500 ? "error" : "warning",
+        metadata: {
+          statusCode: res.statusCode,
+          duration,
+          userAgent: req.get('User-Agent'),
+          ip: req.ip
+        }
+      });
+    }
+  });
+  
   next();
 }
 
-// Error logging middleware
+/**
+ * Enhanced error logger with stack trace capture
+ */
 export function errorLogger(err: Error, req: Request, res: Response, next: NextFunction) {
-  logError(err, `${req.method} ${req.path}`);
+  const endpoint = `${req.method} ${req.path}`;
+  const user = (req as any).user;
+  
+  console.error(`Error on ${endpoint}:`, err);
+  
+  // Log to both old and new systems
+  logError(err, endpoint);
+  logAPIError(endpoint, err, user?.id, user?.role);
+  
   next(err);
 }
