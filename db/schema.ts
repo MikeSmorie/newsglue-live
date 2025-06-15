@@ -36,11 +36,16 @@ export const users = pgTable("users", {
   twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
   twoFactorSecret: text("two_factor_secret"),
   email: text("email").unique().notNull(),
-  referredBy: text("referred_by"), // stores referral_code used during registration
+  referredBy: integer("referred_by"), // foreign key to users.id
   tokens: integer("tokens").notNull().default(0), // user token balance for referral rewards
   trialActive: boolean("trial_active").notNull().default(true),
   trialStartDate: timestamp("trial_start_date").defaultNow(),
   trialExpiresAt: timestamp("trial_expires_at"),
+  trialEndsAt: timestamp("trial_ends_at"),
+  bonusTrialClaimed: boolean("bonus_trial_claimed").notNull().default(false),
+  status: text("status").notNull().default("active"), // active, suspended, banned
+  notes: text("notes"), // admin-only notes
+  isTestAccount: boolean("is_test_account").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
   lastLogin: timestamp("last_login")
 });
