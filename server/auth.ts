@@ -7,7 +7,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { users, insertUserSchema, type SelectUser } from "@db/schema";
 import { db } from "@db";
-import { eq } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 import { logAuth } from "../lib/logs";
 
 const scryptAsync = promisify(scrypt);
@@ -115,18 +115,18 @@ export function setupAuth(app: Express) {
         });
       }
 
-      const { username, password } = result.data;
+      const { username, email, password } = result.data;
 
-      // Check if user already exists
+      // Check if user already exists (by username or email)
       const [existingUser] = await db
         .select()
         .from(users)
-        .where(eq(users.username, username))
+        .where(or(eq(users.username, username), eq(users.email, email)))
         .limit(1);
 
       if (existingUser) {
         return res.status(400).json({
-          message: "Username already exists"
+          message: existingUser.username === username ? "Username already exists" : "Email already exists"
         });
       }
 
@@ -142,6 +142,7 @@ export function setupAuth(app: Express) {
         .insert(users)
         .values({
           username,
+          email,
           password: hashedPassword,
           role: role,
           lastLogin: now,
