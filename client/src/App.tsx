@@ -10,27 +10,16 @@ import SupergodDashboard from "@/pages/supergod-dashboard";
 import AdminDashboard from "@/pages/admin-dashboard";
 import AdminCommunications from "@/pages/admin-communications";
 import LogsDashboard from "@/pages/admin/logs-dashboard";
-import AppCentral from "@/pages/app-central";
+import Dashboard from "@/pages/dashboard";
 import ModuleView from "@/pages/module-view";
-import MockDashboard from "@/pages/mock-dashboard";
-import MockSettings from "@/pages/mock-settings";
-import SubscriptionPage from "@/pages/subscriptions";
-import SubscriptionManager from "@/pages/subscription-manager";
-import SubscriptionFeatures from "@/pages/subscription-features";
 import SubscriptionManagement from "@/pages/subscription-management";
+import SubscriptionPlans from "@/pages/subscription-plans";
 
 import { useUser } from "@/hooks/use-user";
-import { Loader2, LogOut, ArrowLeft, ArrowRight, Home, Settings } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { ThemeProvider } from "@/components/theme-provider";
-import { CustomThemeToggle } from "@/components/custom-theme-toggle";
-import { FontSizeControls } from "@/components/font-size-controls";
-import { AdminToggle } from "@/components/admin-toggle";
-import { AIAssistant } from "@/components/ai-assistant";
 import { AdminProvider } from "@/contexts/admin-context";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { useLocation } from "wouter";
-import SubscriptionPlans from "@/pages/subscription-plans";
+import { MainLayout } from "@/components/layout/main-layout";
 
 function ProtectedAdminRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, isLoading } = useUser();
@@ -85,9 +74,7 @@ function ProtectedSupergodRoute({ component: Component }: { component: React.Com
 }
 
 function Router() {
-  const { user, isLoading, logout } = useUser();
-  const { toast } = useToast();
-  const [, navigate] = useLocation();
+  const { user, isLoading } = useUser();
 
   if (isLoading) {
     return (
@@ -96,26 +83,6 @@ function Router() {
       </div>
     );
   }
-
-  const handleLogout = async () => {
-    try {
-      const result = await logout();
-      if (!result.ok) {
-        throw new Error(result.message);
-      }
-      toast({
-        title: "Logged out successfully",
-        description: "See you next time!",
-      });
-      navigate("/");
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message,
-      });
-    }
-  };
 
   if (!user) {
     return (
@@ -128,91 +95,27 @@ function Router() {
   }
 
   return (
-    <div className="min-h-screen">
-      <nav className="border-b">
-        <div className="container flex h-16 items-center px-4">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => window.history.back()}
-              className="h-8 w-8 nav-button"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/")}
-              className="h-8 w-8 nav-button"
-            >
-              <Home className="h-4 w-4" />
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => window.history.forward()}
-              className="h-8 w-8 nav-button"
-            >
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-            
-            <span className="ml-4 font-bold">
-              {user?.username || "User1#*User1$"}
-            </span>
-          </div>
-          
-          <div className="flex items-center gap-4 ml-auto">
-            <AIAssistant />
-            
-            {user?.role === "supergod" && (
-              <span className="text-sm font-bold text-red-500">
-                👑 Super-God Mode Active
-              </span>
-            )}
-            
-            <FontSizeControls />
-            <CustomThemeToggle />
-
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleLogout}
-              className="h-8 w-8 nav-button"
-            >
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </nav>
-
+    <MainLayout>
       <Switch>
         {/* Admin routes */}
         <Route path="/admin" component={() => <ProtectedAdminRoute component={AdminDashboard} />} />
         <Route path="/admin/logs" component={() => <ProtectedAdminRoute component={LogsDashboard} />} />
-        <Route path="/admin/subscription-manager" component={() => <ProtectedAdminRoute component={SubscriptionManager} />} />
         <Route path="/admin/communications" component={() => <ProtectedAdminRoute component={AdminCommunications} />} />
         
-        {/* Supergod exclusive routes (high-security) */}
+        {/* Supergod exclusive routes */}
         <Route path="/supergod" component={() => <ProtectedSupergodRoute component={SupergodDashboard} />} />
         
-        {/* Normal routes */}
-        <Route path="/" component={AppCentral} />
+        {/* Main routes */}
+        <Route path="/" component={Dashboard} />
         <Route path="/module/:id">
           {(params) => <ModuleView moduleId={params.id} />}
         </Route>
-        <Route path="/mock-dashboard" component={MockDashboard} />
-        <Route path="/mock-settings" component={MockSettings} />
         <Route path="/subscription" component={SubscriptionManagement} />
         <Route path="/subscription/plans" component={SubscriptionPlans} />
-        <Route path="/subscription/features" component={SubscriptionFeatures} />
+        <Route path="/profile" component={Dashboard} />
         <Route component={NotFound} />
       </Switch>
-
-      <AdminToggle />
-    </div>
+    </MainLayout>
   );
 }
 
