@@ -72,10 +72,10 @@ export function Sidebar() {
   };
 
   return (
-    <div className="flex h-full w-64 flex-col border-r bg-background">
+    <div className="flex h-full w-64 flex-col border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
       <div className="p-6">
-        <h2 className="text-lg font-semibold">Omega-8</h2>
-        <p className="text-sm text-muted-foreground">Clean Core</p>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Omega-8</h2>
+        <p className="text-sm text-gray-600 dark:text-gray-400">Clean Core</p>
       </div>
       
       <ScrollArea className="flex-1 px-3">
@@ -87,8 +87,8 @@ export function Sidebar() {
                 key={item.href}
                 variant={isActive(item.href) ? "secondary" : "ghost"}
                 className={cn(
-                  "w-full justify-start",
-                  isActive(item.href) && "bg-secondary"
+                  "w-full justify-start text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800",
+                  isActive(item.href) && "bg-gray-100 dark:bg-gray-800"
                 )}
                 asChild
               >
@@ -104,7 +104,7 @@ export function Sidebar() {
         <Separator className="my-4" />
 
         <div className="space-y-1">
-          <h3 className="px-2 py-1 text-sm font-medium text-muted-foreground">
+          <h3 className="px-2 py-1 text-sm font-medium text-gray-600 dark:text-gray-400">
             Modules
           </h3>
           {moduleItems.map((item) => {
@@ -115,8 +115,8 @@ export function Sidebar() {
                 variant={isActive(item.href) ? "secondary" : "ghost"}
                 size="sm"
                 className={cn(
-                  "w-full justify-start",
-                  isActive(item.href) && "bg-secondary"
+                  "w-full justify-start text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800",
+                  isActive(item.href) && "bg-gray-100 dark:bg-gray-800"
                 )}
                 asChild
               >
@@ -133,7 +133,7 @@ export function Sidebar() {
           <>
             <Separator className="my-4" />
             <div className="space-y-1">
-              <h3 className="px-2 py-1 text-sm font-medium text-muted-foreground">
+              <h3 className="px-2 py-1 text-sm font-medium text-gray-600 dark:text-gray-400">
                 Administration
               </h3>
               {adminItems.map((item) => {
@@ -144,8 +144,8 @@ export function Sidebar() {
                     variant={isActive(item.href) ? "secondary" : "ghost"}
                     size="sm"
                     className={cn(
-                      "w-full justify-start",
-                      isActive(item.href) && "bg-secondary"
+                      "w-full justify-start text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800",
+                      isActive(item.href) && "bg-gray-100 dark:bg-gray-800"
                     )}
                     asChild
                   >
@@ -164,7 +164,7 @@ export function Sidebar() {
           <>
             <Separator className="my-4" />
             <div className="space-y-1">
-              <h3 className="px-2 py-1 text-sm font-medium text-muted-foreground">
+              <h3 className="px-2 py-1 text-sm font-medium text-gray-600 dark:text-gray-400">
                 Supergod
               </h3>
               {supergodItems.map((item) => {
@@ -175,8 +175,8 @@ export function Sidebar() {
                     variant={isActive(item.href) ? "secondary" : "ghost"}
                     size="sm"
                     className={cn(
-                      "w-full justify-start",
-                      isActive(item.href) && "bg-secondary"
+                      "w-full justify-start text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800",
+                      isActive(item.href) && "bg-gray-100 dark:bg-gray-800"
                     )}
                     asChild
                   >

@@ -63,14 +63,14 @@ export function Header() {
   };
 
   return (
-    <nav className="border-b">
+    <nav className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
       <div className="container flex h-16 items-center px-4">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => window.history.back()}
-            className="h-8 w-8 nav-button"
+            className="h-8 w-8 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -79,7 +79,7 @@ export function Header() {
             variant="ghost"
             size="icon"
             onClick={() => navigate("/")}
-            className="h-8 w-8 nav-button"
+            className="h-8 w-8 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
           >
             <Home className="h-4 w-4" />
           </Button>
@@ -88,7 +88,7 @@ export function Header() {
             variant="ghost"
             size="icon"
             onClick={() => window.history.forward()}
-            className="h-8 w-8 nav-button"
+            className="h-8 w-8 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
           >
             <ArrowRight className="h-4 w-4" />
           </Button>
@@ -97,7 +97,7 @@ export function Header() {
         <div className="flex items-center gap-4 ml-auto">
           {user && (
             <>
-              <span className="font-bold">
+              <span className="font-bold text-gray-900 dark:text-white">
                 {user.username || "User1#*User1$"}
               </span>
               
@@ -107,7 +107,7 @@ export function Header() {
               </Badge>
               
               {user.role === "supergod" && (
-                <span className="text-sm font-bold text-red-500">
+                <span className="text-sm font-bold text-red-500 dark:text-red-400">
                   👑 Super-God Mode Active
                 </span>
               )}
@@ -121,7 +121,7 @@ export function Header() {
             variant="ghost"
             size="icon"
             onClick={handleLogout}
-            className="h-8 w-8 nav-button"
+            className="h-8 w-8 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
           >
             <LogOut className="h-4 w-4" />
           </Button>

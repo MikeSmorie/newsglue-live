@@ -1,35 +1,31 @@
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
+import { useTheme } from "@/components/theme-provider";
 
 export function CustomThemeToggle() {
-  const [isDarkMode, setIsDarkMode] = useState(true);
-
-  // Initialize theme on mount
-  useEffect(() => {
-    // Default to dark mode
-    document.body.classList.add('dark-mode');
-  }, []);
+  const { theme, setTheme } = useTheme();
 
   const toggleTheme = () => {
-    const body = document.body;
-    if (body.classList.contains('dark-mode')) {
-      body.classList.remove('dark-mode');
-      body.classList.add('light-mode');
-      setIsDarkMode(false);
+    if (theme === "dark") {
+      setTheme("light");
     } else {
-      body.classList.remove('light-mode');
-      body.classList.add('dark-mode');
-      setIsDarkMode(true);
+      setTheme("dark");
     }
   };
 
+  const isDark = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+
   return (
-    <Button variant="outline" size="icon" onClick={toggleTheme} className="border-blue-600 nav-button theme-toggle">
-      {isDarkMode ? (
-        <Moon className="h-[1.2rem] w-[1.2rem] text-white" />
+    <Button 
+      variant="outline" 
+      size="icon" 
+      onClick={toggleTheme} 
+      className="h-8 w-8 nav-button"
+    >
+      {isDark ? (
+        <Moon className="h-4 w-4" />
       ) : (
-        <Sun className="h-[1.2rem] w-[1.2rem] text-blue-600" />
+        <Sun className="h-4 w-4" />
       )}
       <span className="sr-only">Toggle theme</span>
     </Button>
