@@ -56,10 +56,10 @@ export default function Dashboard() {
       {/* Welcome Section */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
             Welcome back, {user.username}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-gray-600 dark:text-gray-400">
             Access your modules and manage your account
           </p>
         </div>
@@ -153,21 +153,21 @@ export default function Dashboard() {
 
       {/* Modules Grid */}
       <div>
-        <h2 className="text-2xl font-bold tracking-tight mb-4">Available Modules</h2>
+        <h2 className="text-2xl font-bold tracking-tight mb-4 text-gray-900 dark:text-white">Available Modules</h2>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {moduleItems.map((module) => {
             const Icon = module.icon;
             return (
-              <Card key={module.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(module.href)}>
+              <Card key={module.id} className="hover:shadow-md transition-shadow cursor-pointer bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700" onClick={() => navigate(module.href)}>
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
-                    <Icon className="h-5 w-5 text-muted-foreground" />
+                    <Icon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                     <Badge variant="secondary">Ready</Badge>
                   </div>
-                  <CardTitle className="text-lg">{module.name}</CardTitle>
+                  <CardTitle className="text-lg text-gray-900 dark:text-white">{module.name}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription className="text-sm">
+                  <CardDescription className="text-sm text-gray-600 dark:text-gray-400">
                     {module.description}
                   </CardDescription>
                   <Button className="mt-3 w-full" variant="outline" size="sm">
