@@ -11,6 +11,7 @@ import messagesRoutes from "./routes/announcements";
 import adminLogsRoutes from "./routes/admin-logs";
 import paymentRoutes from "./routes/payment";
 import { registerSupergodRoutes } from "./routes/supergod";
+import auditRoutes from "./routes/admin/audit";
 import { logError } from "./utils/logger";
 import { requireRole, requireSupergod } from "./middleware/rbac";
 import { db } from "../db";
@@ -70,6 +71,7 @@ export function registerRoutes(app: Express) {
 
   app.use("/api/messages", messagesRoutes);
   app.use("/api/admin", requireAdmin, adminLogsRoutes);
+  app.use("/api/admin/audit-logs", auditRoutes);
   app.use("/api/payment", paymentRoutes);
 
   // Subscription management routes

@@ -78,6 +78,11 @@ const supergodItems = [
     name: "Supergod Panel",
     href: "/supergod",
     icon: Crown
+  },
+  {
+    name: "Audit Logs",
+    href: "/admin/audit",
+    icon: Shield
   }
 ];
 

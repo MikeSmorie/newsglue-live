@@ -17,6 +17,7 @@ import SubscriptionManagement from "@/pages/subscription-management";
 import SubscriptionPlans from "@/pages/subscription-plans";
 import TwoFactorAuth from "@/pages/two-factor-auth";
 import AuditModule from "@/pages/audit-module";
+import AuditPage from "@/pages/admin/audit";
 
 import { useUser } from "@/hooks/use-user";
 import { useToast } from "@/hooks/use-toast";
@@ -106,6 +107,7 @@ function Router() {
         <Route path="/admin/logs" component={() => <ProtectedAdminRoute component={LogsDashboard} />} />
         <Route path="/admin/subscriptions" component={() => <ProtectedAdminRoute component={AdminSubscriptionManagement} />} />
         <Route path="/admin/communications" component={() => <ProtectedAdminRoute component={AdminCommunications} />} />
+        <Route path="/admin/audit" component={() => <ProtectedSupergodRoute component={AuditPage} />} />
         
         {/* Supergod exclusive routes */}
         <Route path="/supergod" component={() => <ProtectedSupergodRoute component={SupergodDashboard} />} />
