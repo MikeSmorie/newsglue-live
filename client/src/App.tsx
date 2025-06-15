@@ -59,6 +59,18 @@ function ProtectedAdminRoute({ component: Component }: { component: React.Compon
 function ProtectedSupergodRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, isLoading } = useUser();
   const { toast } = useToast();
+  const [location, setLocation] = useLocation();
+  
+  React.useEffect(() => {
+    if (!isLoading && (!user || user.role !== "supergod")) {
+      toast({
+        title: "Access Denied",
+        description: "This area requires Super-God privileges.",
+        variant: "destructive"
+      });
+      setLocation("/");
+    }
+  }, [user, isLoading, toast, setLocation]);
   
   if (isLoading) {
     return (
@@ -69,14 +81,7 @@ function ProtectedSupergodRoute({ component: Component }: { component: React.Com
   }
 
   if (!user || user.role !== "supergod") {
-    // For security, don't even show this route exists to non-supergods
-    toast({
-      title: "Access Denied",
-      description: "This area requires Super-God privileges.",
-      variant: "destructive"
-    });
-    
-    return <NotFound />;
+    return null; // Will redirect via useEffect
   }
   
   console.log("[DEBUG] Super-God exclusive route accessed");
