@@ -133,14 +133,20 @@ export function setupAuth(app: Express) {
       // Hash the password
       const hashedPassword = await crypto.hash(password);
 
-      // Create the new user with initial login timestamp
+      // Create the new user with initial login timestamp and trial setup
+      const now = new Date();
+      const trialExpiry = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000); // 14 days from now
+      
       const [newUser] = await db
         .insert(users)
         .values({
           username,
           password: hashedPassword,
           role: "user", // Explicitly set role as user
-          lastLogin: new Date() // Set initial login time
+          lastLogin: now, // Set initial login time
+          trialActive: true,
+          trialStartDate: now,
+          trialExpiresAt: trialExpiry
         })
         .returning();
 

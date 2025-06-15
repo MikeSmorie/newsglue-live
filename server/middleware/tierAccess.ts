@@ -64,12 +64,24 @@ export function requireTier(moduleName: string) {
         });
       }
 
-      // Get user's current tier level
-      const userTier = req.user.subscriptionPlan as keyof typeof TIER_HIERARCHY;
+      // Get user's current tier level with trial override
+      let effectiveTier = req.user.subscriptionPlan as keyof typeof TIER_HIERARCHY;
+      
+      // Check if user has active trial
+      const now = new Date();
+      const trialActive = req.user.trialActive && 
+                         req.user.trialExpiresAt && 
+                         new Date(req.user.trialExpiresAt) > now;
+      
+      // Override tier to enterprise if trial is active
+      if (trialActive) {
+        effectiveTier = 'enterprise';
+      }
+      
       const requiredTier = module.requiredTier as keyof typeof TIER_HIERARCHY;
 
       // Check tier access
-      if (TIER_HIERARCHY[userTier] < TIER_HIERARCHY[requiredTier]) {
+      if (TIER_HIERARCHY[effectiveTier] < TIER_HIERARCHY[requiredTier]) {
         // Log access denied
         await logEvent("user_action", `Tier access denied for module: ${moduleName}`, {
           userId: req.user.id,
@@ -77,17 +89,21 @@ export function requireTier(moduleName: string) {
           endpoint: req.path,
           severity: "info",
           metadata: {
-            userTier,
+            userTier: req.user.subscriptionPlan,
+            effectiveTier,
             requiredTier,
-            moduleName
+            moduleName,
+            trialActive
           }
         });
 
         return res.status(403).json({ 
           error: "Insufficient subscription tier",
           module: moduleName,
-          userTier,
+          userTier: req.user.subscriptionPlan,
+          effectiveTier,
           requiredTier,
+          trialActive,
           redirectTo: `/locked-module?name=${encodeURIComponent(moduleName)}`
         });
       }
@@ -99,9 +115,11 @@ export function requireTier(moduleName: string) {
         endpoint: req.path,
         severity: "info",
         metadata: {
-          userTier,
+          userTier: req.user.subscriptionPlan,
+          effectiveTier,
           requiredTier,
-          moduleName
+          moduleName,
+          trialActive
         }
       });
 
