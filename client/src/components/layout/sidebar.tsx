@@ -68,6 +68,11 @@ const adminItems = [
     icon: Shield
   },
   {
+    name: "User Management",
+    href: "/admin/users",
+    icon: User
+  },
+  {
     name: "Logs",
     href: "/admin/logs",
     icon: Settings

@@ -129,7 +129,7 @@ export function setupAuth(app: Express) {
       const existingUsers = await db
         .select()
         .from(users)
-        .where(or(eq(users.username, username), eq(users.email, username)))
+        .where(eq(users.username, username))
         .limit(1);
       
       const existingUser = existingUsers[0];
