@@ -36,6 +36,9 @@ export const users = pgTable("users", {
   twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
   twoFactorSecret: text("two_factor_secret"),
   email: text("email").unique(),
+  trialActive: boolean("trial_active").notNull().default(true),
+  trialStartDate: timestamp("trial_start_date").defaultNow(),
+  trialExpiresAt: timestamp("trial_expires_at"),
   createdAt: timestamp("created_at").defaultNow(),
   lastLogin: timestamp("last_login")
 });
