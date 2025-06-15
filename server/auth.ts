@@ -126,11 +126,13 @@ export function setupAuth(app: Express) {
       const { username, email, password } = result.data;
 
       // Check if user already exists (by username or email)
-      const [existingUser] = await db
+      const existingUsers = await db
         .select()
         .from(users)
-        .where(or(eq(users.username, username), eq(users.email, email)))
+        .where(or(eq(users.username, username), eq(users.email, username)))
         .limit(1);
+      
+      const existingUser = existingUsers[0];
 
       if (existingUser) {
         return res.status(400).json({

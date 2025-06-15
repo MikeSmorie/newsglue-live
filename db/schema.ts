@@ -41,7 +41,7 @@ export const users = pgTable("users", {
   trialActive: boolean("trial_active").notNull().default(true),
   trialStartDate: timestamp("trial_start_date").defaultNow(),
   trialExpiresAt: timestamp("trial_expires_at"),
-  trialEndsAt: timestamp("trial_ends_at").notNull(),
+  trialEndsAt: timestamp("trial_ends_at"),
   bonusTrialClaimed: boolean("bonus_trial_claimed").notNull().default(false),
   status: text("status").default("active"),
   notes: text("notes"),
