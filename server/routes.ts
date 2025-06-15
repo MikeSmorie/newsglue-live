@@ -66,19 +66,71 @@ export function registerRoutes(app: Express) {
   // Setup auth
   setupAuth(app);
 
-  // Register routes
+  /**
+   * AUTHENTICATION ROUTES
+   * Auth: None required for registration/login
+   * POST /api/register - User registration
+   * POST /api/login - User login
+   * POST /api/logout - User logout
+   * POST /api/register-admin - Admin registration (requires secret key)
+   * POST /api/register-supergod - Supergod registration (requires secret key)
+   */
+
+  /**
+   * SUBSCRIPTION ROUTES
+   * Auth: Required
+   * Role: User/Admin/Supergod (Admin/Supergod bypass restrictions)
+   */
   app.use("/api/subscription", subscriptionRoutes);
+
+  /**
+   * WEBHOOK ROUTES
+   * Auth: None (external payment providers)
+   * Security: Webhook signature verification
+   */
   app.use("/api/webhook", webhookRoutes);
+
+  /**
+   * AI ASSISTANT ROUTES
+   * Auth: Required
+   * Role: User/Admin/Supergod
+   * POST /api/ai/query - Send query to AI assistant
+   * POST /api/ai/feedback - Submit feedback on AI response
+   */
   app.use("/api/ai", aiRoutes);
 
-  // Split features routes into public and admin
+  /**
+   * FEATURE ACCESS ROUTES
+   * Auth: Required for all
+   * Role: Check routes (User/Admin/Supergod), Admin routes (Admin/Supergod only)
+   */
   app.use("/api/features/check", requireAuth, featureRoutes); // Public feature check route
   app.use("/api/features/admin", requireAdmin, featureRoutes); // Admin-only routes
 
+  /**
+   * MESSAGING/ANNOUNCEMENTS ROUTES
+   * Auth: Required
+   * Role: Mixed (some admin-only, some user-accessible)
+   */
   app.use("/api/messages", messagesRoutes);
+
+  /**
+   * ADMIN ROUTES
+   * Auth: Required
+   * Role: Admin/Supergod only
+   * GET /api/admin/users - List all users
+   * POST /api/admin/users/:id/role - Update user role
+   * DELETE /api/admin/users/:id - Delete user
+   */
   app.use("/api/admin", requireAdmin, adminLogsRoutes);
   app.use("/api/admin/logs", logsRoutes);
   app.use("/api/admin/audit-logs", auditRoutes);
+
+  /**
+   * PAYMENT ROUTES
+   * Auth: Required
+   * Role: User/Admin/Supergod (Admin/Supergod bypass payment restrictions)
+   */
   app.use("/api/payment", paymentRoutes);
 
   // User profile export route
@@ -256,7 +308,16 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  // Token management routes
+  /**
+   * TOKEN MANAGEMENT ROUTES
+   * Auth: Required for all
+   * Role: Basic routes (User/Admin/Supergod), Admin routes (Admin/Supergod only)
+   * GET /api/tokens/balance - Get user token balance
+   * POST /api/tokens/consume - Consume tokens for feature usage
+   * POST /api/admin/tokens/gift - Gift tokens to users (Admin/Supergod only)
+   * POST /api/admin/tokens/modify - Modify user token balance (Admin/Supergod only)
+   * GET /api/admin/tokens/all - Get all user token balances (Admin/Supergod only)
+   */
   app.get("/api/tokens/balance", requireAuth, getTokenBalance);
   app.post("/api/tokens/consume", requireAuth, consumeTokens);
   app.post("/api/admin/tokens/gift", requireAdmin, giftTokens);
@@ -407,10 +468,52 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  // Module access control routes
+  /**
+   * PAYPAL INTEGRATION ROUTES
+   * Auth: Required for order creation/capture
+   * Role: User/Admin/Supergod (Admin/Supergod bypass payment restrictions)
+   * GET /paypal/setup - Get PayPal client token
+   * POST /paypal/order - Create PayPal order
+   * POST /paypal/order/:orderID/capture - Capture PayPal payment
+   */
+  app.get("/paypal/setup", async (req, res) => {
+    await loadPaypalDefault(req, res);
+  });
+
+  app.post("/paypal/order", async (req, res) => {
+    // Request body should contain: { intent, amount, currency }
+    await createPaypalOrder(req, res);
+  });
+
+  app.post("/paypal/order/:orderID/capture", async (req, res) => {
+    await capturePaypalOrder(req, res);
+  });
+
+  /**
+   * TRIAL MANAGEMENT ROUTES
+   * Auth: Required
+   * Role: User (Admin/Supergod bypass trial logic entirely)
+   * POST /api/trial/check - Check trial status
+   * POST /api/trial/reset - Reset trial (Admin/Supergod only)
+   */
+  app.post("/api/trial/check", requireAuth, checkTrialStatus);
+  app.post("/api/trial/reset", requireAdmin, resetUserTrial);
+
+  /**
+   * MODULE SYSTEM ROUTES
+   * Auth: Required
+   * Role: User/Admin/Supergod with tier-based access control
+   * GET /api/modules - List available modules
+   * POST /api/modules/run - Execute module
+   */
   app.use("/api/modules", modulesRouter);
 
-  // Register supergod-only routes
+  /**
+   * SUPERGOD ROUTES
+   * Auth: Required
+   * Role: Supergod only
+   * System configuration, admin management, platform control
+   */
   registerSupergodRoutes(app); // These routes have their own middleware checks
 
   // Error handler must be last

@@ -1,221 +1,116 @@
-# Omega-8-Clean-Core
+# Omega-V8.3 ✅
 
-A modular SaaS starter with 10 functional silos, secure session authentication, mock PayPal + Stablecoin integration, and sandbox 2FA scaffold. Built on the Omega framework.
+A comprehensive web development platform with advanced AI-assisted coding capabilities, designed for flexible and secure application building with enhanced payment and subscription management.
 
-## Features
+## What Omega-V8.3 Does
 
-### 🔐 Authentication & Security
-- Secure session-based authentication with Passport.js
-- Role-based access control (User, Admin, Supergod)
-- Two-factor authentication scaffold (TOTP/SMS ready)
-- Protected routes with middleware validation
+Omega-V8.3 is a full-stack web application platform featuring:
 
-### 💳 Subscription Management
-- Three-tier subscription system (Free, Pro, Enterprise)
-- Mock PayPal payment integration ready for live SDK
-- Stablecoin wallet address management
-- Admin subscription monitoring dashboard
+- **Multi-Role Authentication System**: User, Admin, and Supergod roles with tier-based access control
+- **Hybrid Billing System**: Subscription-based billing combined with token-based usage tracking
+- **Executive Access Bypass**: Admin and Supergod roles bypass all trial and subscription restrictions
+- **PayPal Payment Integration**: Secure payment processing with PayPal Checkout
+- **AI-Powered Code Assistant**: OpenAI integration for intelligent development support
+- **Modular Architecture**: Extensible module system for custom functionality
+- **Comprehensive Observability**: Advanced logging, error tracking, and audit trails
+- **Trial Management**: 14-day trial system for new users with automatic expiration
+- **Responsive UI**: Modern React interface with dark/light theme support
 
-### 🎨 Modern UI/UX
-- Responsive design with Tailwind CSS and shadcn/ui
-- Light/dark mode with WCAG AA+ accessibility compliance
-- Persistent header/sidebar navigation
-- Professional SaaS-grade interface
+## Technology Stack
 
-### 📦 Modular Architecture
-- 10 sealed functional module containers
-- Dev-assigned component system
-- Read-only user access with clear boundaries
-- Extensible module framework
+- **Frontend**: React 18, TypeScript, Tailwind CSS, shadcn/ui
+- **Backend**: Express.js, Node.js, TypeScript
+- **Database**: PostgreSQL with Drizzle ORM
+- **Authentication**: Passport.js with session management
+- **Payments**: PayPal Server SDK
+- **AI Integration**: OpenAI API
+- **Build Tools**: Vite, ESBuild
 
-### 🛠️ Developer Tools
-- TypeScript throughout frontend and backend
-- PostgreSQL with Drizzle ORM
-- Real-time query invalidation with TanStack Query
-- Comprehensive error handling and logging
-
-## Quick Start
+## Quick Setup
 
 ### Prerequisites
 - Node.js 18+ 
 - PostgreSQL database
-- npm or yarn package manager
+- PayPal Developer Account (for payments)
+- OpenAI API key (for AI features)
 
 ### Installation
 
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd omega-8-clean-core
-```
+1. **Clone and Install**
+   ```bash
+   git clone <your-repo-url>
+   cd omega-v8.3
+   npm install
+   ```
 
-2. Install dependencies:
-```bash
-npm install
-```
+2. **Environment Setup**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
 
-3. Set up environment variables:
-```bash
-cp .env.example .env
-# Configure your DATABASE_URL and other settings
-```
+3. **Database Setup**
+   ```bash
+   npm run db:push
+   ```
 
-4. Initialize the database:
-```bash
-npm run db:push
-```
+4. **Start Development**
+   ```bash
+   npm run dev
+   ```
 
-5. Start development servers:
-```bash
-npm run dev
-```
+5. **Access Application**
+   - Application: http://localhost:5000
+   - Create your first admin account at `/register-admin`
 
-The application will be available at `http://localhost:5000`
+## Environment Variables
 
-## Scripts
+Required environment variables (see `.env.example`):
 
-- `npm run dev` - Start both client and server in development mode
-- `npm run dev:server` - Start only the backend server
-- `npm run dev:client` - Start only the frontend client
-- `npm run build` - Build for production
-- `npm run db:push` - Push database schema changes
-- `npm run start` - Start production server
+- `DATABASE_URL`: PostgreSQL connection string
+- `PAYPAL_CLIENT_ID`: PayPal application client ID
+- `PAYPAL_CLIENT_SECRET`: PayPal application secret
+- `OPENAI_API_KEY`: OpenAI API key for AI features
+- `REPL_ID`: Session secret key
 
-## Project Structure
+## GitHub Best Practices for Forking
 
-```
-├── client/                 # React frontend
-│   ├── src/
-│   │   ├── components/     # Reusable UI components
-│   │   ├── pages/          # Application pages
-│   │   ├── hooks/          # Custom React hooks
-│   │   └── lib/            # Utility functions
-├── server/                 # Express backend
-│   ├── routes/             # API route handlers
-│   ├── middleware/         # Express middleware
-│   └── auth.ts             # Authentication setup
-├── db/                     # Database schema and config
-│   ├── schema.ts           # Drizzle schema definitions
-│   └── index.ts            # Database connection
-└── package.json
-```
+When forking Omega-V8.3:
 
-## Configuration
+1. **Fork Strategy**: Use GitHub's fork feature to create your own copy
+2. **Branch Management**: Create feature branches from `main`
+3. **Environment Security**: Never commit `.env` files with real credentials
+4. **Customization**: Modify `theme.json` for branding, extend modules in `/server/routes/modules.ts`
+5. **Updates**: Regularly sync with upstream for security updates
+6. **Documentation**: Update this README for your specific implementation
 
-### Environment Variables
+## Core Features
 
-Create a `.env` file with:
+### Authentication & Roles
+- **User**: Standard access with 14-day trial
+- **Admin**: Unlimited access, user management, token administration
+- **Supergod**: Full system control, admin management, configuration access
 
-```env
-DATABASE_URL=postgresql://user:password@localhost:5432/omega8
-IS_SANDBOX=true
-NODE_ENV=development
-```
-
-### Database Setup
-
-The application uses PostgreSQL with Drizzle ORM. Run migrations with:
-
-```bash
-npm run db:push
-```
-
-## API Endpoints
-
-### Authentication
-- `POST /api/login` - User login
-- `POST /api/logout` - User logout
-- `GET /api/user` - Get current user
-
-### Subscriptions
-- `GET /api/subscription/current-plan` - Get user's current plan
-- `POST /api/subscription/change` - Request plan change
-- `GET /api/admin/subscriptions` - Admin: View all subscriptions
-
-### Two-Factor Authentication
-- `GET /api/2fa/status` - Get 2FA status
-- `POST /api/2fa/enable` - Enable 2FA
-- `POST /api/2fa/disable` - Disable 2FA
-
-## Deployment
-
-### Production Build
-
-1. Build the application:
-```bash
-npm run build
-```
-
-2. Set production environment variables
-
-3. Start the production server:
-```bash
-npm run start
-```
-
-### Environment Setup
-
-Ensure these environment variables are set in production:
-- `DATABASE_URL` - PostgreSQL connection string
-- `NODE_ENV=production`
-- `IS_SANDBOX=false` (for live payments)
-
-## Development
-
-### Adding New Features
-
-1. **Frontend Components**: Add to `client/src/components/`
-2. **API Routes**: Add to `server/routes/`
-3. **Database Changes**: Update `db/schema.ts` and run `npm run db:push`
-4. **Pages**: Add to `client/src/pages/` and register in `App.tsx`
+### Billing System
+- **Subscriptions**: Monthly/annual plans with PayPal integration
+- **Tokens**: Pay-per-use model for premium features
+- **Executive Bypass**: Admin/Supergod roles skip all payment restrictions
 
 ### Module System
+- Extensible architecture for custom functionality
+- Tier-based access control
+- Built-in audit and logging
 
-Modules are sealed containers managed by system developers. Each module:
-- Has a reserved content area at `/module/[1-10]`
-- Shows read-only access to users
-- Awaits developer assignment for functionality
+## Documentation
 
-## Technology Stack
-
-### Frontend
-- React 18 with TypeScript
-- Tailwind CSS for styling
-- shadcn/ui component library
-- Wouter for routing
-- TanStack Query for state management
-
-### Backend
-- Express.js with TypeScript
-- Passport.js for authentication
-- Drizzle ORM for database operations
-- PostgreSQL database
-
-### Development Tools
-- Vite for frontend tooling
-- tsx for TypeScript execution
-- ESLint and Prettier for code quality
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature-name`
-3. Make your changes and add tests
-4. Commit your changes: `git commit -am 'Add feature'`
-5. Push to the branch: `git push origin feature-name`
-6. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+For detailed technical specifications, see [/docs/Omega-Spec.md](./docs/Omega-Spec.md)
 
 ## Support
 
-For support and questions:
-- Check the documentation in this README
-- Review the API documentation in `API_DOCUMENTATION.md`
-- Open an issue for bug reports or feature requests
+For issues and feature requests, please use GitHub Issues.
 
 ---
 
-**Omega-8-Clean-Core v1.0.0** - Built with the Omega framework for scalable SaaS applications.
+**Version**: Omega-V8.3 ✅  
+**License**: MIT  
+**Last Updated**: June 2025
