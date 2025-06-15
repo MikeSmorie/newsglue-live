@@ -3,10 +3,11 @@ import { db } from "@db";
 import { 
   subscriptionPlans, 
   userSubscriptions, 
-  payments,
+  transactions,
+  paymentProviders,
   insertSubscriptionPlanSchema,
   insertUserSubscriptionSchema,
-  insertPaymentSchema
+  insertTransactionSchema
 } from "@db/schema";
 import { eq } from "drizzle-orm";
 
@@ -52,22 +53,33 @@ router.post("/subscribe", async (req, res) => {
       throw new Error("Failed to create subscription");
     }
 
-    // Create pending payment record
-    const [payment] = await db.insert(payments)
+    // Get default payment provider for transaction creation
+    const defaultProvider = await db.query.paymentProviders.findFirst({
+      where: eq(paymentProviders.isActive, true)
+    });
+
+    if (!defaultProvider) {
+      return res.status(400).json({ message: "No payment providers available" });
+    }
+
+    // Create pending transaction record
+    const [transaction] = await db.insert(transactions)
       .values({
         userId,
-        subscriptionId: subscription.id,
+        providerId: defaultProvider.id,
+        type: "payment",
         amount: plan.price,
         currency: "USD",
         status: "pending",
-        paymentMethod: "placeholder"
+        txReference: `sub_${subscription.id}_${Date.now()}`,
+        metadata: { subscriptionId: subscription.id }
       })
       .returning();
 
     res.json({ 
       message: "Subscription initiated", 
       subscription,
-      payment
+      transaction
     });
   } catch (error) {
     res.status(400).json({ 
