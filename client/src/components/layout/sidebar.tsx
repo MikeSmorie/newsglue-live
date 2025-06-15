@@ -202,6 +202,13 @@ export function Sidebar() {
           </>
         )}
       </ScrollArea>
+      
+      {/* Version Footer */}
+      <div className="mt-auto p-4 border-t border-gray-200 dark:border-gray-800">
+        <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
+          Omega-8-Clean-Core v1.0.0
+        </div>
+      </div>
     </div>
   );
 }
