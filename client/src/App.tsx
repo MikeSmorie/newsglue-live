@@ -15,6 +15,7 @@ import Dashboard from "@/pages/dashboard";
 import ModuleView from "@/pages/module-view";
 import SubscriptionManagement from "@/pages/subscription-management";
 import SubscriptionPlans from "@/pages/subscription-plans";
+import TwoFactorAuth from "@/pages/two-factor-auth";
 
 import { useUser } from "@/hooks/use-user";
 import { useToast } from "@/hooks/use-toast";
@@ -115,6 +116,7 @@ function Router() {
         </Route>
         <Route path="/subscription" component={SubscriptionManagement} />
         <Route path="/subscription/plans" component={SubscriptionPlans} />
+        <Route path="/2fa" component={TwoFactorAuth} />
         <Route path="/profile" component={Dashboard} />
         <Route component={NotFound} />
       </Switch>

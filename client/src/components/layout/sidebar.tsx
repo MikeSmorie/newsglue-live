@@ -11,7 +11,8 @@ import {
   User, 
   CreditCard,
   Shield,
-  Crown
+  Crown,
+  KeyRound
 } from "lucide-react";
 
 const moduleItems = Array.from({ length: 10 }, (_, i) => ({
@@ -36,6 +37,11 @@ const navigationItems = [
     name: "Subscription",
     href: "/subscription",
     icon: CreditCard
+  },
+  {
+    name: "Two-Factor Auth",
+    href: "/2fa",
+    icon: KeyRound
   }
 ];
 

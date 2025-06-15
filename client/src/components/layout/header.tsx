@@ -12,7 +12,8 @@ import {
   LogOut,
   Crown,
   Shield,
-  User
+  User,
+  KeyRound
 } from "lucide-react";
 
 function getRoleIcon(role: string) {

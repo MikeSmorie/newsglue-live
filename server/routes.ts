@@ -206,6 +206,68 @@ export function registerRoutes(app: Express) {
       res.status(500).json({ message: error.message });
     }
   });
+
+  // 2FA management routes
+  app.get("/api/2fa/status", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      // Mock 2FA status - in real implementation, query user's 2FA settings
+      const mock2FAStatus = {
+        enabled: false, // Default to disabled
+        secret: "JBSWY3DPEHPK3PXP" // Mock TOTP secret
+      };
+
+      res.json(mock2FAStatus);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/2fa/enable", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      // Generate mock TOTP secret
+      const mockSecret = "JBSWY3DPEHPK3PXP" + Math.random().toString(36).substr(2, 9).toUpperCase();
+      
+      // Mock enabling 2FA - in real implementation, update database
+      console.log(`[MOCK] Enabling 2FA for user ${userId} with secret: ${mockSecret}`);
+
+      res.json({
+        success: true,
+        message: "2FA enabled successfully",
+        secret: mockSecret
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/2fa/disable", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      // Mock disabling 2FA - in real implementation, update database
+      console.log(`[MOCK] Disabling 2FA for user ${userId}`);
+
+      res.json({
+        success: true,
+        message: "2FA disabled successfully"
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
   
   // Register supergod-only routes
   registerSupergodRoutes(app); // These routes have their own middleware checks
