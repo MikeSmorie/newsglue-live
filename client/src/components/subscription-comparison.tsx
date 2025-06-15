@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
+import { PaymentProviderButtons } from "@/components/PaymentProviderButtons";
 
 interface Plan {
   id: number;
@@ -203,6 +204,18 @@ export function SubscriptionComparison() {
           </Table>
         </div>
 
+        {/* Payment Provider Options */}
+        {user && currentPlan && currentPlan.name !== "Enterprise" && (
+          <div className="mt-8 border-t pt-6">
+            <h3 className="text-lg font-semibold mb-4">Upgrade Your Plan</h3>
+            <PaymentProviderButtons 
+              currentPlan={currentPlan.name === "Free" ? "Pro" : "Enterprise"}
+              planPrice={currentPlan.name === "Free" ? 29 : 99}
+              planId={currentPlan.name === "Free" ? 2 : 3}
+            />
+          </div>
+        )}
+
         <div className="mt-6 flex justify-end gap-4">
           {!user ? (
             <Button onClick={() => navigate("/auth")}>Sign Up Now</Button>
@@ -211,7 +224,7 @@ export function SubscriptionComparison() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button onClick={() => navigate("/subscriptions")}>
-                    Upgrade Plan
+                    Manage Subscription
                     {subscriptionOverride?.proRatedAmount && (
                       <span className="ml-2 text-xs">
                         (Pro-rated adjustment: ${subscriptionOverride.proRatedAmount})
@@ -220,7 +233,7 @@ export function SubscriptionComparison() {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Upgrade now and only pay the difference for the remaining billing period</p>
+                  <p>View detailed subscription management and payment options</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
