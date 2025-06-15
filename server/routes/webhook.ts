@@ -1,6 +1,6 @@
 import express from "express";
 import { db } from "@db";
-import { payments, userSubscriptions } from "@db/schema";
+import { transactions, userSubscriptions } from "@db/schema";
 import { eq } from "drizzle-orm";
 
 const router = express.Router();
@@ -18,29 +18,28 @@ router.post("/payment-webhook", express.raw({type: 'application/json'}), async (
     
     console.log("Received webhook event:", event);
 
-    // For demonstration, we'll just update the payment status
+    // For demonstration, we'll just update the transaction status
     if (event.type === 'payment.succeeded') {
-      const paymentId = event.data.paymentId;
+      const txReference = event.data.txReference;
       
-      // Update payment status
+      // Update transaction status
       await db
-        .update(payments)
+        .update(transactions)
         .set({ 
-          status: "completed",
-          updatedAt: new Date()
+          status: "completed"
         })
-        .where(eq(payments.id, paymentId));
+        .where(eq(transactions.txReference, txReference));
 
       // Update subscription status
-      const payment = await db.query.payments.findFirst({
-        where: eq(payments.id, paymentId)
+      const transaction = await db.query.transactions.findFirst({
+        where: eq(transactions.txReference, txReference)
       });
 
-      if (payment?.subscriptionId) {
+      if (transaction?.metadata?.subscriptionId) {
         await db
           .update(userSubscriptions)
           .set({ status: "active" })
-          .where(eq(userSubscriptions.id, payment.subscriptionId));
+          .where(eq(userSubscriptions.id, transaction.metadata.subscriptionId));
       }
     }
 

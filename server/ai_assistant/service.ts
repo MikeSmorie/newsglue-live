@@ -5,7 +5,7 @@ import {
   users, 
   subscriptionPlans, 
   userSubscriptions,
-  payments
+  transactions
 } from "@db/schema";
 import { eq, and, gte, desc } from "drizzle-orm";
 import type { AIQuery, AIResponse, AIFeedback } from "./types";
@@ -38,10 +38,10 @@ export class AIAssistantService {
         .from(userSubscriptions)
         .where(eq(userSubscriptions.status, "active"));
 
-      // Get recent payments
-      const recentPayments = await db.select()
-        .from(payments)
-        .orderBy(desc(payments.createdAt))
+      // Get recent transactions
+      const recentTransactions = await db.select()
+        .from(transactions)
+        .orderBy(desc(transactions.createdAt))
         .limit(5);
 
       return {
@@ -51,7 +51,7 @@ export class AIAssistantService {
         activeUsers: activeUsers.length,
         metrics: {
           activeSubscriptions: activeSubscriptions.length,
-          recentPayments: recentPayments.length,
+          recentTransactions: recentTransactions.length,
         },
         timestamp: now.toISOString()
       };
@@ -64,7 +64,7 @@ export class AIAssistantService {
         activeUsers: 0,
         metrics: {
           activeSubscriptions: 0,
-          recentPayments: 0,
+          recentTransactions: 0,
         },
         timestamp: new Date().toISOString()
       };
@@ -88,23 +88,23 @@ export class AIAssistantService {
         }
       });
 
-      // Get user's recent payments
-      const userPayments = await db.select()
-        .from(payments)
-        .where(eq(payments.userId, userId))
-        .orderBy(desc(payments.createdAt))
+      // Get user's recent transactions
+      const userTransactions = await db.select()
+        .from(transactions)
+        .where(eq(transactions.userId, userId))
+        .orderBy(desc(transactions.createdAt))
         .limit(3);
 
       return {
         user,
-        recentPayments: userPayments,
+        recentTransactions: userTransactions,
         timestamp: new Date().toISOString()
       };
     } catch (error) {
       console.error("Error getting user context:", error);
       return {
         user: null,
-        recentPayments: [],
+        recentTransactions: [],
         timestamp: new Date().toISOString()
       };
     }
