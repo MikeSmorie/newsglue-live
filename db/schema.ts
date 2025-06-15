@@ -1,4 +1,4 @@
-import { pgTable, text, varchar, serial, timestamp, integer, boolean, decimal, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, serial, timestamp, integer, boolean, decimal, jsonb, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations, sql } from "drizzle-orm";
@@ -510,3 +510,58 @@ export type InsertReferral = typeof referrals.$inferInsert;
 export type SelectReferral = typeof referrals.$inferSelect;
 export type InsertReferralRedemption = typeof referralRedemptions.$inferInsert;
 export type SelectReferralRedemption = typeof referralRedemptions.$inferSelect;
+
+// AI Output Tracking Tables
+export const rewrites = pgTable("rewrites", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  originalText: text("original_text").notNull(),
+  rewrittenText: text("rewritten_text").notNull(),
+  wordCount: integer("word_count").default(0),
+  tone: text("tone"),
+  dialect: text("dialect"),
+  styleLabel: text("style_label"),
+  isClone: boolean("is_clone").default(false),
+  rewriteTime: timestamp("rewrite_time").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+export const aiOutputLogs = pgTable("ai_output_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  rewriteId: uuid("rewrite_id").references(() => rewrites.id),
+  tokensUsed: integer("tokens_used"),
+  detectionRating: text("detection_rating"), // 'Human', 'Likely AI', 'Detectable', etc.
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+// AI tracking relations
+export const rewritesRelations = relations(rewrites, ({ one, many }) => ({
+  user: one(users, {
+    fields: [rewrites.userId],
+    references: [users.id]
+  }),
+  outputLogs: many(aiOutputLogs)
+}));
+
+export const aiOutputLogsRelations = relations(aiOutputLogs, ({ one }) => ({
+  user: one(users, {
+    fields: [aiOutputLogs.userId],
+    references: [users.id]
+  }),
+  rewrite: one(rewrites, {
+    fields: [aiOutputLogs.rewriteId],
+    references: [rewrites.id]
+  })
+}));
+
+// AI tracking schemas
+export const insertRewriteSchema = createInsertSchema(rewrites);
+export const selectRewriteSchema = createSelectSchema(rewrites);
+export const insertAiOutputLogSchema = createInsertSchema(aiOutputLogs);
+export const selectAiOutputLogSchema = createSelectSchema(aiOutputLogs);
+
+export type InsertRewrite = typeof rewrites.$inferInsert;
+export type SelectRewrite = typeof rewrites.$inferSelect;
+export type InsertAiOutputLog = typeof aiOutputLogs.$inferInsert;
+export type SelectAiOutputLog = typeof aiOutputLogs.$inferSelect;
