@@ -2,7 +2,10 @@ import { Router } from "express";
 import { db } from "../../../db";
 import { users, activityLogs } from "../../../db/schema";
 import { eq, count, desc } from "drizzle-orm";
-import { logEvent } from "../../../lib/logs";
+// Simplified logging without logEvent for now
+const logAdminAction = (action: string, details: any) => {
+  console.log(`[ADMIN ACTION] ${action}:`, details);
+};
 
 export const userManagementRouter = Router();
 
@@ -65,7 +68,7 @@ userManagementRouter.get("/users", requireAdminOrSupergod, async (req: any, res)
       })
     );
 
-    await logEvent("user_action", "User list accessed", {
+    logAdminAction("User list accessed", {
       adminId: req.user.id,
       adminRole: req.user.role,
       userCount: usersWithStats.length
@@ -112,7 +115,7 @@ userManagementRouter.post("/user/:id/suspend", requireAdminOrSupergod, async (re
       .set({ status: 'suspended' })
       .where(eq(users.id, userId));
 
-    await logEvent("user_action", "User suspended", {
+    logAdminAction("User suspended", {
       adminId: req.user.id,
       adminRole: req.user.role,
       targetUserId: userId,
@@ -160,7 +163,7 @@ userManagementRouter.post("/user/:id/ban", requireAdminOrSupergod, async (req: a
       .set({ status: 'banned' })
       .where(eq(users.id, userId));
 
-    await logEvent("admin_action", "User banned", {
+    logAdminAction("admin_action", "User banned", {
       adminId: req.user.id,
       adminRole: req.user.role,
       targetUserId: userId,
@@ -200,7 +203,7 @@ userManagementRouter.post("/user/:id/activate", requireAdminOrSupergod, async (r
       .set({ status: 'active' })
       .where(eq(users.id, userId));
 
-    await logEvent("admin_action", "User activated", {
+    logAdminAction("admin_action", "User activated", {
       adminId: req.user.id,
       adminRole: req.user.role,
       targetUserId: userId,
@@ -252,7 +255,7 @@ userManagementRouter.delete("/user/:id", requireAdminOrSupergod, async (req: any
       });
     }
 
-    await logEvent("admin_action", "User deleted", {
+    logAdminAction("admin_action", "User deleted", {
       adminId: req.user.id,
       adminRole: req.user.role,
       targetUserId: userId,
@@ -304,7 +307,7 @@ userManagementRouter.post("/user/:id/credits", requireAdminOrSupergod, async (re
       .set({ tokens: newTokenBalance })
       .where(eq(users.id, userId));
 
-    await logEvent("admin_action", "Credits added to user", {
+    logAdminAction("admin_action", "Credits added to user", {
       adminId: req.user.id,
       adminRole: req.user.role,
       targetUserId: userId,
@@ -370,7 +373,7 @@ userManagementRouter.post("/user/:id/role", requireAdminOrSupergod, async (req: 
       .set({ role })
       .where(eq(users.id, userId));
 
-    await logEvent("admin_action", "User role updated", {
+    logAdminAction("admin_action", "User role updated", {
       adminId: req.user.id,
       adminRole: req.user.role,
       targetUserId: userId,
@@ -420,7 +423,7 @@ userManagementRouter.post("/user/:id/subscription", requireAdminOrSupergod, asyn
       .set({ subscriptionPlan: plan })
       .where(eq(users.id, userId));
 
-    await logEvent("admin_action", "User subscription updated", {
+    logAdminAction("admin_action", "User subscription updated", {
       adminId: req.user.id,
       adminRole: req.user.role,
       targetUserId: userId,
@@ -463,7 +466,7 @@ userManagementRouter.post("/user/:id/notes", requireAdminOrSupergod, async (req:
       .set({ notes: notes || null })
       .where(eq(users.id, userId));
 
-    await logEvent("admin_action", "User notes updated", {
+    logAdminAction("admin_action", "User notes updated", {
       adminId: req.user.id,
       adminRole: req.user.role,
       targetUserId: userId,

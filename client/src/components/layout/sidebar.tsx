@@ -9,6 +9,7 @@ import {
   Settings, 
   Grid3X3, 
   User, 
+  Users,
   CreditCard,
   Shield,
   Crown,
@@ -76,6 +77,11 @@ const adminItems = [
     name: "Subscriptions",
     href: "/admin/subscriptions",
     icon: CreditCard
+  },
+  {
+    name: "User Management",
+    href: "/admin/users",
+    icon: Users
   }
 ];
 

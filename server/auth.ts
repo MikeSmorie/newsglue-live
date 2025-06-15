@@ -71,6 +71,15 @@ export function setupAuth(app: Express) {
         if (!user) {
           return done(null, false, { message: "Incorrect username." });
         }
+
+        // Check if user is banned or suspended
+        if (user.status === 'banned') {
+          return done(null, false, { message: "Your account has been banned. Please contact support." });
+        }
+        if (user.status === 'suspended') {
+          return done(null, false, { message: "Your account has been suspended. Please contact support." });
+        }
+
         const isMatch = await crypto.compare(password, user.password);
         if (!isMatch) {
           return done(null, false, { message: "Incorrect password." });
