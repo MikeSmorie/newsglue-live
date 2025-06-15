@@ -432,7 +432,7 @@ export function registerRoutes(app: Express) {
         .from(users);
 
       // Get total tokens used from transactions
-      const [tokensUsedResult] = await db.execute(sql`
+      const tokensUsedResult = await db.execute(sql`
         SELECT COALESCE(SUM(ABS(amount)), 0) as total_used
         FROM transactions 
         WHERE transaction_type = 'payment' AND status = 'completed'
@@ -443,7 +443,7 @@ export function registerRoutes(app: Express) {
         activeUsers: Number(activeUsersResult.count),
         bannedUsers: Number(bannedUsersResult.count),
         totalTokensIssued: Number(totalTokensResult.total) || 0,
-        totalTokensUsed: Number((tokensUsedResult as any[])[0]?.total_used) || 0
+        totalTokensUsed: Number((tokensUsedResult.rows?.[0] as any)?.total_used) || 0
       };
 
       res.json(aggregateStats);
