@@ -1,4 +1,5 @@
-import { Switch, Route } from "wouter";
+import React from "react";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -58,19 +59,6 @@ function ProtectedAdminRoute({ component: Component }: { component: React.Compon
 
 function ProtectedSupergodRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, isLoading } = useUser();
-  const { toast } = useToast();
-  const [location, setLocation] = useLocation();
-  
-  React.useEffect(() => {
-    if (!isLoading && (!user || user.role !== "supergod")) {
-      toast({
-        title: "Access Denied",
-        description: "This area requires Super-God privileges.",
-        variant: "destructive"
-      });
-      setLocation("/");
-    }
-  }, [user, isLoading, toast, setLocation]);
   
   if (isLoading) {
     return (
@@ -81,7 +69,7 @@ function ProtectedSupergodRoute({ component: Component }: { component: React.Com
   }
 
   if (!user || user.role !== "supergod") {
-    return null; // Will redirect via useEffect
+    return <NotFound />;
   }
   
   console.log("[DEBUG] Super-God exclusive route accessed");
