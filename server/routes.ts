@@ -20,6 +20,7 @@ import { logError } from "./utils/logger";
 import { requireRole, requireSupergod } from "./middleware/rbac";
 import { getTokenBalance, consumeTokens, giftTokens, modifyTokens, getAllTokenBalances } from "./routes/tokens";
 import referralRouter from "../modules/3.ReferralEngine/api";
+import { registerAnalyticsRoutes } from "./routes/analytics";
 import { db } from "../db";
 import { users } from "../db/schema";
 import { eq, and, or, desc, asc, sql } from "drizzle-orm";
@@ -698,7 +699,15 @@ export function registerRoutes(app: Express) {
    * Role: Supergod only
    * System configuration, admin management, platform control
    */
-  registerSupergodRoutes(app); // These routes have their own middleware checks
+  registerSupergodRoutes(app);
+
+  /**
+   * ANALYTICS ROUTES
+   * Auth: Required
+   * Role: Supergod only
+   * AI output tracking and admin insights
+   */
+  registerAnalyticsRoutes(app); // These routes have their own middleware checks
 
   // Error handler must be last
   app.use(errorHandler);

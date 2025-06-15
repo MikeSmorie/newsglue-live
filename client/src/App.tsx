@@ -23,6 +23,7 @@ import AuditModule from "@/pages/audit-module";
 import AuditPage from "@/pages/admin/audit";
 import ReferralsPage from "@/pages/referrals";
 import AdminUsersPage from "@/pages/admin/users-simple";
+import AdminAnalyticsPage from "@/pages/admin/analytics";
 
 import { useUser } from "@/hooks/use-user";
 import { useToast } from "@/hooks/use-toast";
@@ -115,6 +116,7 @@ function Router() {
         <Route path="/admin/communications" component={() => <ProtectedAdminRoute component={AdminCommunications} />} />
         <Route path="/admin/users" component={() => <ProtectedAdminRoute component={AdminUsersPage} />} />
         <Route path="/admin/audit" component={() => <ProtectedSupergodRoute component={AuditPage} />} />
+        <Route path="/admin/analytics" component={() => <ProtectedSupergodRoute component={() => import("./pages/admin/analytics").then(m => m.default)} />} />
         
         {/* Supergod exclusive routes */}
         <Route path="/supergod" component={() => <ProtectedSupergodRoute component={SupergodDashboard} />} />
