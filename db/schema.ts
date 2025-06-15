@@ -6,11 +6,19 @@ import { relations } from "drizzle-orm";
 export const userRoleEnum = z.enum(["user", "admin", "supergod"]);
 export type UserRole = z.infer<typeof userRoleEnum>;
 
+export const subscriptionPlanEnum = z.enum(["free", "pro", "enterprise"]);
+export type SubscriptionPlan = z.infer<typeof subscriptionPlanEnum>;
+
+export const paymentMethodEnum = z.enum(["paypal", "stablecoin", "credit_card"]);
+export type PaymentMethod = z.infer<typeof paymentMethodEnum>;
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").unique().notNull(),
   password: text("password").notNull(),
   role: text("role").notNull().default("user"),
+  subscriptionPlan: text("subscription_plan").notNull().default("free"),
+  walletAddress: text("wallet_address"),
   email: text("email").unique(),
   createdAt: timestamp("created_at").defaultNow(),
   lastLogin: timestamp("last_login")
@@ -52,6 +60,15 @@ export const selectErrorLogSchema = createSelectSchema(errorLogs);
 export type InsertErrorLog = typeof errorLogs.$inferInsert;
 export type SelectErrorLog = typeof errorLogs.$inferSelect;
 
+// Mock payments table for subscription scaffold
+export const mockPayments = pgTable("mock_payments", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  method: text("method").notNull(), // paypal, stablecoin, credit_card
+  status: text("status").notNull().default("pending"), // pending, completed, failed, cancelled
+  timestamp: timestamp("timestamp").defaultNow(),
+  reference: text("reference").notNull()
+});
 
 // Simple messages table with no relations
 export const messages = pgTable("messages", {
@@ -72,7 +89,7 @@ export type SelectMessage = typeof messages.$inferSelect;
 export const subscriptionStatusEnum = z.enum(["active", "cancelled", "expired", "pending"]);
 export type SubscriptionStatus = z.infer<typeof subscriptionStatusEnum>;
 
-export const paymentStatusEnum = z.enum(["pending", "completed", "failed", "refunded"]);
+export const paymentStatusEnum = z.enum(["pending", "completed", "failed", "refunded", "cancelled"]);
 export type PaymentStatus = z.infer<typeof paymentStatusEnum>;
 
 export const gatewayProviderEnum = z.enum(["PayPal", "Stripe"]);
