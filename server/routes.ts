@@ -15,6 +15,7 @@ import { registerSupergodRoutes } from "./routes/supergod";
 import auditRoutes from "./routes/admin/audit";
 import { modulesRouter } from "./routes/modules";
 import { checkTrialStatus, resetUserTrial } from "./routes/trial";
+import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
 import { logError } from "./utils/logger";
 import { requireRole, requireSupergod } from "./middleware/rbac";
 import { db } from "../db";
@@ -203,6 +204,20 @@ export function registerRoutes(app: Express) {
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
+  });
+
+  // PayPal routes
+  app.get("/paypal/setup", async (req, res) => {
+    await loadPaypalDefault(req, res);
+  });
+
+  app.post("/paypal/order", async (req, res) => {
+    // Request body should contain: { intent, amount, currency }
+    await createPaypalOrder(req, res);
+  });
+
+  app.post("/paypal/order/:orderID/capture", async (req, res) => {
+    await capturePaypalOrder(req, res);
   });
 
   // Trial management routes

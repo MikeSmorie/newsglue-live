@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CheckCircle, Lock, Star, Zap, Users, MessageSquare, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import PayPalButton from "@/components/PayPalButton";
 
 interface Module {
   id: number;
@@ -238,13 +239,23 @@ export default function SubscriptionPlans() {
                 </div>
 
                 {canUpgrade && (
-                  <Button 
-                    onClick={() => handleUpgrade(tier)}
-                    disabled={selectedPlan === tier}
-                    className="w-full"
-                  >
-                    {selectedPlan === tier ? "Processing..." : `Upgrade to ${tier.charAt(0).toUpperCase() + tier.slice(1)}`}
-                  </Button>
+                  <div className="space-y-2">
+                    <Button 
+                      onClick={() => handleUpgrade(tier)}
+                      disabled={selectedPlan === tier}
+                      className="w-full"
+                    >
+                      {selectedPlan === tier ? "Processing..." : `Upgrade to ${tier.charAt(0).toUpperCase() + tier.slice(1)}`}
+                    </Button>
+                    <div className="text-center text-sm text-muted-foreground">or</div>
+                    <div className="flex justify-center">
+                      <PayPalButton
+                        amount={tier === "pro" ? "29.00" : "99.00"}
+                        currency="USD"
+                        intent="CAPTURE"
+                      />
+                    </div>
+                  </div>
                 )}
 
                 {isCurrentPlan && (
