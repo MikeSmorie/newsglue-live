@@ -14,7 +14,8 @@ import {
   Crown,
   KeyRound,
   FileText,
-  Gift
+  Gift,
+  BarChart3
 } from "lucide-react";
 
 const moduleItems = Array.from({ length: 9 }, (_, i) => ({
@@ -94,6 +95,11 @@ const supergodItems = [
     name: "Audit Logs",
     href: "/admin/audit",
     icon: Shield
+  },
+  {
+    name: "AI Analytics",
+    href: "/admin/analytics",
+    icon: BarChart3
   }
 ];
 

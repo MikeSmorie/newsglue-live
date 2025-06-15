@@ -116,7 +116,7 @@ function Router() {
         <Route path="/admin/communications" component={() => <ProtectedAdminRoute component={AdminCommunications} />} />
         <Route path="/admin/users" component={() => <ProtectedAdminRoute component={AdminUsersPage} />} />
         <Route path="/admin/audit" component={() => <ProtectedSupergodRoute component={AuditPage} />} />
-        <Route path="/admin/analytics" component={() => <ProtectedSupergodRoute component={() => import("./pages/admin/analytics").then(m => m.default)} />} />
+        <Route path="/admin/analytics" component={() => <ProtectedSupergodRoute component={AdminAnalyticsPage} />} />
         
         {/* Supergod exclusive routes */}
         <Route path="/supergod" component={() => <ProtectedSupergodRoute component={SupergodDashboard} />} />
