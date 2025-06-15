@@ -57,6 +57,7 @@ export function setupAuth(app: Express) {
           return done(null, false, { message: "Incorrect username." });
         }
 
+        console.log(`[DEBUG] Password comparison: provided='${password}', stored='${user.password}', match=${password === user.password}`);
         const isMatch = password === user.password;
         if (!isMatch) {
           return done(null, false, { message: "Incorrect password." });
