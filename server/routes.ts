@@ -22,7 +22,7 @@ import { getTokenBalance, consumeTokens, giftTokens, modifyTokens, getAllTokenBa
 import referralRouter from "../modules/3.ReferralEngine/api";
 import { db } from "../db";
 import { users } from "../db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { logEvent } from "../lib/logs";
 
 // Simple auth checks using passport
@@ -32,23 +32,8 @@ const requireAuth = (req: any, res: any, next: any) => {
 };
 
 const requireAdmin = (req: any, res: any, next: any) => {
-  if (!req.isAuthenticated()) {
-    return res.status(401).json({ message: "Not authenticated" });
-  }
-  if (req.user.role === "admin" || req.user.role === "supergod") {
-    return next();
-  }
+  if (req.isAuthenticated() && (req.user.role === "admin" || req.user.role === "supergod")) return next();
   res.status(403).json({ message: "Not authorized" });
-};
-
-const requireSupergodLocal = (req: any, res: any, next: any) => {
-  if (!req.isAuthenticated()) {
-    return res.status(401).json({ message: "Not authenticated" });
-  }
-  if (req.user.role === "supergod") {
-    return next();
-  }
-  res.status(403).json({ message: "Supergod access required" });
 };
 
 // Global error handler
@@ -530,8 +515,6 @@ export function registerRoutes(app: Express) {
    * POST /api/modules/run - Execute module
    */
   app.use("/api/modules", modulesRouter);
-
-
 
   /**
    * SUPERGOD ROUTES
