@@ -18,6 +18,7 @@ import { requireRole, requireSupergod } from "./middleware/rbac";
 import { db } from "../db";
 import { users } from "../db/schema";
 import { eq } from "drizzle-orm";
+import { logEvent } from "../lib/logs";
 
 // Simple auth checks using passport
 const requireAuth = (req: any, res: any, next: any) => {
@@ -350,6 +351,33 @@ export function registerRoutes(app: Express) {
     }
   });
   
+  // Client error logging endpoint
+  app.post("/api/logs/client-error", async (req, res) => {
+    try {
+      const { message, stack, componentStack, timestamp, userAgent, url } = req.body;
+      const user = (req as any).user;
+
+      await logEvent("error_boundary", `Client error: ${message}`, {
+        userId: user?.id,
+        userRole: user?.role || "anonymous",
+        endpoint: url,
+        severity: "error",
+        stackTrace: stack,
+        metadata: {
+          componentStack,
+          timestamp,
+          userAgent,
+          url
+        }
+      });
+
+      res.json({ success: true, message: "Error logged successfully" });
+    } catch (error: any) {
+      console.error("Failed to log client error:", error);
+      res.status(500).json({ message: "Failed to log error" });
+    }
+  });
+
   // Register supergod-only routes
   registerSupergodRoutes(app); // These routes have their own middleware checks
 

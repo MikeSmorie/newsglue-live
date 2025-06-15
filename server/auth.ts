@@ -8,6 +8,7 @@ import { promisify } from "util";
 import { users, insertUserSchema, type SelectUser } from "@db/schema";
 import { db } from "@db";
 import { eq } from "drizzle-orm";
+import { logAuth } from "../lib/logs";
 
 const scryptAsync = promisify(scrypt);
 const crypto = {

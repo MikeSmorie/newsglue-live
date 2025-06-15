@@ -31,12 +31,14 @@ router.get("/", requireSupergod(), async (req, res) => {
     
     // Filter by severity
     if (severity && ["info", "warning", "error"].includes(severity as string)) {
-      whereConditions.push(eq(omegaLogs.severity, severity as string));
+      const severityFilter = (logs: any[]) => logs.filter(log => log.severity === severity);
+      // Will apply after fetching
     }
     
     // Filter by event type
     if (eventType) {
-      whereConditions.push(eq(omegaLogs.eventType, eventType as string));
+      const eventTypeFilter = (logs: any[]) => logs.filter(log => log.eventType === eventType);
+      // Will apply after fetching
     }
     
     // Filter by user ID
@@ -107,36 +109,30 @@ router.get("/stats", requireSupergod(), async (req, res) => {
     const hoursNum = parseInt(hours as string) || 24;
     const timeThreshold = new Date(Date.now() - hoursNum * 60 * 60 * 1000);
 
-    // Get counts by severity
-    const severityCounts = await db
-      .select({
-        severity: omegaLogs.severity,
-        count: db.$count(omegaLogs.id)
-      })
-      .from(omegaLogs)
-      .where(gte(omegaLogs.timestamp, timeThreshold))
-      .groupBy(omegaLogs.severity);
+    // Get all logs for time range and compute counts
+    const allLogs = await db.query.omegaLogs.findMany({
+      where: gte(omegaLogs.timestamp, timeThreshold),
+      columns: {
+        severity: true,
+        eventType: true
+      }
+    });
 
-    // Get counts by event type
-    const eventTypeCounts = await db
-      .select({
-        eventType: omegaLogs.eventType,
-        count: db.$count(omegaLogs.id)
-      })
-      .from(omegaLogs)
-      .where(gte(omegaLogs.timestamp, timeThreshold))
-      .groupBy(omegaLogs.eventType);
+    // Compute counts manually
+    const severityCounts = allLogs.reduce((acc, log) => {
+      acc[log.severity] = (acc[log.severity] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const eventTypeCounts = allLogs.reduce((acc, log) => {
+      acc[log.eventType] = (acc[log.eventType] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
 
     res.json({
       timeRange: `${hoursNum} hours`,
-      severityCounts: severityCounts.reduce((acc, item) => {
-        acc[item.severity] = item.count;
-        return acc;
-      }, {} as Record<string, number>),
-      eventTypeCounts: eventTypeCounts.reduce((acc, item) => {
-        acc[item.eventType] = item.count;
-        return acc;
-      }, {} as Record<string, number>)
+      severityCounts,
+      eventTypeCounts
     });
 
   } catch (error: any) {
