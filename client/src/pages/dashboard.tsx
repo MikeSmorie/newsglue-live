@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useLocation } from "wouter";
+import { TrialBadge } from "@/components/trial-badge";
 import { 
   Grid3X3, 
   User, 
@@ -90,6 +91,7 @@ export default function Dashboard() {
           </p>
         </div>
         <div className="flex items-center space-x-3">
+          <TrialBadge />
           <Button 
             onClick={handleExportProfile}
             variant="outline"

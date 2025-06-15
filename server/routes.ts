@@ -14,6 +14,7 @@ import logsRoutes from "./routes/logs";
 import { registerSupergodRoutes } from "./routes/supergod";
 import auditRoutes from "./routes/admin/audit";
 import { modulesRouter } from "./routes/modules";
+import { checkTrialStatus, resetUserTrial } from "./routes/trial";
 import { logError } from "./utils/logger";
 import { requireRole, requireSupergod } from "./middleware/rbac";
 import { db } from "../db";
@@ -203,6 +204,10 @@ export function registerRoutes(app: Express) {
       res.status(500).json({ message: error.message });
     }
   });
+
+  // Trial management routes
+  app.post("/api/trial/check-status", requireAuth, checkTrialStatus);
+  app.post("/api/admin/reset-trial/:userId", requireAdmin, resetUserTrial);
 
   // Admin route to get all user subscriptions
   app.get("/api/admin/subscriptions", requireAdmin, async (req, res) => {
