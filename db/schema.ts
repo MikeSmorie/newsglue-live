@@ -19,6 +19,8 @@ export const users = pgTable("users", {
   role: text("role").notNull().default("user"),
   subscriptionPlan: text("subscription_plan").notNull().default("free"),
   walletAddress: text("wallet_address"),
+  twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
+  twoFactorSecret: text("two_factor_secret"),
   email: text("email").unique(),
   createdAt: timestamp("created_at").defaultNow(),
   lastLogin: timestamp("last_login")
