@@ -39,7 +39,9 @@ export default function AuthPage() {
   const onSubmit = async (data: AuthFormData, isLogin: boolean) => {
     setIsLoading(true);
     try {
+      console.log('Attempting login with data:', { username: data.username, email: data.email });
       const result = await (isLogin ? login(data) : register(data));
+      console.log('Login result:', result);
       if (!result.ok) {
         throw new Error(result.message);
       }
@@ -48,6 +50,7 @@ export default function AuthPage() {
         description: `Welcome ${data.username}!`,
       });
     } catch (error: any) {
+      console.error('Login error:', error);
       toast({
         variant: "destructive",
         title: "Error",

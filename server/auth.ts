@@ -312,8 +312,10 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
+    console.log('[DEBUG] Login attempt:', { username: req.body.username, email: req.body.email });
     const result = loginSchema.safeParse(req.body);
     if (!result.success) {
+      console.log('[DEBUG] Schema validation failed:', result.error.issues);
       return res.status(400).json({
         message: "Invalid input: " + result.error.issues.map(i => i.message).join(", ")
       });
