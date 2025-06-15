@@ -101,31 +101,31 @@ function Router() {
   return (
     <MainLayout>
       <Switch>
-        {/* Admin routes */}
-        <Route path="/admin" component={() => <ProtectedAdminRoute component={AdminDashboard} />} />
-        <Route path="/admin/logs" component={() => <ProtectedAdminRoute component={LogsDashboard} />} />
-        <Route path="/admin/subscriptions" component={() => <ProtectedAdminRoute component={AdminSubscriptionManagement} />} />
-        <Route path="/admin/subscription-manager" component={() => <ProtectedAdminRoute component={SubscriptionManager} />} />
-        <Route path="/admin/communications" component={() => <ProtectedAdminRoute component={AdminCommunications} />} />
-        <Route path="/admin/users" component={() => <ProtectedAdminRoute component={AdminUsersPage} />} />
-        <Route path="/admin/audit" component={() => <ProtectedSupergodRoute component={AuditPage} />} />
+        {/* Admin routes - must come before main routes */}
         <Route path="/admin/analytics" component={() => <ProtectedSupergodRoute component={AnalyticsTest} />} />
+        <Route path="/admin/audit" component={() => <ProtectedSupergodRoute component={AuditPage} />} />
+        <Route path="/admin/users" component={() => <ProtectedAdminRoute component={AdminUsersPage} />} />
+        <Route path="/admin/communications" component={() => <ProtectedAdminRoute component={AdminCommunications} />} />
+        <Route path="/admin/subscription-manager" component={() => <ProtectedAdminRoute component={SubscriptionManager} />} />
+        <Route path="/admin/subscriptions" component={() => <ProtectedAdminRoute component={AdminSubscriptionManagement} />} />
+        <Route path="/admin/logs" component={() => <ProtectedAdminRoute component={LogsDashboard} />} />
+        <Route path="/admin" component={() => <ProtectedAdminRoute component={AdminDashboard} />} />
         
         {/* Supergod exclusive routes */}
         <Route path="/supergod" component={() => <ProtectedSupergodRoute component={SupergodDashboard} />} />
         
         {/* Main routes */}
-        <Route path="/" component={Dashboard} />
+        <Route path="/module/omega-10" component={AuditModule} />
         <Route path="/module/:id">
           {(params) => <ModuleView moduleId={params.id} />}
         </Route>
-        <Route path="/subscription" component={SubscriptionManagement} />
         <Route path="/subscription/plans" component={SubscriptionPlans} />
+        <Route path="/subscription" component={SubscriptionManagement} />
         <Route path="/referrals" component={ReferralsPage} />
         <Route path="/locked-module" component={LockedModule} />
         <Route path="/2fa" component={TwoFactorAuth} />
-        <Route path="/module/omega-10" component={AuditModule} />
         <Route path="/profile" component={Dashboard} />
+        <Route path="/" component={Dashboard} />
         <Route component={NotFound} />
       </Switch>
     </MainLayout>
