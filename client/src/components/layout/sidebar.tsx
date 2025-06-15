@@ -12,15 +12,25 @@ import {
   CreditCard,
   Shield,
   Crown,
-  KeyRound
+  KeyRound,
+  FileText
 } from "lucide-react";
 
-const moduleItems = Array.from({ length: 10 }, (_, i) => ({
+const moduleItems = Array.from({ length: 9 }, (_, i) => ({
   id: i + 1,
   name: `Module ${i + 1}`,
   href: `/module/${i + 1}`,
   icon: Grid3X3
 }));
+
+// Special Omega-10 Audit Module
+const auditModule = {
+  id: 10,
+  name: "Omega-10 Audit",
+  href: "/module/omega-10",
+  icon: FileText,
+  restricted: true
+};
 
 const navigationItems = [
   {
@@ -138,6 +148,24 @@ export function Sidebar() {
               </Button>
             );
           })}
+          
+          {/* Omega-10 Audit Module - Admin/Supergod Only */}
+          {(user?.role === "admin" || user?.role === "supergod") && (
+            <Button
+              variant={isActive(auditModule.href) ? "secondary" : "ghost"}
+              size="sm"
+              className={cn(
+                "w-full justify-start text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/20",
+                isActive(auditModule.href) && "bg-red-50 dark:bg-red-950/20"
+              )}
+              asChild
+            >
+              <a href={auditModule.href}>
+                <FileText className="mr-2 h-3 w-3" />
+                {auditModule.name}
+              </a>
+            </Button>
+          )}
         </div>
 
         {(user?.role === "admin" || user?.role === "supergod") && (
