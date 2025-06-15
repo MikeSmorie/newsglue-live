@@ -133,7 +133,8 @@ export function registerRoutes(app: Express) {
         page = '1', 
         limit = '50',
         sortBy = 'createdAt',
-        sortOrder = 'desc'
+        sortOrder = 'desc',
+        includeSubscriptions
       } = req.query;
 
       // Build where conditions
@@ -292,6 +293,163 @@ export function registerRoutes(app: Express) {
     } catch (error) {
       console.error('Error adding credits:', error);
       res.status(500).json({ message: 'Failed to add credits' });
+    }
+  });
+
+  // Change user role
+  app.post("/api/admin/users/:id/role", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { role } = req.body;
+
+      if (!['user', 'admin', 'supergod'].includes(role)) {
+        return res.status(400).json({ message: 'Invalid role' });
+      }
+
+      await db
+        .update(users)
+        .set({ role })
+        .where(eq(users.id, userId));
+
+      await logEvent('user_action', `Role changed to ${role} for user ID ${userId}`, {
+        userId: req.user?.id,
+        userRole: req.user?.role,
+        endpoint: `/api/admin/users/${userId}/role`,
+        metadata: { targetUserId: userId, newRole: role }
+      });
+
+      res.json({ message: 'Role updated successfully' });
+    } catch (error) {
+      console.error('Error updating role:', error);
+      res.status(500).json({ message: 'Failed to update role' });
+    }
+  });
+
+  // Update user notes and test account flag
+  app.post("/api/admin/users/:id/label", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { notes, isTestAccount } = req.body;
+
+      await db.execute(sql`
+        UPDATE users 
+        SET notes = ${notes}, is_test_account = ${isTestAccount}
+        WHERE id = ${userId}
+      `);
+
+      res.json({ message: 'User data updated successfully' });
+    } catch (error) {
+      console.error('Error updating user data:', error);
+      res.status(500).json({ message: 'Failed to update user data' });
+    }
+  });
+
+  // Delete user
+  app.delete("/api/admin/users/:id", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+
+      await db.delete(users).where(eq(users.id, userId));
+
+      await logEvent('user_action', `User ID ${userId} deleted`, {
+        userId: req.user?.id,
+        userRole: req.user?.role,
+        endpoint: `/api/admin/users/${userId}`,
+        metadata: { deletedUserId: userId }
+      });
+
+      res.json({ message: 'User deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      res.status(500).json({ message: 'Failed to delete user' });
+    }
+  });
+
+  // Get user statistics (for individual users)
+  app.get("/api/admin/users/stats", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      // Get referral counts for all users
+      const referralStats = await db.execute(sql`
+        SELECT r.referrer_id as userId, COUNT(*) as referralCount
+        FROM referrals r
+        GROUP BY r.referrer_id
+      `);
+
+      // Get total requests from activity logs
+      const requestStats = await db.execute(sql`
+        SELECT al.user_id as userId, COUNT(*) as totalRequests
+        FROM activity_logs al
+        WHERE al.user_id IS NOT NULL
+        GROUP BY al.user_id
+      `);
+
+      // Combine stats
+      const statsMap: Record<number, any> = {};
+      
+      (referralStats.rows as any[]).forEach(stat => {
+        if (!statsMap[stat.userId]) statsMap[stat.userId] = {};
+        statsMap[stat.userId].referralCount = Number(stat.referralCount);
+      });
+
+      (requestStats.rows as any[]).forEach(stat => {
+        if (!statsMap[stat.userId]) statsMap[stat.userId] = {};
+        statsMap[stat.userId].totalRequests = Number(stat.totalRequests);
+      });
+
+      res.json(statsMap);
+    } catch (error) {
+      console.error('Error fetching user stats:', error);
+      res.status(500).json({ message: 'Failed to fetch user stats' });
+    }
+  });
+
+  // Get aggregate statistics for SuperGod dashboard
+  app.get("/api/admin/users/aggregate-stats", requireAuth, requireSupergod, async (req, res) => {
+    try {
+      // Get total users
+      const [totalUsersResult] = await db
+        .select({ count: sql`COUNT(*)` })
+        .from(users);
+
+      // Get active users (status is null or 'active')
+      const [activeUsersResult] = await db
+        .select({ count: sql`COUNT(*)` })
+        .from(users)
+        .where(or(
+          eq(users.status, 'active'),
+          sql`${users.status} IS NULL`
+        ));
+
+      // Get banned users
+      const [bannedUsersResult] = await db
+        .select({ count: sql`COUNT(*)` })
+        .from(users)
+        .where(eq(users.status, 'banned'));
+
+      // Get total tokens issued (sum of all user tokens)
+      const [totalTokensResult] = await db
+        .select({ total: sql`SUM(${users.tokens})` })
+        .from(users);
+
+      // Get total tokens used from transactions
+      const [tokensUsedResult] = await db.execute(sql`
+        SELECT COALESCE(SUM(ABS(amount)), 0) as total_used
+        FROM transactions 
+        WHERE transaction_type = 'payment' AND status = 'completed'
+      `);
+
+      const aggregateStats = {
+        totalUsers: Number(totalUsersResult.count),
+        activeUsers: Number(activeUsersResult.count),
+        bannedUsers: Number(bannedUsersResult.count),
+        totalTokensIssued: Number(totalTokensResult.total) || 0,
+        totalTokensUsed: Number((tokensUsedResult as any[])[0]?.total_used) || 0
+      };
+
+      res.json(aggregateStats);
+    } catch (error) {
+      console.error('Error fetching aggregate stats:', error);
+      res.status(500).json({ message: 'Failed to fetch aggregate stats' });
     }
   });
 

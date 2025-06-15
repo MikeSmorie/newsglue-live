@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { MoreHorizontal, UserX, Ban, Shield, Coins, FileText, TestTube, Trash2 } from "lucide-react";
+import { MoreHorizontal, UserX, Ban, Shield, Coins, FileText, TestTube, Trash2, Search, Filter, ArrowUpDown, Users, Activity, UserMinus, CreditCard, TrendingUp, TrendingDown } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 interface User {
@@ -28,6 +28,10 @@ interface User {
   notes: string | null;
   isTestAccount: boolean;
   referredBy: number | null;
+  subscription?: {
+    plan: string;
+    status: string;
+  };
 }
 
 interface UserStats {
@@ -35,20 +39,165 @@ interface UserStats {
   referralCount: number;
 }
 
+interface AggregateStats {
+  totalUsers: number;
+  activeUsers: number;
+  bannedUsers: number;
+  totalTokensIssued: number;
+  totalTokensUsed: number;
+}
+
+// Debounce hook for search optimization
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+// Memoized user row component for performance
+const UserRow = memo(({ 
+  user, 
+  userStats, 
+  onAction 
+}: { 
+  user: User; 
+  userStats?: UserStats; 
+  onAction: (user: User, action: string) => void;
+}) => {
+  const getStatusBadge = (status: string) => {
+    const variants = {
+      active: "default",
+      suspended: "secondary", 
+      banned: "destructive"
+    } as const;
+    
+    return <Badge variant={variants[status as keyof typeof variants] || "outline"}>{status}</Badge>;
+  };
+
+  const getRoleBadge = (role: string) => {
+    const variants = {
+      user: "outline",
+      admin: "secondary",
+      supergod: "default"
+    } as const;
+    
+    return <Badge variant={variants[role as keyof typeof variants] || "outline"}>{role}</Badge>;
+  };
+
+  const getSubscriptionBadge = (subscription: User['subscription']) => {
+    if (!subscription) return <Badge variant="outline">None</Badge>;
+    
+    const variants = {
+      free: "outline",
+      pro: "default",
+      enterprise: "secondary"
+    } as const;
+    
+    return <Badge variant={variants[subscription.plan as keyof typeof variants] || "outline"}>
+      {subscription.plan}
+    </Badge>;
+  };
+
+  return (
+    <TableRow>
+      <TableCell>
+        <div>
+          <div className="font-medium">{user.username}</div>
+          <div className="text-sm text-muted-foreground">{user.email}</div>
+        </div>
+      </TableCell>
+      <TableCell>{getRoleBadge(user.role)}</TableCell>
+      <TableCell>{getStatusBadge(user.status)}</TableCell>
+      <TableCell>{getSubscriptionBadge(user.subscription)}</TableCell>
+      <TableCell>{user.tokens}</TableCell>
+      <TableCell>
+        {user.lastLogin ? formatDistanceToNow(new Date(user.lastLogin), { addSuffix: true }) : "Never"}
+      </TableCell>
+      <TableCell>
+        {new Date(user.createdAt).toLocaleDateString()}
+      </TableCell>
+      <TableCell>{userStats?.referralCount || 0}</TableCell>
+      <TableCell>
+        {user.isTestAccount && <Badge variant="outline">Test</Badge>}
+      </TableCell>
+      <TableCell>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onAction(user, "suspend")}>
+              <UserX className="h-4 w-4 mr-2" />
+              Suspend
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onAction(user, "ban")}>
+              <Ban className="h-4 w-4 mr-2" />
+              Ban
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onAction(user, "credits")}>
+              <Coins className="h-4 w-4 mr-2" />
+              Add Credits
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onAction(user, "role")}>
+              <Shield className="h-4 w-4 mr-2" />
+              Change Role
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onAction(user, "notes")}>
+              <FileText className="h-4 w-4 mr-2" />
+              Edit Notes
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onAction(user, "delete")} className="text-destructive">
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </TableCell>
+    </TableRow>
+  );
+});
+
+UserRow.displayName = "UserRow";
+
 export default function AdminUsersPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // State management
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [actionType, setActionType] = useState<string>("");
   const [creditsAmount, setCreditsAmount] = useState<string>("");
   const [newRole, setNewRole] = useState<string>("");
   const [userNotes, setUserNotes] = useState<string>("");
+  
+  // Filter and search state
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [subscriptionFilter, setSubscriptionFilter] = useState<string>("all");
+  const [sortField, setSortField] = useState<string>("createdAt");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
-  // Fetch all users
+  // Debounced search for performance
+  const debouncedSearch = useDebounce(searchTerm, 300);
+
+  // Fetch all users with subscription data
   const { data: users, isLoading } = useQuery<User[]>({
     queryKey: ['admin-users'],
     queryFn: async () => {
-      const response = await fetch('/api/admin/users', {
+      const response = await fetch('/api/admin/users?includeSubscriptions=true', {
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Failed to fetch users');
@@ -68,6 +217,84 @@ export default function AdminUsersPage() {
     }
   });
 
+  // Fetch aggregate statistics
+  const { data: aggregateStats } = useQuery<AggregateStats>({
+    queryKey: ['admin-aggregate-stats'],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/users/aggregate-stats', {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch aggregate stats');
+      return response.json();
+    }
+  });
+
+  // Filter and sort users
+  const filteredAndSortedUsers = useMemo(() => {
+    if (!users) return [];
+
+    let filtered = users.filter(user => {
+      // Search filter
+      const matchesSearch = !debouncedSearch || 
+        user.username.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        user.email.toLowerCase().includes(debouncedSearch.toLowerCase());
+
+      // Status filter
+      const matchesStatus = statusFilter === "all" || user.status === statusFilter;
+
+      // Role filter
+      const matchesRole = roleFilter === "all" || user.role === roleFilter;
+
+      // Subscription filter
+      const matchesSubscription = subscriptionFilter === "all" || 
+        (subscriptionFilter === "none" && !user.subscription) ||
+        user.subscription?.plan === subscriptionFilter;
+
+      return matchesSearch && matchesStatus && matchesRole && matchesSubscription;
+    });
+
+    // Sort users
+    filtered.sort((a, b) => {
+      let aValue: any, bValue: any;
+
+      switch (sortField) {
+        case "tokens":
+          aValue = a.tokens;
+          bValue = b.tokens;
+          break;
+        case "lastLogin":
+          aValue = a.lastLogin ? new Date(a.lastLogin).getTime() : 0;
+          bValue = b.lastLogin ? new Date(b.lastLogin).getTime() : 0;
+          break;
+        case "createdAt":
+          aValue = new Date(a.createdAt).getTime();
+          bValue = new Date(b.createdAt).getTime();
+          break;
+        default:
+          aValue = a.username.toLowerCase();
+          bValue = b.username.toLowerCase();
+      }
+
+      if (sortDirection === "asc") {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+
+    return filtered;
+  }, [users, debouncedSearch, statusFilter, roleFilter, subscriptionFilter, sortField, sortDirection]);
+
+  // Handle sort change
+  const handleSort = useCallback((field: string) => {
+    if (sortField === field) {
+      setSortDirection(prev => prev === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("desc");
+    }
+  }, [sortField]);
+
   // User action mutations
   const suspendMutation = useMutation({
     mutationFn: async (userId: number) => {
@@ -80,6 +307,7 @@ export default function AdminUsersPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-aggregate-stats'] });
       toast({ title: "User suspended successfully" });
     }
   });
@@ -95,6 +323,7 @@ export default function AdminUsersPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-aggregate-stats'] });
       toast({ title: "User banned successfully" });
     }
   });
@@ -110,6 +339,7 @@ export default function AdminUsersPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-aggregate-stats'] });
       toast({ title: "User deleted successfully" });
     }
   });
@@ -127,6 +357,7 @@ export default function AdminUsersPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-aggregate-stats'] });
       toast({ title: "Credits updated successfully" });
       setCreditsAmount("");
     }
@@ -169,27 +400,7 @@ export default function AdminUsersPage() {
     }
   });
 
-  const getStatusBadge = (status: string) => {
-    const variants = {
-      active: "default",
-      suspended: "secondary", 
-      banned: "destructive"
-    } as const;
-    
-    return <Badge variant={variants[status as keyof typeof variants] || "outline"}>{status}</Badge>;
-  };
-
-  const getRoleBadge = (role: string) => {
-    const variants = {
-      user: "outline",
-      admin: "secondary",
-      supergod: "default"
-    } as const;
-    
-    return <Badge variant={variants[role as keyof typeof variants] || "outline"}>{role}</Badge>;
-  };
-
-  const handleAction = (user: User, action: string) => {
+  const handleAction = useCallback((user: User, action: string) => {
     setSelectedUser(user);
     setActionType(action);
     if (action === "notes") {
@@ -198,6 +409,15 @@ export default function AdminUsersPage() {
     if (action === "role") {
       setNewRole(user.role);
     }
+  }, []);
+
+  const resetFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("all");
+    setRoleFilter("all");
+    setSubscriptionFilter("all");
+    setSortField("createdAt");
+    setSortDirection("desc");
   };
 
   if (isLoading) {
@@ -206,82 +426,183 @@ export default function AdminUsersPage() {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Statistics Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{aggregateStats?.totalUsers || 0}</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Users</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{aggregateStats?.activeUsers || 0}</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Banned Users</CardTitle>
+            <UserMinus className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{aggregateStats?.bannedUsers || 0}</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Tokens Issued</CardTitle>
+            <CreditCard className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{aggregateStats?.totalTokensIssued || 0}</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Tokens Used</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{aggregateStats?.totalTokensUsed || 0}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main User Management Card */}
       <Card>
         <CardHeader>
-          <CardTitle>User Management</CardTitle>
-          <CardDescription>
-            Manage user accounts, permissions, and status
-          </CardDescription>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <CardTitle>User Management</CardTitle>
+              <CardDescription>
+                Advanced user management with search, filtering, and analytics
+              </CardDescription>
+            </div>
+            <Button variant="outline" onClick={resetFilters}>
+              Reset Filters
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
+          {/* Search and Filter Controls */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search users by username or email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+            
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="suspended">Suspended</SelectItem>
+                <SelectItem value="banned">Banned</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={roleFilter} onValueChange={setRoleFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Roles</SelectItem>
+                <SelectItem value="user">User</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="supergod">SuperGod</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={subscriptionFilter} onValueChange={setSubscriptionFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Subscription" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Subscriptions</SelectItem>
+                <SelectItem value="free">Free</SelectItem>
+                <SelectItem value="pro">Pro</SelectItem>
+                <SelectItem value="enterprise">Enterprise</SelectItem>
+                <SelectItem value="none">No Subscription</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <div className="text-sm text-muted-foreground flex items-center">
+              Showing {filteredAndSortedUsers.length} of {users?.length || 0} users
+            </div>
+          </div>
+
+          {/* User Table */}
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>User</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Tokens</TableHead>
-                <TableHead>Last Login</TableHead>
+                <TableHead>Subscription</TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort("tokens")}
+                >
+                  <div className="flex items-center gap-1">
+                    Tokens
+                    {sortField === "tokens" && (
+                      sortDirection === "asc" ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />
+                    )}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort("lastLogin")}
+                >
+                  <div className="flex items-center gap-1">
+                    Last Login
+                    {sortField === "lastLogin" && (
+                      sortDirection === "asc" ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />
+                    )}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort("createdAt")}
+                >
+                  <div className="flex items-center gap-1">
+                    Join Date
+                    {sortField === "createdAt" && (
+                      sortDirection === "asc" ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />
+                    )}
+                  </div>
+                </TableHead>
                 <TableHead>Referrals</TableHead>
                 <TableHead>Test Account</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users?.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{user.username}</div>
-                      <div className="text-sm text-muted-foreground">{user.email}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{getRoleBadge(user.role)}</TableCell>
-                  <TableCell>{getStatusBadge(user.status)}</TableCell>
-                  <TableCell>{user.tokens}</TableCell>
-                  <TableCell>
-                    {user.lastLogin ? formatDistanceToNow(new Date(user.lastLogin), { addSuffix: true }) : "Never"}
-                  </TableCell>
-                  <TableCell>{userStats?.[user.id]?.referralCount || 0}</TableCell>
-                  <TableCell>
-                    {user.isTestAccount && <Badge variant="outline">Test</Badge>}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleAction(user, "suspend")}>
-                          <UserX className="h-4 w-4 mr-2" />
-                          Suspend
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleAction(user, "ban")}>
-                          <Ban className="h-4 w-4 mr-2" />
-                          Ban
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleAction(user, "credits")}>
-                          <Coins className="h-4 w-4 mr-2" />
-                          Add Credits
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleAction(user, "role")}>
-                          <Shield className="h-4 w-4 mr-2" />
-                          Change Role
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleAction(user, "notes")}>
-                          <FileText className="h-4 w-4 mr-2" />
-                          Edit Notes
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleAction(user, "delete")} className="text-destructive">
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
+              {filteredAndSortedUsers.map((user) => (
+                <UserRow
+                  key={user.id}
+                  user={user}
+                  userStats={userStats?.[user.id]}
+                  onAction={handleAction}
+                />
               ))}
             </TableBody>
           </Table>
@@ -408,7 +729,7 @@ export default function AdminUsersPage() {
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>
-                {actionType === "delete" ? "Delete" : actionType === "suspend" ? "Suspend" : "Ban"} User
+                {actionType === "delete" ? "Delete" : actionType === "ban" ? "Ban" : "Suspend"} User
               </AlertDialogTitle>
               <AlertDialogDescription>
                 Are you sure you want to {actionType} {selectedUser.username}? 
@@ -416,17 +737,17 @@ export default function AdminUsersPage() {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setSelectedUser(null)}>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => {
                   if (actionType === "suspend") suspendMutation.mutate(selectedUser.id);
-                  if (actionType === "ban") banMutation.mutate(selectedUser.id);
-                  if (actionType === "delete") deleteMutation.mutate(selectedUser.id);
+                  else if (actionType === "ban") banMutation.mutate(selectedUser.id);
+                  else if (actionType === "delete") deleteMutation.mutate(selectedUser.id);
                   setSelectedUser(null);
                 }}
-                className={actionType === "delete" ? "bg-destructive hover:bg-destructive/90" : ""}
+                className={actionType === "delete" ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : ""}
               >
-                {actionType === "delete" ? "Delete" : actionType === "suspend" ? "Suspend" : "Ban"}
+                {actionType === "delete" ? "Delete" : actionType === "ban" ? "Ban" : "Suspend"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
