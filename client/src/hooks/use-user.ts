@@ -26,8 +26,8 @@ async function handleRequest(
         return { ok: false, message: response.statusText };
       }
 
-      const message = await response.text();
-      return { ok: false, message };
+      const errorData = await response.json().catch(() => ({ message: response.statusText }));
+      return { ok: false, message: errorData.message || response.statusText };
     }
 
     return { ok: true };
