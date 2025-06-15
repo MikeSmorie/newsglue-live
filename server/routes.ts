@@ -520,7 +520,6 @@ export function registerRoutes(app: Express) {
    * ADMIN USER MANAGEMENT ROUTES
    * Auth: Required
    * Role: Admin/Supergod only
-   * User oversight, moderation, account management
    */
   app.get("/api/admin/users", requireAdmin, async (req, res) => {
     try {
@@ -609,7 +608,6 @@ export function registerRoutes(app: Express) {
         return res.status(404).json({ message: 'User not found' });
       }
 
-      // Prevent deleting supergod users
       if (user.role === 'supergod') {
         return res.status(403).json({ message: 'Cannot delete supergod users' });
       }
