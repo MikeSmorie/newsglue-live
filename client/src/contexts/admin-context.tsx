@@ -35,11 +35,6 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   return (
     <AdminContext.Provider value={{ godMode, setGodMode, isSupergod }}>
       {children}
-      {isSupergod && (
-        <div className="fixed top-0 left-0 w-full bg-destructive text-destructive-foreground py-1 text-center z-50">
-          👑 Super-God Mode Active
-        </div>
-      )}
     </AdminContext.Provider>
   );
 }

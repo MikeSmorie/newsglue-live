@@ -1,9 +1,11 @@
 import { useLocation } from "wouter";
 import { useUser } from "@/hooks/use-user";
+import { useAdmin } from "@/contexts/admin-context";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { 
   Home, 
   Settings, 
@@ -106,6 +108,7 @@ const supergodItems = [
 export function Sidebar() {
   const [location] = useLocation();
   const { user } = useUser();
+  const { isSupergod } = useAdmin();
 
   const isActive = (href: string) => {
     if (href === "/") {
@@ -117,8 +120,18 @@ export function Sidebar() {
   return (
     <div className="flex h-full w-64 flex-col border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
       <div className="p-6">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Omega-8</h2>
-        <p className="text-sm text-gray-600 dark:text-gray-400">Clean Core</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Omega-8</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Clean Core</p>
+          </div>
+          {isSupergod && (
+            <Badge variant="destructive" className="text-xs px-2 py-1">
+              <Crown className="h-3 w-3 mr-1" />
+              SuperGod
+            </Badge>
+          )}
+        </div>
       </div>
       
       <ScrollArea className="flex-1 px-3">
