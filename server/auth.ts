@@ -57,6 +57,11 @@ export function setupAuth(app: Express) {
           return done(null, false, { message: "Incorrect username." });
         }
 
+        // Check if user email is verified
+        if (!user.isVerified) {
+          return done(null, false, { message: "Please verify your email address before logging in." });
+        }
+
         console.log(`[DEBUG] Password comparison: provided='${password}', stored='${user.password}', match=${password === user.password}`);
         const isMatch = password === user.password;
         if (!isMatch) {
@@ -112,6 +117,13 @@ export function setupAuth(app: Express) {
           return res.status(500).json({ message: "Internal server error", error: err.message });
         }
         if (!user) {
+          // Check if the error is due to unverified email
+          if (info.message === "Please verify your email address before logging in.") {
+            return res.status(401).json({ 
+              message: info.message,
+              requiresVerification: true
+            });
+          }
           return res.status(401).json({ message: info.message || "Authentication failed" });
         }
 
@@ -151,17 +163,34 @@ export function setupAuth(app: Express) {
 
       const { username, password, email } = result.data;
 
-      const existingUsers = await db
+      // Check if username or email already exists
+      const existingUser = await db
         .select()
         .from(users)
         .where(eq(users.username, username))
         .limit(1);
       
-      if (existingUsers.length > 0) {
+      if (existingUser.length > 0) {
         return res.status(400).json({
           message: "Username already exists"
         });
       }
+
+      const existingEmailUser = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, email || ""))
+        .limit(1);
+
+      if (existingEmailUser.length > 0) {
+        return res.status(400).json({
+          message: "Email already exists"
+        });
+      }
+
+      // Generate verification token
+      const crypto = await import('crypto');
+      const verificationToken = crypto.randomBytes(32).toString('hex');
 
       const now = new Date();
       
@@ -181,23 +210,24 @@ export function setupAuth(app: Express) {
           status: "active", 
           tokens: 1000,
           createdAt: now,
+          isVerified: false,
+          verificationToken: verificationToken
         })
         .returning();
 
-      req.logIn(newUser, (err) => {
-        if (err) {
-          console.error("Auto-login error:", err);
-          return res.status(500).json({ message: "Registration successful but login failed" });
-        }
-        return res.status(201).json({
-          message: "Registration successful",
-          user: {
-            id: newUser.id,
-            username: newUser.username,
-            email: newUser.email,
-            role: newUser.role,
-          },
-        });
+      // TODO: Send verification email
+      console.log(`Email verification token for ${email}: ${verificationToken}`);
+      console.log(`Verification link: ${req.get('origin') || 'http://localhost:5000'}/verify-email?token=${verificationToken}`);
+
+      res.status(201).json({ 
+        message: "User registered successfully. Please check your email to verify your account.",
+        requiresVerification: true,
+        email: newUser.email,
+        // In development, include the token for testing
+        ...(process.env.NODE_ENV === 'development' && { 
+          verificationToken,
+          verificationLink: `${req.get('origin') || 'http://localhost:5000'}/verify-email?token=${verificationToken}`
+        })
       });
     } catch (error) {
       console.error("Registration error:", error);

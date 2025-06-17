@@ -180,13 +180,20 @@ export default function AuthPage() {
                 </form>
               </Form>
 
-              {/* Forgot Password Link */}
-              <div className="text-center mt-4">
+              {/* Forgot Password and Email Verification Links */}
+              <div className="text-center mt-4 space-y-2">
                 <Link href="/forgot-password">
                   <Button variant="link" className="text-sm text-muted-foreground hover:text-foreground">
                     Forgot your password?
                   </Button>
                 </Link>
+                <div>
+                  <Link href="/verify-email">
+                    <Button variant="link" className="text-sm text-muted-foreground hover:text-foreground">
+                      Need to verify your email?
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </TabsContent>
 

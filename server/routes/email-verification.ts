@@ -174,7 +174,7 @@ router.get("/status/:email", async (req, res) => {
 });
 
 // Validate verification token endpoint (for frontend validation)
-router.get("/validate-token/:token", async (req, res) => {
+router.get("/validate-verification-token/:token", async (req, res) => {
   try {
     const { token } = req.params;
 
