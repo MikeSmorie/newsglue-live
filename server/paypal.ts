@@ -20,11 +20,14 @@ import { Request, Response } from "express";
 const { PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET } = process.env;
 
 if (!PAYPAL_CLIENT_ID) {
-  throw new Error("Missing PAYPAL_CLIENT_ID");
+  console.warn("PAYPAL_CLIENT_ID not configured - PayPal features will be disabled");
 }
 if (!PAYPAL_CLIENT_SECRET) {
-  throw new Error("Missing PAYPAL_CLIENT_SECRET");
+  console.warn("PAYPAL_CLIENT_SECRET not configured - PayPal features will be disabled");
 }
+
+// Only initialize PayPal client if both credentials are available
+const paypalConfigured = !!(PAYPAL_CLIENT_ID && PAYPAL_CLIENT_SECRET);
 const client = new Client({
   clientCredentialsAuthCredentials: {
     oAuthClientId: PAYPAL_CLIENT_ID,

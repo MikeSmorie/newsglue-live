@@ -6,6 +6,7 @@ import express from "express";
 import subscriptionRoutes from "./routes/subscription";
 import webhookRoutes from "./routes/webhook";
 import aiRoutes from "./routes/ai";
+import { aiProvidersRouter } from "./routes/ai-providers";
 import featureRoutes from "./routes/features";
 import messagesRoutes from "./routes/announcements";
 import adminLogsRoutes from "./routes/admin-logs";
@@ -100,6 +101,16 @@ export function registerRoutes(app: Express) {
    * POST /api/ai/feedback - Submit feedback on AI response
    */
   app.use("/api/ai", aiRoutes);
+
+  /**
+   * AI PROVIDERS ROUTES (OmegaAIR)
+   * Auth: Required for admin functions
+   * Role: Admin/Supergod for provider management
+   * GET /api/ai/providers/status - Get provider statuses
+   * POST /api/ai/providers/test/:provider - Test specific provider
+   * POST /api/ai/providers/generate - Generate with fallback
+   */
+  app.use("/api/ai/providers", aiProvidersRouter);
 
   /**
    * FEATURE ACCESS ROUTES

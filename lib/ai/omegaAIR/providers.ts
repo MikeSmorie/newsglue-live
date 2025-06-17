@@ -13,6 +13,10 @@ export class OpenAIProvider {
   }
 
   async generateResponse(request: OmegaAIRRequest): Promise<OmegaAIRResponse> {
+    if (!this.config.enabled) {
+      throw new Error('OpenAI provider is not configured');
+    }
+
     const response = await fetch(`${this.config.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
