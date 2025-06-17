@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { useUser } from "@/hooks/use-user";
 import { useToast } from "@/hooks/use-toast";
@@ -6,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FontSizeControls } from "@/components/font-size-controls";
 import { CustomThemeToggle } from "@/components/custom-theme-toggle";
+import { GPTSupportAgent } from "@/components/GPTSupportAgent";
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -14,7 +16,8 @@ import {
   Crown,
   Shield,
   User,
-  KeyRound
+  KeyRound,
+  HelpCircle
 } from "lucide-react";
 
 function getRoleIcon(role: string) {
@@ -43,6 +46,8 @@ export function Header() {
   const [, navigate] = useLocation();
   const { user, logout } = useUser();
   const { toast } = useToast();
+  const [isSupportAgentOpen, setIsSupportAgentOpen] = useState(false);
+  const [isSupportMinimized, setIsSupportMinimized] = useState(false);
   
   // Fetch 2FA status for header indicator
   const { data: twoFactorStatus } = useQuery<{ enabled: boolean; secret?: string }>({
@@ -129,6 +134,19 @@ export function Header() {
             </>
           )}
           
+          {/* GPT Support Agent - Only for logged in users */}
+          {user && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsSupportAgentOpen(true)}
+              className="h-8 w-8 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
+              title="Help Assistant"
+            >
+              <HelpCircle className="h-4 w-4" />
+            </Button>
+          )}
+
           <FontSizeControls />
           <CustomThemeToggle />
 
@@ -142,6 +160,23 @@ export function Header() {
           </Button>
         </div>
       </div>
+
+      {/* GPT Support Agent Modal */}
+      {user && (
+        <GPTSupportAgent
+          isOpen={isSupportAgentOpen}
+          onClose={() => setIsSupportAgentOpen(false)}
+          isMinimized={isSupportMinimized}
+          onToggleMinimize={() => {
+            setIsSupportMinimized(!isSupportMinimized);
+            if (isSupportMinimized) {
+              setIsSupportAgentOpen(true);
+            } else {
+              setIsSupportAgentOpen(false);
+            }
+          }}
+        />
+      )}
     </nav>
   );
 }

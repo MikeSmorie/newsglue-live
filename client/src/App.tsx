@@ -26,6 +26,7 @@ import ReferralsPage from "@/pages/referrals";
 import AdminUsersPage from "@/pages/admin/users-simple";
 import AnalyticsTest from "@/pages/admin/analytics-test";
 import ModelRouterPage from "@/pages/admin/model-router";
+import SupportAI from "@/pages/support-ai";
 
 import { useUser } from "@/hooks/use-user";
 import { useToast } from "@/hooks/use-toast";
@@ -117,6 +118,7 @@ function Router() {
         <Route path="/supergod" component={() => <ProtectedSupergodRoute component={SupergodDashboard} />} />
         
         {/* Main routes */}
+        <Route path="/support/ai" component={SupportAI} />
         <Route path="/module/omega-10" component={AuditModule} />
         <Route path="/module/:id">
           {(params) => <ModuleView moduleId={params.id} />}
