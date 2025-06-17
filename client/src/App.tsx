@@ -25,6 +25,7 @@ import AuditPage from "@/pages/admin/audit";
 import ReferralsPage from "@/pages/referrals";
 import AdminUsersPage from "@/pages/admin/users-simple";
 import AnalyticsTest from "@/pages/admin/analytics-test";
+import ModelRouterPage from "@/pages/admin/model-router";
 
 import { useUser } from "@/hooks/use-user";
 import { useToast } from "@/hooks/use-toast";
@@ -105,6 +106,7 @@ function Router() {
         <Route path="/admin/analytics" component={() => <ProtectedSupergodRoute component={AnalyticsTest} />} />
         <Route path="/admin/audit" component={() => <ProtectedSupergodRoute component={AuditPage} />} />
         <Route path="/admin/users" component={() => <ProtectedSupergodRoute component={AdminUsersPage} />} />
+        <Route path="/admin/model-router" component={() => <ProtectedSupergodRoute component={ModelRouterPage} />} />
         <Route path="/admin/communications" component={() => <ProtectedAdminRoute component={AdminCommunications} />} />
         <Route path="/admin/subscription-manager" component={() => <ProtectedAdminRoute component={SubscriptionManager} />} />
         <Route path="/admin/subscriptions" component={() => <ProtectedAdminRoute component={AdminSubscriptionManagement} />} />
