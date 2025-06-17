@@ -2,7 +2,7 @@ import express from "express";
 import { z } from "zod";
 import { db } from "@db";
 import { users, passwordResetTokens } from "@db/schema";
-import { eq, and, gt } from "drizzle-orm";
+import { eq, and, gt, isNull } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
