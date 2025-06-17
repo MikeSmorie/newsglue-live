@@ -164,7 +164,7 @@ export function registerRoutes(app: Express) {
    * POST /api/support-agent/chat - Chat with AI support assistant
    * GET /api/support-agent/status - Get support agent availability status
    */
-  app.use("/api/support-agent", supportAgentRouter);
+  app.use("/api/support-agent", requireAuth, supportAgentRouter);
 
   /**
    * FEATURE ACCESS ROUTES

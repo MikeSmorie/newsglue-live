@@ -3,8 +3,14 @@ import { sendAIRequest, isAnyProviderAvailable, getBestModel } from "../../lib/a
 
 const router = express.Router();
 
+// Authentication middleware
+const requireAuth = (req: any, res: any, next: any) => {
+  if (req.isAuthenticated()) return next();
+  res.status(401).json({ message: "Not authenticated" });
+};
+
 // GPT Support Agent endpoint - requires authentication
-router.post("/chat", async (req, res) => {
+router.post("/chat", requireAuth, async (req, res) => {
   try {
     const { message, context } = req.body;
     const user = req.user;
@@ -76,7 +82,7 @@ User Question: ${message}`;
 });
 
 // Get support agent status
-router.get("/status", async (req, res) => {
+router.get("/status", requireAuth, async (req, res) => {
   try {
     const [available, bestProvider, user] = await Promise.all([
       isAnyProviderAvailable(),
