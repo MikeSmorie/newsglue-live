@@ -11,6 +11,7 @@ import { aiRoutingRouter } from "./routes/ai-routing";
 import { aiDemoRouter } from "./routes/ai-demo";
 import { aiRouterTestRouter } from "./routes/ai-router-test";
 import { modulesTestRouter } from "./routes/modules-test";
+import { supportAgentRouter } from "./routes/support-agent";
 import featureRoutes from "./routes/features";
 import messagesRoutes from "./routes/announcements";
 import adminLogsRoutes from "./routes/admin-logs";
@@ -155,6 +156,15 @@ export function registerRoutes(app: Express) {
    * GET /api/modules-test/test-all - Test all refactored modules
    */
   app.use("/api/modules-test", modulesTestRouter);
+
+  /**
+   * GPT SUPPORT AGENT
+   * Auth: Required (logged-in users only)
+   * Role: All authenticated users
+   * POST /api/support-agent/chat - Chat with AI support assistant
+   * GET /api/support-agent/status - Get support agent availability status
+   */
+  app.use("/api/support-agent", supportAgentRouter);
 
   /**
    * FEATURE ACCESS ROUTES

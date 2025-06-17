@@ -128,17 +128,16 @@ For regular users: Focus on navigation, features, and account management
 
 Respond comprehensively to: ${userMessage.content}`;
 
-      const response = await fetch('/api/ai-demo/generate', {
+      const response = await fetch('/api/support-agent/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          prompt: userMessage.content,
-          options: {
-            temperature: 0.6,
-            maxTokens: 1000,
-            systemPrompt: systemPrompt
+          message: userMessage.content,
+          context: {
+            role: user?.role,
+            username: user?.username
           }
         }),
       });
