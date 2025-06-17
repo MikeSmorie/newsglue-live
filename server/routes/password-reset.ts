@@ -2,7 +2,7 @@ import express from "express";
 import { z } from "zod";
 import { db } from "@db";
 import { users, passwordResetTokens } from "@db/schema";
-import { eq, and, gt, isNull } from "drizzle-orm";
+import { eq, and, gt, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
@@ -114,7 +114,7 @@ router.post("/reset-password", async (req, res) => {
         and(
           eq(passwordResetTokens.token, token),
           gt(passwordResetTokens.expiresAt, new Date()),
-          eq(passwordResetTokens.usedAt, null)
+          sql`${passwordResetTokens.usedAt} IS NULL`
         )
       )
       .limit(1);
