@@ -97,29 +97,27 @@ router.post("/reset-password", async (req, res) => {
 
     // Find valid, unexpired token
     const [resetTokenRecord] = await db
-      .select({
-        id: passwordResetTokens.id,
-        userId: passwordResetTokens.userId,
-        expiresAt: passwordResetTokens.expiresAt,
-        usedAt: passwordResetTokens.usedAt,
-        user: {
-          id: users.id,
-          username: users.username,
-          email: users.email
-        }
-      })
+      .select()
       .from(passwordResetTokens)
       .innerJoin(users, eq(passwordResetTokens.userId, users.id))
-      .where(
-        and(
-          eq(passwordResetTokens.token, token),
-          gt(passwordResetTokens.expiresAt, new Date()),
-          sql`${passwordResetTokens.usedAt} IS NULL`
-        )
-      )
+      .where(eq(passwordResetTokens.token, token))
       .limit(1);
 
     if (!resetTokenRecord) {
+      return res.status(400).json({
+        message: "Invalid or expired reset token"
+      });
+    }
+
+    // Check if token is expired
+    if (new Date() > resetTokenRecord.password_reset_tokens.expiresAt) {
+      return res.status(400).json({
+        message: "Invalid or expired reset token"
+      });
+    }
+
+    // Check if token has been used
+    if (resetTokenRecord.password_reset_tokens.usedAt) {
       return res.status(400).json({
         message: "Invalid or expired reset token"
       });
@@ -132,15 +130,15 @@ router.post("/reset-password", async (req, res) => {
     await db
       .update(users)
       .set({ password: hashedPassword })
-      .where(eq(users.id, resetTokenRecord.userId));
+      .where(eq(users.id, resetTokenRecord.password_reset_tokens.userId));
 
     // Mark token as used
     await db
       .update(passwordResetTokens)
       .set({ usedAt: new Date() })
-      .where(eq(passwordResetTokens.id, resetTokenRecord.id));
+      .where(eq(passwordResetTokens.id, resetTokenRecord.password_reset_tokens.id));
 
-    console.log(`Password reset successful for user: ${resetTokenRecord.user.username}`);
+    console.log(`Password reset successful for user: ${resetTokenRecord.users.username}`);
 
     res.json({
       message: "Password has been reset successfully"
