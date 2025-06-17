@@ -12,6 +12,7 @@ import { aiDemoRouter } from "./routes/ai-demo";
 import { aiRouterTestRouter } from "./routes/ai-router-test";
 import { modulesTestRouter } from "./routes/modules-test";
 import { supportAgentRouter } from "./routes/support-agent";
+import { passwordResetRouter } from "./routes/password-reset";
 import featureRoutes from "./routes/features";
 import messagesRoutes from "./routes/announcements";
 import adminLogsRoutes from "./routes/admin-logs";
@@ -165,6 +166,16 @@ export function registerRoutes(app: Express) {
    * GET /api/support-agent/status - Get support agent availability status
    */
   app.use("/api/support-agent", requireAuth, supportAgentRouter);
+
+  /**
+   * PASSWORD RESET ROUTES
+   * Auth: None (public access for password reset)
+   * Role: Public access
+   * POST /api/auth/forgot-password - Request password reset
+   * POST /api/auth/reset-password - Reset password with token
+   * GET /api/auth/validate-token/:token - Validate reset token
+   */
+  app.use("/api/auth", passwordResetRouter);
 
   /**
    * FEATURE ACCESS ROUTES

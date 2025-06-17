@@ -50,6 +50,15 @@ export const users = pgTable("users", {
   tokens: integer("tokens").notNull().default(0)
 });
 
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  token: text("token").unique().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  usedAt: timestamp("used_at")
+});
+
 export const activityLogs = pgTable("activity_logs", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
@@ -565,3 +574,18 @@ export type InsertRewrite = typeof rewrites.$inferInsert;
 export type SelectRewrite = typeof rewrites.$inferSelect;
 export type InsertAiOutputLog = typeof aiOutputLogs.$inferInsert;
 export type SelectAiOutputLog = typeof aiOutputLogs.$inferSelect;
+
+// Password reset token relations
+export const passwordResetTokensRelations = relations(passwordResetTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [passwordResetTokens.userId],
+    references: [users.id]
+  })
+}));
+
+// Password reset token schemas
+export const insertPasswordResetTokenSchema = createInsertSchema(passwordResetTokens);
+export const selectPasswordResetTokenSchema = createSelectSchema(passwordResetTokens);
+
+export type InsertPasswordResetToken = typeof passwordResetTokens.$inferInsert;
+export type SelectPasswordResetToken = typeof passwordResetTokens.$inferSelect;

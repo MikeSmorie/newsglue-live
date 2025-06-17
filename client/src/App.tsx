@@ -27,6 +27,8 @@ import AdminUsersPage from "@/pages/admin/users-simple";
 import AnalyticsTest from "@/pages/admin/analytics-test";
 import ModelRouterPage from "@/pages/admin/model-router";
 import SupportAI from "@/pages/support-ai";
+import ForgotPasswordPage from "@/pages/forgot-password";
+import ResetPasswordPage from "@/pages/reset-password";
 
 import { useUser } from "@/hooks/use-user";
 import { useToast } from "@/hooks/use-toast";
@@ -95,6 +97,8 @@ function Router() {
       <Switch>
         <Route path="/admin-register" component={AdminRegisterPage} />
         <Route path="/supergod-register" component={SupergodRegisterPage} />
+        <Route path="/forgot-password" component={ForgotPasswordPage} />
+        <Route path="/reset-password" component={ResetPasswordPage} />
         <Route path="*" component={AuthPage} />
       </Switch>
     );

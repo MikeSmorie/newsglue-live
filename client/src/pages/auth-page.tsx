@@ -169,6 +169,15 @@ export default function AuthPage() {
                   </Button>
                 </form>
               </Form>
+
+              {/* Forgot Password Link */}
+              <div className="text-center mt-4">
+                <Link href="/forgot-password">
+                  <Button variant="link" className="text-sm text-muted-foreground hover:text-foreground">
+                    Forgot your password?
+                  </Button>
+                </Link>
+              </div>
             </TabsContent>
 
             <TabsContent value="register">
