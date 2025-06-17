@@ -49,7 +49,8 @@ export const users = pgTable("users", {
   referredBy: integer("referred_by"),
   tokens: integer("tokens").notNull().default(0),
   isVerified: boolean("is_verified").notNull().default(false),
-  verificationToken: text("verification_token")
+  verificationToken: text("verification_token"),
+  tokenVersion: integer("token_version").notNull().default(0)
 });
 
 export const passwordResetTokens = pgTable("password_reset_tokens", {

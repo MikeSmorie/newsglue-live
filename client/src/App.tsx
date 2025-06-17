@@ -26,6 +26,7 @@ import ReferralsPage from "@/pages/referrals";
 import AdminUsersPage from "@/pages/admin/users-simple";
 import AnalyticsTest from "@/pages/admin/analytics-test";
 import ModelRouterPage from "@/pages/admin/model-router";
+import SessionManagementPage from "@/pages/admin/session-management";
 import SupportAI from "@/pages/support-ai";
 import ForgotPasswordPage from "@/pages/forgot-password";
 import ResetPasswordPage from "@/pages/reset-password";

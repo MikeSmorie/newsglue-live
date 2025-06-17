@@ -14,6 +14,7 @@ import { modulesTestRouter } from "./routes/modules-test";
 import { supportAgentRouter } from "./routes/support-agent";
 import { passwordResetRouter } from "./routes/password-reset";
 import { emailVerificationRouter } from "./routes/email-verification";
+import { sessionManagementRouter } from "./routes/session-management";
 import featureRoutes from "./routes/features";
 import messagesRoutes from "./routes/announcements";
 import adminLogsRoutes from "./routes/admin-logs";
@@ -188,6 +189,16 @@ export function registerRoutes(app: Express) {
    * GET /api/auth/validate-verification-token/:token - Validate verification token
    */
   app.use("/api/auth", emailVerificationRouter);
+
+  /**
+   * SESSION MANAGEMENT ROUTES
+   * Auth: Required (JWT with supergod role)
+   * Role: Supergod only
+   * POST /api/admin/users/:id/invalidate-sessions - Invalidate all sessions for user
+   * GET /api/admin/users/:id/token-version - Get user's token version
+   * POST /api/admin/bulk-invalidate-sessions - Bulk invalidate sessions
+   */
+  app.use("/api/admin", sessionManagementRouter);
 
   /**
    * FEATURE ACCESS ROUTES

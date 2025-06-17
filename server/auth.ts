@@ -211,7 +211,8 @@ export function setupAuth(app: Express) {
           tokens: 1000,
           createdAt: now,
           isVerified: false,
-          verificationToken: verificationToken
+          verificationToken: verificationToken,
+          tokenVersion: 0
         })
         .returning();
 
