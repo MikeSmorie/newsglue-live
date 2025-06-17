@@ -9,6 +9,7 @@ import aiRoutes from "./routes/ai";
 import { aiProvidersRouter } from "./routes/ai-providers";
 import { aiRoutingRouter } from "./routes/ai-routing";
 import { aiDemoRouter } from "./routes/ai-demo";
+import { aiRouterTestRouter } from "./routes/ai-router-test";
 import featureRoutes from "./routes/features";
 import messagesRoutes from "./routes/announcements";
 import adminLogsRoutes from "./routes/admin-logs";
@@ -133,6 +134,15 @@ export function registerRoutes(app: Express) {
    * GET /api/ai-demo/health - Health check for AI router
    */
   app.use("/api/ai-demo", requireAuth, aiDemoRouter);
+
+  /**
+   * AI ROUTER TEST UTILITIES
+   * Auth: None (public testing endpoints)
+   * Role: Public access for testing
+   * POST /api/ai-router-test/demo - Test OmegaAIR utilities
+   * GET /api/ai-router-test/test-utilities - Test all utility functions
+   */
+  app.use("/api/ai-router-test", aiRouterTestRouter);
 
   /**
    * FEATURE ACCESS ROUTES
