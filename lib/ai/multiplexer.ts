@@ -88,15 +88,44 @@ export const runAIProvider = async (
           };
         }
         
-        // For now, return a stub response for OpenAI too
-        // This will be replaced with actual OpenAI integration
-        return {
-          success: true,
-          provider: 'openai',
-          model: model || 'gpt-3.5-turbo',
-          output: `OpenAI response for: ${input}`,
-          tokensUsed: 50
-        };
+        // Use actual OpenAI API integration
+        try {
+          const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: model || 'gpt-3.5-turbo',
+              messages: [{ role: 'user', content: input }],
+              temperature: 0.7,
+              max_tokens: 1000,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`OpenAI API error: ${response.statusText}`);
+          }
+
+          const data = await response.json();
+          return {
+            success: true,
+            provider: 'openai',
+            model: data.model,
+            output: data.choices[0].message.content,
+            tokensUsed: data.usage?.total_tokens || 0
+          };
+        } catch (error) {
+          return {
+            success: false,
+            provider: 'openai',
+            model: model || 'gpt-3.5-turbo',
+            output: '',
+            tokensUsed: 0,
+            error: error instanceof Error ? error.message : 'OpenAI request failed'
+          };
+        }
       
       default:
         return {
