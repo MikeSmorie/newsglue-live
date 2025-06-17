@@ -8,6 +8,7 @@ import webhookRoutes from "./routes/webhook";
 import aiRoutes from "./routes/ai";
 import { aiProvidersRouter } from "./routes/ai-providers";
 import { aiRoutingRouter } from "./routes/ai-routing";
+import { aiDemoRouter } from "./routes/ai-demo";
 import featureRoutes from "./routes/features";
 import messagesRoutes from "./routes/announcements";
 import adminLogsRoutes from "./routes/admin-logs";
@@ -122,6 +123,16 @@ export function registerRoutes(app: Express) {
    * GET /api/admin/ai-routing/preferences - Get routing preferences
    */
   app.use("/api/admin/ai-routing", requireSupergod, aiRoutingRouter);
+
+  /**
+   * AI DEMO UTILITIES
+   * Auth: Required
+   * Role: User/Admin/Supergod
+   * POST /api/ai-demo/generate - Generate using best available model
+   * GET /api/ai-demo/status - Get current AI system status
+   * GET /api/ai-demo/health - Health check for AI router
+   */
+  app.use("/api/ai-demo", requireAuth, aiDemoRouter);
 
   /**
    * FEATURE ACCESS ROUTES
