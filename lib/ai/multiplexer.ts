@@ -126,7 +126,7 @@ export const runWithFallback = async (
   preferredModel?: string
 ): Promise<AIResponse> => {
   const providers = await getProviderStatuses();
-  const availableProviders = providers.filter(p => p.isOnline || p.name === 'claude' || p.name === 'mistral');
+  const availableProviders = providers.filter((p: ProviderStatus) => p.isOnline || p.name === 'claude' || p.name === 'mistral');
   
   // Try preferred provider first
   if (preferredProvider) {

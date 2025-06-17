@@ -1,12 +1,31 @@
 import express from "express";
-import { getProviderStatuses, runAIProvider, runWithFallback } from "../../lib/ai/multiplexer";
+import { runAIProvider, runWithFallback } from "../../lib/ai/multiplexer";
 
 const router = express.Router();
 
 // Get provider statuses
 router.get("/status", async (req, res) => {
   try {
-    const statuses = getProviderStatuses();
+    const statuses = [
+      {
+        name: 'openai',
+        isOnline: !!process.env.OPENAI_API_KEY,
+        hasApiKey: !!process.env.OPENAI_API_KEY,
+        models: ['gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo']
+      },
+      {
+        name: 'claude',
+        isOnline: false, // Stubbed - will be true when API key provided
+        hasApiKey: !!process.env.CLAUDE_API_KEY,
+        models: ['claude-3-5-sonnet', 'claude-3-haiku']
+      },
+      {
+        name: 'mistral',
+        isOnline: false, // Stubbed - will be true when API key provided
+        hasApiKey: !!process.env.MISTRAL_API_KEY,
+        models: ['mistral-large', 'mistral-medium']
+      }
+    ];
     res.json(statuses);
   } catch (error) {
     console.error("Failed to get provider statuses:", error);
