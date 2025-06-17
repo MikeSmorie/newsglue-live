@@ -1,0 +1,9 @@
+{
+  "priority": ["claude", "openai", "mistral"],
+  "fallbacks": {
+    "claude": true,
+    "openai": true,
+    "mistral": true
+  },
+  "globalFallback": true
+}

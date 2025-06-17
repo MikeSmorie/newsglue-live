@@ -1,0 +1,12 @@
+{
+  "priority": ["claude", "openai", "mistral"],
+  "fallbacks": {
+    "claude": true,
+    "openai": true,
+    "mistral": true
+  },
+  "globalFallback": true,
+  "version": "omega-v9-stable",
+  "createdAt": "2025-06-17T00:00:00.000Z",
+  "description": "Baseline OmegaAIR routing configuration for Omega-V9"
+}
