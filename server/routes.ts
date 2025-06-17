@@ -183,7 +183,7 @@ export function registerRoutes(app: Express) {
    * Auth: None (public access for email verification)
    * Role: Public access
    * POST /api/auth/send-verification - Send verification email
-   * POST /api/auth/verify-email - Verify email with token
+   * GET /api/auth/verify-email - Verify email with token
    * GET /api/auth/status/:email - Check verification status
    * GET /api/auth/validate-verification-token/:token - Validate verification token
    */

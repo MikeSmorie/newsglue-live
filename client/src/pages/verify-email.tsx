@@ -61,7 +61,7 @@ export default function VerifyEmailPage() {
         
         // If token is valid, automatically verify the email
         if (result.valid) {
-          await verifyEmail(token);
+          await verifyEmailWithToken(token);
         }
       } catch (error) {
         setTokenValidation({
@@ -76,14 +76,10 @@ export default function VerifyEmailPage() {
     validateToken();
   }, [token]);
 
-  const verifyEmail = async (verificationToken: string) => {
+  const verifyEmailWithToken = async (verificationToken: string) => {
     try {
-      const response = await fetch('/api/auth/verify-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ token: verificationToken }),
+      const response = await fetch(`/api/auth/verify-email?token=${verificationToken}`, {
+        method: 'GET',
       });
 
       const result = await response.json();

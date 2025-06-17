@@ -78,18 +78,16 @@ router.post("/send-verification", async (req, res) => {
   }
 });
 
-// Verify email endpoint
-router.post("/verify-email", async (req, res) => {
+// Verify email endpoint - GET route as specified
+router.get("/verify-email", async (req, res) => {
   try {
-    const result = verifyEmailSchema.safeParse(req.body);
-    if (!result.success) {
+    const { token } = req.query;
+
+    if (!token || typeof token !== 'string') {
       return res.status(400).json({
-        message: "Invalid input",
-        errors: result.error.issues,
+        message: "Verification token is required"
       });
     }
-
-    const { token } = result.data;
 
     // Find user with verification token
     const [user] = await db
