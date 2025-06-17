@@ -18,8 +18,19 @@ export interface ProviderStatus {
   models: string[];
 }
 
-export const getProviderStatuses = (): ProviderStatus[] => {
-  return [
+export const getProviderStatuses = async (): Promise<ProviderStatus[]> => {
+  // Get routing preferences if available
+  let routingPrefs = null;
+  try {
+    const response = await fetch('/api/admin/ai-routing/preferences');
+    if (response.ok) {
+      routingPrefs = await response.json();
+    }
+  } catch (error) {
+    // Fallback to defaults if no saved preferences
+  }
+
+  const baseProviders = [
     {
       name: 'openai',
       isOnline: !!process.env.OPENAI_API_KEY,
@@ -39,6 +50,16 @@ export const getProviderStatuses = (): ProviderStatus[] => {
       models: ['mistral-large', 'mistral-medium']
     }
   ];
+
+  // Apply routing preferences if available
+  if (routingPrefs?.priority) {
+    return routingPrefs.priority.map((providerName: string) => {
+      const provider = baseProviders.find(p => p.name === providerName);
+      return provider || baseProviders.find(p => p.name === providerName);
+    }).filter(Boolean);
+  }
+
+  return baseProviders;
 };
 
 export const runAIProvider = async (
@@ -104,7 +125,7 @@ export const runWithFallback = async (
   preferredProvider?: string,
   preferredModel?: string
 ): Promise<AIResponse> => {
-  const providers = getProviderStatuses();
+  const providers = await getProviderStatuses();
   const availableProviders = providers.filter(p => p.isOnline || p.name === 'claude' || p.name === 'mistral');
   
   // Try preferred provider first
@@ -115,7 +136,7 @@ export const runWithFallback = async (
     }
   }
   
-  // Fallback to other providers
+  // Fallback to other providers in priority order
   for (const provider of availableProviders) {
     if (provider.name !== preferredProvider) {
       const result = await runAIProvider(provider.name, input);

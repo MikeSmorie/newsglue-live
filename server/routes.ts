@@ -7,6 +7,7 @@ import subscriptionRoutes from "./routes/subscription";
 import webhookRoutes from "./routes/webhook";
 import aiRoutes from "./routes/ai";
 import { aiProvidersRouter } from "./routes/ai-providers";
+import { aiRoutingRouter } from "./routes/ai-routing";
 import featureRoutes from "./routes/features";
 import messagesRoutes from "./routes/announcements";
 import adminLogsRoutes from "./routes/admin-logs";
@@ -111,6 +112,16 @@ export function registerRoutes(app: Express) {
    * POST /api/ai/providers/generate - Generate with fallback
    */
   app.use("/api/ai/providers", aiProvidersRouter);
+
+  /**
+   * AI ROUTING CONFIGURATION
+   * Auth: Required
+   * Role: Supergod only
+   * GET /api/admin/ai-routing/config - Get routing configuration
+   * POST /api/admin/ai-routing/config - Save routing configuration
+   * GET /api/admin/ai-routing/preferences - Get routing preferences
+   */
+  app.use("/api/admin/ai-routing", requireSupergod, aiRoutingRouter);
 
   /**
    * FEATURE ACCESS ROUTES

@@ -17,7 +17,8 @@ import {
   KeyRound,
   FileText,
   Gift,
-  BarChart3
+  BarChart3,
+  Brain
 } from "lucide-react";
 
 const moduleItems = Array.from({ length: 9 }, (_, i) => ({
@@ -102,6 +103,14 @@ const supergodItems = [
     name: "AI Analytics",
     href: "/admin/analytics",
     icon: BarChart3
+  }
+];
+
+const systemControlItems = [
+  {
+    name: "AI Model Routing",
+    href: "/admin/model-router",
+    icon: Brain
   }
 ];
 
@@ -251,6 +260,33 @@ export function Sidebar() {
                     className={cn(
                       "w-full justify-start text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800",
                       isActive(item.href) && "bg-gray-100 dark:bg-gray-800"
+                    )}
+                    asChild
+                  >
+                    <a href={item.href}>
+                      <Icon className="mr-2 h-3 w-3" />
+                      {item.name}
+                    </a>
+                  </Button>
+                );
+              })}
+            </div>
+            
+            <Separator className="my-4" />
+            <div className="space-y-1">
+              <h3 className="px-2 py-1 text-sm font-medium text-gray-600 dark:text-gray-400">
+                System Controls
+              </h3>
+              {systemControlItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Button
+                    key={item.href}
+                    variant={isActive(item.href) ? "secondary" : "ghost"}
+                    size="sm"
+                    className={cn(
+                      "w-full justify-start text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/20",
+                      isActive(item.href) && "bg-blue-50 dark:bg-blue-950/20"
                     )}
                     asChild
                   >
