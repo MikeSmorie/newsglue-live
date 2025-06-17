@@ -10,6 +10,7 @@ import { aiProvidersRouter } from "./routes/ai-providers";
 import { aiRoutingRouter } from "./routes/ai-routing";
 import { aiDemoRouter } from "./routes/ai-demo";
 import { aiRouterTestRouter } from "./routes/ai-router-test";
+import { modulesTestRouter } from "./routes/modules-test";
 import featureRoutes from "./routes/features";
 import messagesRoutes from "./routes/announcements";
 import adminLogsRoutes from "./routes/admin-logs";
@@ -143,6 +144,17 @@ export function registerRoutes(app: Express) {
    * GET /api/ai-router-test/test-utilities - Test all utility functions
    */
   app.use("/api/ai-router-test", aiRouterTestRouter);
+
+  /**
+   * MODULE REFACTORING TESTS
+   * Auth: None (public testing endpoints)
+   * Role: Public access for testing refactored modules
+   * POST /api/modules-test/content - Test content generation
+   * POST /api/modules-test/analyze - Test data analysis
+   * POST /api/modules-test/review - Test code review
+   * GET /api/modules-test/test-all - Test all refactored modules
+   */
+  app.use("/api/modules-test", modulesTestRouter);
 
   /**
    * FEATURE ACCESS ROUTES
