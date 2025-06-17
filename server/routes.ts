@@ -13,6 +13,7 @@ import { aiRouterTestRouter } from "./routes/ai-router-test";
 import { modulesTestRouter } from "./routes/modules-test";
 import { supportAgentRouter } from "./routes/support-agent";
 import { passwordResetRouter } from "./routes/password-reset";
+import { emailVerificationRouter } from "./routes/email-verification";
 import featureRoutes from "./routes/features";
 import messagesRoutes from "./routes/announcements";
 import adminLogsRoutes from "./routes/admin-logs";
@@ -176,6 +177,17 @@ export function registerRoutes(app: Express) {
    * GET /api/auth/validate-token/:token - Validate reset token
    */
   app.use("/api/auth", passwordResetRouter);
+
+  /**
+   * EMAIL VERIFICATION ROUTES
+   * Auth: None (public access for email verification)
+   * Role: Public access
+   * POST /api/auth/send-verification - Send verification email
+   * POST /api/auth/verify-email - Verify email with token
+   * GET /api/auth/status/:email - Check verification status
+   * GET /api/auth/validate-verification-token/:token - Validate verification token
+   */
+  app.use("/api/auth", emailVerificationRouter);
 
   /**
    * FEATURE ACCESS ROUTES

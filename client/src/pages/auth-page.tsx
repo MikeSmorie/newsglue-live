@@ -43,6 +43,16 @@ export default function AuthPage() {
       const result = await (isLogin ? login(data) : register(data));
       console.log('Login result:', result);
       if (!result.ok) {
+        // Handle email verification requirement
+        if (result.requiresVerification) {
+          toast({
+            title: isLogin ? "Email verification required" : "Registration successful",
+            description: isLogin 
+              ? "Please verify your email address before logging in." 
+              : "Please check your email to verify your account.",
+          });
+          return;
+        }
         throw new Error(result.message);
       }
       toast({
