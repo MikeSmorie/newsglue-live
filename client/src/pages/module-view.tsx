@@ -9,6 +9,22 @@ import {
   Package,
   Lock
 } from "lucide-react";
+import { lazy, Suspense } from "react";
+import { Loader2 } from "lucide-react";
+
+// Dynamic module imports
+const modules = {
+  1: lazy(() => import("../../../modules/module1")),
+  2: lazy(() => import("../../../modules/module2")),
+  3: lazy(() => import("../../../modules/module3")),
+  4: lazy(() => import("../../../modules/module4")),
+  5: lazy(() => import("../../../modules/module5")),
+  6: lazy(() => import("../../../modules/module6")),
+  7: lazy(() => import("../../../modules/module7")),
+  8: lazy(() => import("../../../modules/module8")),
+  9: lazy(() => import("../../../modules/module9")),
+  10: lazy(() => import("../../../modules/module10")),
+};
 
 interface ModuleViewProps {
   moduleId?: string;
@@ -18,8 +34,50 @@ export default function ModuleView({ moduleId }: ModuleViewProps) {
   const params = useParams();
   const [, navigate] = useLocation();
   const id = moduleId || params.id;
+  const moduleNumber = parseInt(id);
   
-  // Module name logic - show "Unnamed Module" if no name is set
+  // Check if module exists and load it
+  const ModuleComponent = modules[moduleNumber as keyof typeof modules];
+  
+  if (ModuleComponent) {
+    return (
+      <div className="space-y-6">
+        {/* Header Section */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
+            </Button>
+            <Separator orientation="vertical" className="h-6" />
+            <div className="flex items-center space-x-2">
+              <Grid3X3 className="h-6 w-6 text-gray-600 dark:text-gray-400" />
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+                Module #{id}
+              </h1>
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <Badge variant="default" className="bg-green-600 hover:bg-green-700">
+              Active
+            </Badge>
+          </div>
+        </div>
+
+        {/* Module Content */}
+        <Suspense fallback={
+          <div className="flex items-center justify-center p-12">
+            <Loader2 className="h-8 w-8 animate-spin text-border" />
+          </div>
+        }>
+          <ModuleComponent />
+        </Suspense>
+      </div>
+    );
+  }
+
+  // Fallback for non-existent modules
   const moduleName = `Module ${id}`;
   const displayName = moduleName || "Unnamed Module";
 
@@ -98,48 +156,6 @@ export default function ModuleView({ moduleId }: ModuleViewProps) {
           </div>
         </CardContent>
       </Card>
-
-      {/* Module Status */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-900 dark:text-white">Status</CardTitle>
-            <Grid3X3 className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">Inactive</div>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
-              Awaiting system developer activation
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-900 dark:text-white">Assignment</CardTitle>
-            <Package className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">Pending</div>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
-              No functional components assigned
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-900 dark:text-white">Access</CardTitle>
-            <Lock className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">Read-Only</div>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
-              User modification not permitted
-            </p>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }
