@@ -1,36 +1,33 @@
 // NewsJack Content Generator - Core Engine
 // Restored from original NewsGlue build into Omega-V9
 
-interface Campaign {
-  id: string;
-  name: string;
-  brand: string;
-  tone: 'professional' | 'casual' | 'humorous' | 'urgent' | 'inspirational';
-  targetAudience: string;
-  keyMessages: string[];
-  hashtags: string[];
-  contentTypes: string[];
+import { Campaign, NewsItem, Channel } from '../../lib/newsjack/types.js';
+
+// Extended interfaces for internal processing
+interface ExtendedCampaign extends Campaign {
+  tone?: 'professional' | 'casual' | 'humorous' | 'urgent' | 'inspirational';
+  keyMessages?: string[];
+  hashtags?: string[];
+  contentTypes?: string[];
 }
 
-interface NewsItem {
-  id: string;
-  headline: string;
-  summary: string;
-  source: string;
-  publishedAt: string;
-  category: string;
-  sentiment: 'positive' | 'negative' | 'neutral';
-  relevanceScore: number;
-  keywords: string[];
+interface ExtendedNewsItem extends NewsItem {
+  id?: string;
+  summary?: string;
+  source?: string;
+  publishedAt?: string;
+  category?: string;
+  sentiment?: 'positive' | 'negative' | 'neutral';
+  relevanceScore?: number;
+  keywords?: string[];
 }
 
-interface Channel {
-  id: string;
-  name: string;
-  platform: 'twitter' | 'linkedin' | 'facebook' | 'instagram' | 'blog' | 'email';
+interface ExtendedChannel extends Channel {
+  id?: string;
+  platform?: 'twitter' | 'linkedin' | 'facebook' | 'instagram' | 'blog' | 'email';
   characterLimit?: number;
-  contentFormat: string;
-  audienceSize: number;
+  contentFormat?: string;
+  audienceSize?: number;
 }
 
 interface NewsjackContent {
@@ -49,36 +46,66 @@ interface NewsjackContent {
 
 async function generateNewsjackContent(campaign: Campaign, newsItem: NewsItem, channel: Channel): Promise<NewsjackContent> {
   try {
+    // Convert to extended interfaces for internal processing
+    const extendedCampaign: ExtendedCampaign = {
+      ...campaign,
+      tone: 'professional',
+      keyMessages: campaign.keywords ? campaign.keywords.split(',').map(k => k.trim()) : [],
+      hashtags: [],
+      contentTypes: ['social']
+    };
+
+    const extendedNewsItem: ExtendedNewsItem = {
+      ...newsItem,
+      id: 'news-' + Date.now(),
+      summary: newsItem.content.substring(0, 200),
+      source: newsItem.sourceUrl,
+      publishedAt: new Date().toISOString(),
+      category: 'general',
+      sentiment: 'neutral',
+      relevanceScore: 0.7,
+      keywords: newsItem.headline.split(' ').slice(0, 5)
+    };
+
+    const extendedChannel: ExtendedChannel = {
+      ...channel,
+      id: 'channel-' + Date.now(),
+      platform: channel.type as any,
+      characterLimit: channel.maxLength,
+      contentFormat: channel.formatNotes || 'standard',
+      audienceSize: 1000
+    };
+
     // Analyze news relevance and brand alignment
-    const relevanceAnalysis = analyzeNewsRelevance(campaign, newsItem);
+    const relevanceAnalysis = analyzeNewsRelevance(extendedCampaign, extendedNewsItem);
     
     if (relevanceAnalysis.score < 0.6) {
       throw new Error('News item relevance score too low for effective newsjacking');
     }
 
     // Generate content hook based on news timing and brand positioning
-    const hook = await generateContentHook(newsItem, campaign, channel);
+    const hook = await generateContentHook(extendedNewsItem, extendedCampaign, extendedChannel);
     
     // Create platform-specific content
-    const content = await generatePlatformContent(hook, campaign, newsItem, channel);
+    const content = await generatePlatformContent(hook, extendedCampaign, extendedNewsItem, extendedChannel);
     
     // Generate strategic hashtags
-    const hashtags = generateStrategicHashtags(campaign, newsItem, channel);
+    const hashtags = generateStrategicHashtags(extendedCampaign, extendedNewsItem, extendedChannel);
     
     // Create compelling call-to-action
-    const callToAction = generateCallToAction(campaign, channel);
+    const callToAction = generateCallToAction(extendedCampaign, extendedChannel);
     
     // Recommend media assets
-    const mediaRecommendations = suggestMediaAssets(newsItem, campaign, channel);
+    const mediaRecommendations = suggestMediaAssets(extendedNewsItem, extendedCampaign, extendedChannel);
     
     // Calculate optimal timing
-    const schedulingRecommendation = calculateOptimalTiming(newsItem, channel);
+    const schedulingRecommendation = calculateOptimalTiming(extendedNewsItem, extendedChannel);
     
     // Predict engagement potential
-    const engagementPrediction = predictEngagement(content, newsItem, channel, campaign);
+    const engagementPrediction = predictEngagement(content, extendedNewsItem, extendedChannel, extendedCampaign);
     
     // Assess risks and compliance
-    const riskAssessment = assessContentRisks(content, newsItem, campaign);
+    const riskAssessment = assessContentRisks(content, extendedNewsItem, extendedCampaign);
 
     return {
       content,
@@ -99,7 +126,7 @@ async function generateNewsjackContent(campaign: Campaign, newsItem: NewsItem, c
 
 // Supporting functions for the core generator
 
-function analyzeNewsRelevance(campaign: Campaign, newsItem: NewsItem) {
+function analyzeNewsRelevance(campaign: ExtendedCampaign, newsItem: ExtendedNewsItem) {
   let score = 0;
   const factors = [];
 
@@ -138,7 +165,7 @@ function analyzeNewsRelevance(campaign: Campaign, newsItem: NewsItem) {
   return { score: Math.min(score, 1), factors };
 }
 
-async function generateContentHook(newsItem: NewsItem, campaign: Campaign, channel: Channel): Promise<string> {
+async function generateContentHook(newsItem: ExtendedNewsItem, campaign: ExtendedCampaign, channel: ExtendedChannel): Promise<string> {
   const templates = {
     breaking: `🚨 BREAKING: ${newsItem.headline} - Here's what this means for ${campaign.targetAudience}...`,
     trend: `📈 Everyone's talking about: ${newsItem.headline}. Our take:`,
@@ -169,7 +196,7 @@ async function generateContentHook(newsItem: NewsItem, campaign: Campaign, chann
   return selectedTemplate;
 }
 
-async function generatePlatformContent(hook: string, campaign: Campaign, newsItem: NewsItem, channel: Channel): Promise<string> {
+async function generatePlatformContent(hook: string, campaign: ExtendedCampaign, newsItem: ExtendedNewsItem, channel: ExtendedChannel): Promise<string> {
   let content = hook;
 
   // Add brand perspective
@@ -189,7 +216,7 @@ async function generatePlatformContent(hook: string, campaign: Campaign, newsIte
   return content;
 }
 
-function generateBrandPerspective(campaign: Campaign, newsItem: NewsItem): string {
+function generateBrandPerspective(campaign: ExtendedCampaign, newsItem: ExtendedNewsItem): string {
   const perspectives = [
     `an opportunity to ${campaign.keyMessages[0]}`,
     `a chance to help ${campaign.targetAudience} navigate this change`,
@@ -200,7 +227,7 @@ function generateBrandPerspective(campaign: Campaign, newsItem: NewsItem): strin
   return perspectives[Math.floor(Math.random() * perspectives.length)];
 }
 
-function generateValueAddition(campaign: Campaign, newsItem: NewsItem): string {
+function generateValueAddition(campaign: ExtendedCampaign, newsItem: ExtendedNewsItem): string {
   return `Here's how ${campaign.targetAudience} can turn this into an advantage: [Strategic insight based on ${campaign.keyMessages[0]}]`;
 }
 

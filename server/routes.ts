@@ -31,6 +31,7 @@ import { getTokenBalance, consumeTokens, giftTokens, modifyTokens, getAllTokenBa
 import referralRouter from "../modules/3.ReferralEngine/api";
 import { registerAnalyticsRoutes } from "./routes/analytics";
 import { generateNewsjackContent } from "./routes/newsjack-exec";
+import newsjackRouter from "./routes/newsjack";
 import { db } from "../db";
 import { users } from "../db/schema";
 import { eq, and, or, desc, asc, sql } from "drizzle-orm";
@@ -156,21 +157,7 @@ export function registerRoutes(app: Express) {
    * Role: User/Admin/Supergod
    * POST /api/newsjack/generate - Generate newsjack content from campaign, news, and channel data
    */
-  app.post('/api/newsjack/generate', async (req, res) => {
-    try {
-      const { campaign, newsItem, channel } = req.body;
-
-      if (!campaign || !newsItem || !channel) {
-        return res.status(400).json({ error: 'Missing required input' });
-      }
-
-      const content = await generateNewsjackContent(campaign, newsItem, channel);
-      res.json({ content });
-    } catch (err) {
-      console.error('[NewsJack Error]', err);
-      res.status(500).json({ error: 'Failed to generate newsjack content' });
-    }
-  });
+  app.use("/api/newsjack", newsjackRouter);
 
   /**
    * MODULE REFACTORING TESTS
