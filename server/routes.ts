@@ -30,6 +30,7 @@ import { requireRole, requireSupergod } from "./middleware/rbac";
 import { getTokenBalance, consumeTokens, giftTokens, modifyTokens, getAllTokenBalances } from "./routes/tokens";
 import referralRouter from "../modules/3.ReferralEngine/api";
 import { registerAnalyticsRoutes } from "./routes/analytics";
+import { generateNewsjackContent } from "./routes/newsjack-exec";
 import { db } from "../db";
 import { users } from "../db/schema";
 import { eq, and, or, desc, asc, sql } from "drizzle-orm";

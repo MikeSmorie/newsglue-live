@@ -93,7 +93,7 @@ async function generateNewsjackContent(campaign: Campaign, newsItem: NewsItem, c
 
   } catch (error) {
     console.error('NewsJack content generation failed:', error);
-    throw new Error(`Failed to generate newsjack content: ${error.message}`);
+    throw new Error(`Failed to generate newsjack content: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 

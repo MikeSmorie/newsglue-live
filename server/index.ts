@@ -3,6 +3,7 @@ import "express-async-errors";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { ModuleManager } from "./moduleManager";
+import { generateNewsjackContent } from "./routes/newsjack-exec";
 
 interface IModule {
   name: string;
@@ -77,6 +78,8 @@ app.get("/api/module/test", async (req, res) => {
     res.status(500).json({ error: "Module test failed" });
   }
 });
+
+
 
 (async () => {
   // Register all API routes and create HTTP server
