@@ -1,0 +1,105 @@
+// Prompt 1 of 9 – Module 1: Campaign Builder (Frontend & Backend Setup)
+// Execute only this prompt and don’t try to interpret or anticipate what comes next.
+// This creates the UI and backend logic for campaign creation, including archetype, tone, brand name, and campaign goals.
+
+// 📁 /lib/types/campaign.ts
+export interface Campaign {
+  id: string;
+  campaignName: string;
+  description?: string;
+  targetAudience?: string;
+  brandVoice?: string;
+  keyBenefits?: string;
+  keywords?: string;
+  campaignGoals?: string;
+  campaignUrl?: string;
+}
+
+// 📁 /server/routes/campaigns.ts
+import express from 'express';
+import { z } from 'zod';
+import { Campaign } from '../../lib/types/campaign';
+const router = express.Router();
+
+const CampaignSchema = z.object({
+  campaignName: z.string().min(1),
+  description: z.string().optional(),
+  targetAudience: z.string().optional(),
+  brandVoice: z.string().optional(),
+  keyBenefits: z.string().optional(),
+  keywords: z.string().optional(),
+  campaignGoals: z.string().optional(),
+  campaignUrl: z.string().url().optional(),
+});
+
+const campaigns: Campaign[] = [];
+
+router.get('/', (req, res) => {
+  res.json(campaigns);
+});
+
+router.post('/', (req, res) => {
+  const result = CampaignSchema.safeParse(req.body);
+  if (!result.success) {
+    return res.status(400).json({ error: result.error.flatten() });
+  }
+  const newCampaign: Campaign = { id: Date.now().toString(), ...result.data };
+  campaigns.push(newCampaign);
+  res.status(201).json(newCampaign);
+});
+
+export default router;
+
+// 📁 /components/CampaignForm.tsx
+'use client';
+import { useState } from 'react';
+
+export default function CampaignForm() {
+  const [form, setForm] = useState({
+    campaignName: '',
+    description: '',
+    targetAudience: '',
+    brandVoice: '',
+    keyBenefits: '',
+    keywords: '',
+    campaignGoals: '',
+    campaignUrl: '',
+  });
+
+  const handleChange = (e: any) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: any) => {
+    e.preventDefault();
+    const res = await fetch('/api/campaigns', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form),
+    });
+    const result = await res.json();
+    alert(res.ok ? 'Campaign Created!' : `Error: ${result.error}`);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4 p-4">
+      {Object.keys(form).map((key) => (
+        <div key={key}>
+          <label className="block capitalize">{key.replace(/([A-Z])/g, ' $1')}</label>
+          <input name={key} value={form[key as keyof typeof form]} onChange={handleChange} className="w-full p-2 border rounded" />
+        </div>
+      ))}
+      <button type="submit" className="bg-blue-600 text-white p-2 rounded">Create Campaign</button>
+    </form>
+  );
+}
+
+// 📁 /app/(app)/campaigns/page.tsx
+import CampaignForm from '@/components/CampaignForm';
+export default function CampaignPage() {
+  return <CampaignForm />;
+}
+
+// 📁 /server/routes.ts
+import campaigns from './routes/campaigns';
+router.use('/campaigns', campaigns);
