@@ -63,8 +63,8 @@ export function setupAuth(app: Express) {
           return done(null, false, { message: "Incorrect username." });
         }
 
-        // Check if user email is verified
-        if (!user.isVerified) {
+        // Check if user email is verified (skip in development)
+        if (!user.isVerified && process.env.NODE_ENV !== 'development') {
           return done(null, false, { message: "Please verify your email address before logging in." });
         }
 
