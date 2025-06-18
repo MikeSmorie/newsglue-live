@@ -151,6 +151,28 @@ export function registerRoutes(app: Express) {
   app.use("/api/ai-router-test", aiRouterTestRouter);
 
   /**
+   * NEWSJACK CONTENT GENERATION
+   * Auth: Required
+   * Role: User/Admin/Supergod
+   * POST /api/newsjack/generate - Generate newsjack content from campaign, news, and channel data
+   */
+  app.post('/api/newsjack/generate', async (req, res) => {
+    try {
+      const { campaign, newsItem, channel } = req.body;
+
+      if (!campaign || !newsItem || !channel) {
+        return res.status(400).json({ error: 'Missing required input' });
+      }
+
+      const content = await generateNewsjackContent(campaign, newsItem, channel);
+      res.json({ content });
+    } catch (err) {
+      console.error('[NewsJack Error]', err);
+      res.status(500).json({ error: 'Failed to generate newsjack content' });
+    }
+  });
+
+  /**
    * MODULE REFACTORING TESTS
    * Auth: None (public testing endpoints)
    * Role: Public access for testing refactored modules
