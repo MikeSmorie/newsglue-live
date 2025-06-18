@@ -31,6 +31,7 @@ import SupportAI from "@/pages/support-ai";
 import ForgotPasswordPage from "@/pages/forgot-password";
 import ResetPasswordPage from "@/pages/reset-password";
 import VerifyEmailPage from "@/pages/verify-email";
+import NewsJack from "@/pages/NewsJack";
 
 import { useUser } from "@/hooks/use-user";
 import { useToast } from "@/hooks/use-toast";
@@ -125,6 +126,7 @@ function Router() {
         <Route path="/supergod" component={() => <ProtectedSupergodRoute component={SupergodDashboard} />} />
         
         {/* Main routes */}
+        <Route path="/newsjack" component={NewsJack} />
         <Route path="/support/ai" component={SupportAI} />
         <Route path="/module/omega-10" component={AuditModule} />
         <Route path="/module/:id">
