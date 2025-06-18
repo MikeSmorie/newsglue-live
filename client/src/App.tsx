@@ -127,6 +127,7 @@ function Router() {
         <Route path="/supergod" component={() => <ProtectedSupergodRoute component={SupergodDashboard} />} />
         
         {/* Main routes */}
+        <Route path="/campaigns" component={CampaignPage} />
         <Route path="/newsjack" component={NewsJack} />
         <Route path="/support/ai" component={SupportAI} />
         <Route path="/module/omega-10" component={AuditModule} />
