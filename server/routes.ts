@@ -32,6 +32,8 @@ import referralRouter from "../modules/3.ReferralEngine/api";
 import { registerAnalyticsRoutes } from "./routes/analytics";
 
 import newsjackRouter from "./routes/newsjack.js";
+import campaignsRouter from "./routes/campaigns";
+import newsitemsRouter from "./routes/newsitems";
 import { db } from "../db";
 import { users } from "../db/schema";
 import { eq, and, or, desc, asc, sql } from "drizzle-orm";
@@ -158,6 +160,24 @@ export function registerRoutes(app: Express) {
    * POST /api/newsjack/generate - Generate newsjack content from campaign, news, and channel data
    */
   app.use("/api/newsjack", newsjackRouter);
+
+  /**
+   * CAMPAIGNS API
+   * Auth: Required
+   * Role: User/Admin/Supergod
+   * GET /api/campaigns - Get all campaigns
+   * GET /api/campaigns/:id - Get specific campaign
+   */
+  app.use("/api/campaigns", requireAuth, campaignsRouter);
+
+  /**
+   * NEWS ITEMS API
+   * Auth: Required
+   * Role: User/Admin/Supergod
+   * GET /api/newsitems - Get all news items
+   * GET /api/newsitems/:id - Get specific news item
+   */
+  app.use("/api/newsitems", requireAuth, newsitemsRouter);
 
   /**
    * MODULE REFACTORING TESTS

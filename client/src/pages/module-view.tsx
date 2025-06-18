@@ -34,7 +34,7 @@ export default function ModuleView({ moduleId }: ModuleViewProps) {
   const params = useParams();
   const [, navigate] = useLocation();
   const id = moduleId || params.id;
-  const moduleNumber = parseInt(id);
+  const moduleNumber = parseInt(id || '0');
   
   // Check if module exists and load it
   const ModuleComponent = modules[moduleNumber as keyof typeof modules];
