@@ -22,6 +22,12 @@ declare global {
   }
 }
 
+declare module "express-session" {
+  interface SessionData {
+    user?: SelectUser;
+  }
+}
+
 export function setupAuth(app: Express) {
   const sessionSettings = {
     secret: process.env.REPL_ID || "porygon-supremacy",
