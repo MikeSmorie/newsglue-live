@@ -1,0 +1,91 @@
+// 📁 /components/newsjack/NewsJackForm.tsx
+
+// Prompt 6 of 12 – Validate NewsJack Frontend UX
+
+import React, { useState } from 'react';
+import axios from 'axios';
+import { Campaign, NewsItem, Channel } from '@/lib/newsjack/types';
+
+export default function NewsJackForm() {
+  const [campaign, setCampaign] = useState<Campaign>({
+    campaignName: '',
+    description: '',
+    targetAudience: '',
+    brandVoice: '',
+    keyBenefits: '',
+    keywords: '',
+    campaignGoals: '',
+    campaignUrl: ''
+  });
+
+  const [newsItem, setNewsItem] = useState<NewsItem>({
+    headline: '',
+    sourceUrl: '',
+    content: ''
+  });
+
+  const [channel, setChannel] = useState<Channel>({
+    name: 'Twitter',
+    type: 'twitter',
+    tone: 'Witty',
+    maxLength: 280,
+    newsRatio: 60,
+    campaignRatio: 40,
+    formatNotes: '',
+    wordCount: 0,
+    aiDetectionEnabled: false
+  });
+
+  const [output, setOutput] = useState<string>('');
+  const [loading, setLoading] = useState(false);
+
+  const handleGenerate = async () => {
+    setLoading(true);
+    setOutput('');
+    try {
+      const res = await axios.post('/api/newsjack/generate', {
+        campaign,
+        newsItem,
+        channel
+      });
+      setOutput(res.data.content || 'No content generated');
+    } catch (err: any) {
+      setOutput('Error generating content: ' + (err?.response?.data?.error || err.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="p-4">
+      <h1 className="text-xl font-bold mb-4">NewsJack Generator</h1>
+      <textarea
+        placeholder="Campaign Name"
+        value={campaign.campaignName}
+        onChange={(e) => setCampaign({ ...campaign, campaignName: e.target.value })}
+        className="w-full mb-2 p-2 border"
+      />
+      <textarea
+        placeholder="News Headline"
+        value={newsItem.headline}
+        onChange={(e) => setNewsItem({ ...newsItem, headline: e.target.value })}
+        className="w-full mb-2 p-2 border"
+      />
+      <textarea
+        placeholder="News Content"
+        rows={5}
+        value={newsItem.content}
+        onChange={(e) => setNewsItem({ ...newsItem, content: e.target.value })}
+        className="w-full mb-2 p-2 border"
+      />
+      <button
+        onClick={handleGenerate}
+        disabled={loading}
+        className="bg-blue-600 text-white px-4 py-2 rounded"
+      >
+        {loading ? 'Generating...' : 'Generate NewsJack'}
+      </button>
+      {output && <pre className="mt-4 p-2 bg-gray-100">{output}</pre>}
+    </div>
+  );
+}
