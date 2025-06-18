@@ -19,10 +19,10 @@ export interface Channel {
   name: string;
   type: string;
   tone: string;
-  formatNotes?: string;
   maxLength: number;
-  wordCount?: number;
   newsRatio: number;
   campaignRatio: number;
+  formatNotes?: string;
+  wordCount?: number;
   aiDetectionEnabled?: boolean;
 }
