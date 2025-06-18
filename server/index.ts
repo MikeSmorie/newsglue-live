@@ -67,6 +67,14 @@ app.use((req, res, next) => {
   next();
 });
 
+// TEMP: Development-only auto-verify all logins
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV === 'development' && req.session?.user) {
+    req.session.user.isVerified = true;
+  }
+  next();
+});
+
 // Test endpoint for module manager
 app.get("/api/module/test", async (req, res) => {
   try {
