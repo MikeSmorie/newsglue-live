@@ -15,9 +15,10 @@ const generateProposalPDF = async (clientName: string, htmlContent: string, temp
   let browser;
   
   try {
-    // Launch browser with optimized settings for Replit environment
+    // Launch browser with system Chromium
     browser = await puppeteer.launch({
       headless: true,
+      executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -28,8 +29,11 @@ const generateProposalPDF = async (clientName: string, htmlContent: string, temp
         '--single-process',
         '--disable-gpu',
         '--disable-web-security',
-        '--disable-features=TranslateUI',
-        '--disable-extensions'
+        '--disable-features=VizDisplayCompositor',
+        '--disable-extensions',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding'
       ],
       timeout: 30000
     });

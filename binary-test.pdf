@@ -1,0 +1,1 @@
+{"error":"PDF generation failed","details":"PDF generation failed: Failed to launch the browser process!\n/home/runner/.cache/puppeteer/chrome/linux-137.0.7151.119/chrome-linux64/chrome: error while loading shared libraries: libgobject-2.0.so.0: cannot open shared object file: No such file or directory\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"}
