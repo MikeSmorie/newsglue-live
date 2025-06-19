@@ -15,27 +15,23 @@ const generateProposalPDF = async (clientName: string, htmlContent: string, temp
   let browser;
   
   try {
-    // Launch browser with system Chromium
+    // Launch browser with optimized settings for Replit
     browser = await puppeteer.launch({
-      headless: true,
-      executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
+      headless: 'new',
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-accelerated-2d-canvas',
         '--no-first-run',
-        '--no-zygote',
-        '--single-process',
         '--disable-gpu',
         '--disable-web-security',
         '--disable-features=VizDisplayCompositor',
         '--disable-extensions',
-        '--disable-background-timer-throttling',
-        '--disable-backgrounding-occluded-windows',
-        '--disable-renderer-backgrounding'
+        '--disable-default-apps',
+        '--no-zygote'
       ],
-      timeout: 30000
+      timeout: 15000
     });
 
     const page = await browser.newPage();
