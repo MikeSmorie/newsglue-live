@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { BarChart3, Clock, DollarSign, Target, Download, Copy, FileText, TrendingUp } from "lucide-react";
+import { BarChart3, Clock, DollarSign, Target, Download, Copy, FileText, TrendingUp, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { useCampaignContext } from "@/hooks/use-campaign-context";
