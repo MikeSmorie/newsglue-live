@@ -89,6 +89,8 @@ export default function CampaignForm({ onSuccess, onCancel, editingCampaign }: C
       const url = editingCampaign ? `/api/campaigns/${editingCampaign.id}` : '/api/campaigns';
       const method = editingCampaign ? 'PUT' : 'POST';
       
+      console.log('Making API request:', { url, method, data });
+      
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -96,12 +98,17 @@ export default function CampaignForm({ onSuccess, onCancel, editingCampaign }: C
         body: JSON.stringify(data),
       });
       
+      console.log('API response status:', res.status);
+      
       if (!res.ok) {
         const error = await res.json();
+        console.error('API error response:', error);
         throw new Error(error.message || 'Failed to save campaign');
       }
       
-      return res.json();
+      const result = await res.json();
+      console.log('API success response:', result);
+      return result;
     },
     onSuccess: async (campaign) => {
       console.log('Campaign save successful:', campaign);

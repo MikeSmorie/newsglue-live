@@ -26,6 +26,12 @@ export default function SimplePlatformSelector({
 }: SimplePlatformSelectorProps) {
   const [selected, setSelected] = useState<string[]>(selectedPlatforms);
 
+  // Sync with prop changes
+  React.useEffect(() => {
+    console.log('SimplePlatformSelector: selectedPlatforms prop changed:', selectedPlatforms);
+    setSelected(selectedPlatforms);
+  }, [selectedPlatforms]);
+
   const { data: platforms = [], isLoading } = useQuery<Platform[]>({
     queryKey: ['platforms'],
     queryFn: async () => {
@@ -42,6 +48,7 @@ export default function SimplePlatformSelector({
       ? [...selected, platformId]
       : selected.filter(id => id !== platformId);
     
+    console.log('Platform selection change:', { platformId, checked, newSelected });
     setSelected(newSelected);
     if (onSelectionChange) {
       onSelectionChange(newSelected);

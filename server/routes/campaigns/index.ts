@@ -147,12 +147,13 @@ router.put('/:id', requireAuth, async (req, res) => {
 
     const updatedCampaign = await db.update(campaigns)
       .set({
-        name: validatedData.name,
+        campaignName: validatedData.name,
         websiteUrl: validatedData.website_url || null,
         ctaUrl: validatedData.cta_url || null,
         emotionalObjective: validatedData.emotional_objective || null,
         audiencePain: validatedData.audience_pain || null,
         additionalData: validatedData.additional_data || null,
+        status: validatedData.status || "draft",
         updatedAt: new Date(),
       })
       .where(and(
