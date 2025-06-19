@@ -491,8 +491,8 @@ export default function Module6() {
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center max-w-md">
                 <div className="text-6xl mb-4">👆</div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Select a news item to begin</h3>
-                <p className="text-gray-600">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Select a news item to begin</h3>
+                <p className="text-gray-600 dark:text-gray-300">
                   Choose an item from the queue to generate or view NewsJack content
                 </p>
               </div>
@@ -591,10 +591,10 @@ export default function Module6() {
                     {selectedNewsItem.platformOutputs[activeChannel] && (
                       <>
                         {/* Styled Output */}
-                        <div className="bg-gray-50 border border-gray-200 rounded-lg">
-                          <div className="p-4 border-b border-gray-200 bg-gray-100">
+                        <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+                          <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-900">
                             <div className="flex items-center justify-between">
-                              <h3 className="font-semibold text-gray-900 capitalize">
+                              <h3 className="font-semibold text-gray-900 dark:text-white capitalize">
                                 {activeChannel} NewsJack Output
                               </h3>
                               <div className="flex items-center gap-2">
@@ -617,7 +617,7 @@ export default function Module6() {
                           </div>
                           
                           <div className="p-6">
-                            <div className="bg-white p-4 rounded border text-sm leading-relaxed whitespace-pre-wrap font-mono">
+                            <div className="bg-white dark:bg-gray-900 p-4 rounded border text-sm leading-relaxed whitespace-pre-wrap font-mono text-gray-900 dark:text-white">
                               {selectedNewsItem.platformOutputs[activeChannel].content}
                             </div>
                           </div>
@@ -698,11 +698,11 @@ export default function Module6() {
 
                         {/* Additional Content Elements */}
                         {selectedNewsItem.platformOutputs[activeChannel].hashtags && (
-                          <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-                            <h4 className="text-sm font-medium text-blue-900 mb-2">Hashtags</h4>
+                          <div className="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 p-4 rounded-lg">
+                            <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">Hashtags</h4>
                             <div className="flex flex-wrap gap-2">
                               {selectedNewsItem.platformOutputs[activeChannel].hashtags.map((tag: string, index: number) => (
-                                <Badge key={index} variant="outline" className="bg-blue-100 text-blue-800">
+                                <Badge key={index} variant="outline" className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200">
                                   #{tag}
                                 </Badge>
                               ))}
@@ -731,52 +731,52 @@ export default function Module6() {
                         {/* Stats Panel */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                           {/* Content Metrics */}
-                          <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
-                            <h4 className="text-sm font-semibold text-gray-900 mb-3">Content Analysis</h4>
+                          <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 rounded-lg">
+                            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Content Analysis</h4>
                             <div className="space-y-3">
                               <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">Requested vs. Actual:</span>
-                                <span className="font-medium">
+                                <span className="text-gray-600 dark:text-gray-300">Requested vs. Actual:</span>
+                                <span className="font-medium text-gray-900 dark:text-white">
                                   {activeChannel === 'twitter' ? '280' : 
                                    activeChannel === 'linkedin' ? '3000' : 
                                    activeChannel === 'instagram' ? '2200' : '1000'} / {selectedNewsItem.platformOutputs[activeChannel].content.length} chars
                                 </span>
                               </div>
                               <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">Word Count:</span>
-                                <span className="font-medium">{selectedNewsItem.platformOutputs[activeChannel].content.split(/\s+/).length} words</span>
+                                <span className="text-gray-600 dark:text-gray-300">Word Count:</span>
+                                <span className="font-medium text-gray-900 dark:text-white">{selectedNewsItem.platformOutputs[activeChannel].content.split(/\s+/).length} words</span>
                               </div>
                               <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">AI Model:</span>
+                                <span className="text-gray-600 dark:text-gray-300">AI Model:</span>
                                 <span className="font-medium">GPT-4o</span>
                               </div>
                             </div>
                           </div>
 
                           {/* Performance Benchmarks */}
-                          <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
-                            <h4 className="text-sm font-semibold text-gray-900 mb-3">Performance Benchmarks</h4>
+                          <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 rounded-lg">
+                            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Performance Benchmarks</h4>
                             <div className="space-y-3">
                               <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">AI Processing Time:</span>
-                                <span className="font-medium text-blue-600">{selectedNewsItem.generationMetrics?.generationTime || '3.2s'}</span>
+                                <span className="text-gray-600 dark:text-gray-300">AI Processing Time:</span>
+                                <span className="font-medium text-blue-600 dark:text-blue-400">{selectedNewsItem.generationMetrics?.generationTime || '3.2s'}</span>
                               </div>
                               <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">Human Time:</span>
-                                <span className="font-medium text-gray-600">~45min</span>
+                                <span className="text-gray-600 dark:text-gray-300">Human Time:</span>
+                                <span className="font-medium text-gray-600 dark:text-gray-400">~45min</span>
                               </div>
                               <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">Human + AI Time:</span>
-                                <span className="font-medium text-green-600">~8min</span>
+                                <span className="text-gray-600 dark:text-gray-300">Human + AI Time:</span>
+                                <span className="font-medium text-green-600 dark:text-green-400">~8min</span>
                               </div>
                               <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">NewsGlue Time:</span>
-                                <span className="font-medium text-blue-600">{selectedNewsItem.generationMetrics?.generationTime || '3.2s'}</span>
+                                <span className="text-gray-600 dark:text-gray-300">NewsGlue Time:</span>
+                                <span className="font-medium text-blue-600 dark:text-blue-400">{selectedNewsItem.generationMetrics?.generationTime || '3.2s'}</span>
                               </div>
-                              <div className="pt-2 border-t border-gray-300">
+                              <div className="pt-2 border-t border-gray-300 dark:border-gray-600">
                                 <div className="flex justify-between text-sm font-medium">
-                                  <span className="text-gray-700">Time Savings:</span>
-                                  <span className="text-emerald-600">82% vs Human | 60% vs Human+AI</span>
+                                  <span className="text-gray-700 dark:text-gray-300">Time Savings:</span>
+                                  <span className="text-emerald-600 dark:text-emerald-400">82% vs Human | 60% vs Human+AI</span>
                                 </div>
                               </div>
                             </div>
@@ -785,29 +785,29 @@ export default function Module6() {
 
                         {/* NewsJack Quality Metrics */}
                         {selectedNewsItem.platformOutputs[activeChannel].metrics && (
-                          <div className="bg-purple-50 border border-purple-200 p-4 rounded-lg">
-                            <h4 className="text-sm font-semibold text-purple-900 mb-3">NewsJack Quality Analysis</h4>
+                          <div className="bg-purple-50 dark:bg-purple-900 border border-purple-200 dark:border-purple-700 p-4 rounded-lg">
+                            <h4 className="text-sm font-semibold text-purple-900 dark:text-purple-100 mb-3">NewsJack Quality Analysis</h4>
                             <div className="grid grid-cols-2 gap-6">
                               <div className="text-center">
-                                <div className="text-3xl font-bold text-orange-600 mb-1">
+                                <div className="text-3xl font-bold text-orange-600 dark:text-orange-400 mb-1">
                                   {selectedNewsItem.platformOutputs[activeChannel].metrics.newsPercentage}%
                                 </div>
-                                <div className="text-sm text-gray-600">News Focus</div>
-                                <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                                <div className="text-sm text-gray-600 dark:text-gray-300">News Focus</div>
+                                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-2">
                                   <div 
-                                    className="bg-orange-500 h-2 rounded-full transition-all" 
+                                    className="bg-orange-500 dark:bg-orange-400 h-2 rounded-full transition-all" 
                                     style={{ width: `${selectedNewsItem.platformOutputs[activeChannel].metrics.newsPercentage}%` }}
                                   ></div>
                                 </div>
                               </div>
                               <div className="text-center">
-                                <div className="text-3xl font-bold text-purple-600 mb-1">
+                                <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-1">
                                   {selectedNewsItem.platformOutputs[activeChannel].metrics.campaignPercentage}%
                                 </div>
-                                <div className="text-sm text-gray-600">Campaign Focus</div>
-                                <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                                <div className="text-sm text-gray-600 dark:text-gray-300">Campaign Focus</div>
+                                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-2">
                                   <div 
-                                    className="bg-purple-500 h-2 rounded-full transition-all" 
+                                    className="bg-purple-500 dark:bg-purple-400 h-2 rounded-full transition-all" 
                                     style={{ width: `${selectedNewsItem.platformOutputs[activeChannel].metrics.campaignPercentage}%` }}
                                   ></div>
                                 </div>
