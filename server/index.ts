@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import { createServer } from "http";
 import "express-async-errors";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
@@ -90,8 +91,11 @@ app.get("/api/module/test", async (req, res) => {
 
 
 (async () => {
-  // Register all API routes and create HTTP server
+  // Register all API routes
   await registerRoutes(app);
+
+  // Create HTTP server
+  const server = createServer(app);
 
   // Global error handling middleware
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -99,7 +103,6 @@ app.get("/api/module/test", async (req, res) => {
     const message = err.message || "Internal Server Error";
 
     res.status(status).json({ message });
-    throw err;
   });
 
   // Setup development/production server
