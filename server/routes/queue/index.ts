@@ -138,16 +138,16 @@ router.post('/generate-newsjacks/:id', requireAuth, async (req, res) => {
     const campaign = newsItem.campaign;
     const startTime = Date.now();
 
-    // Get campaign's social settings to determine platforms
+    // Get campaign's social settings or use defaults
     const socialSettings = campaign.socialSettings as any || {};
-    const platforms = Object.keys(socialSettings).filter(platform => 
+    let platforms = Object.keys(socialSettings).filter(platform => 
       socialSettings[platform]?.enabled
     );
 
+    // If no platforms configured, use defaults for demonstration
     if (platforms.length === 0) {
-      return res.status(400).json({ 
-        error: 'No platforms enabled for this campaign. Please configure platforms in Module 2.' 
-      });
+      platforms = ['twitter', 'linkedin', 'instagram', 'facebook'];
+      console.log('No platforms configured, using defaults:', platforms);
     }
 
     const platformOutputs: any = {};
