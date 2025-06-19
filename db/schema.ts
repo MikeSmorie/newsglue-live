@@ -300,10 +300,18 @@ export const newsItems = pgTable("news_items", {
   sourceUrl: text("source_url").notNull(),
   content: text("content").notNull(),
   contentType: text("content_type").notNull().default("external"), // 'external' | 'internal'
-  status: text("status").notNull().default("draft"), // 'draft' | 'processing' | 'completed' | 'failed'
+  status: text("status").notNull().default("draft"), // 'draft' | 'sent' | 'complete' | 'error'
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
 });
+
+// News items relations
+export const newsItemsRelations = relations(newsItems, ({ one }) => ({
+  campaign: one(campaigns, {
+    fields: [newsItems.campaignId],
+    references: [campaigns.id]
+  })
+}));
 
 // Add relations for the new tables
 export const adminAnnouncementsRelations = relations(adminAnnouncements, ({ one, many }) => ({
@@ -343,13 +351,7 @@ export const selectNewsItemSchema = createSelectSchema(newsItems);
 export type InsertNewsItem = typeof newsItems.$inferInsert;
 export type SelectNewsItem = typeof newsItems.$inferSelect;
 
-// Add news items relations
-export const newsItemsRelations = relations(newsItems, ({ one }) => ({
-  campaign: one(campaigns, {
-    fields: [newsItems.campaignId],
-    references: [campaigns.id]
-  })
-}));
+
 
 // Add new schemas for validation
 export const insertAdminAnnouncementSchema = createInsertSchema(adminAnnouncements);
