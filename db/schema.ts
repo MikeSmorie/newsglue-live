@@ -609,6 +609,7 @@ export const campaigns = pgTable("campaigns", {
   emotionalObjective: text("emotional_objective"), // Target emotional response
   audiencePain: text("audience_pain"), // Pain-focused audience description
   additionalData: text("additional_data"), // Extra context and notes
+  websiteAnalysis: text("website_analysis"), // Scraped website analysis data
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

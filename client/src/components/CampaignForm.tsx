@@ -618,6 +618,7 @@ The more detail you provide, the better the AI can create targeted NewsJack cont
                 const submitData = {
                   ...formValues,
                   platforms: selectedPlatforms,
+                  website_analysis: scrapedData ? JSON.stringify(scrapedData) : null,
                 };
                 
                 console.log('Final submit data:', submitData);

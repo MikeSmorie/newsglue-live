@@ -19,6 +19,7 @@ const campaignCreateSchema = z.object({
   emotional_objective: z.string().optional(),
   audience_pain: z.string().optional(),
   additional_data: z.string().optional(),
+  website_analysis: z.string().optional(),
   status: z.enum(["draft", "active", "archived"]).optional().default("draft"),
   platforms: z.array(z.string()).optional(),
 });
@@ -154,6 +155,7 @@ router.put('/:id', requireAuth, async (req, res) => {
         emotionalObjective: validatedData.emotional_objective || null,
         audiencePain: validatedData.audience_pain || null,
         additionalData: validatedData.additional_data || null,
+        websiteAnalysis: validatedData.website_analysis || null,
         status: validatedData.status || "draft",
         updatedAt: new Date(),
       })
