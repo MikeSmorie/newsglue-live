@@ -139,7 +139,11 @@ export default function CampaignForm({ onSuccess, onCancel, editingCampaign }: C
       });
       
       console.log('Calling onSuccess callback');
-      onSuccess?.();
+      
+      // Force navigation back to campaigns
+      setTimeout(() => {
+        onSuccess?.();
+      }, 100);
     },
     onError: (error: Error) => {
       toast({
@@ -595,9 +599,23 @@ The more detail you provide, the better the AI can create targeted NewsJack cont
               Cancel
             </Button>
             <Button 
-              type="submit" 
+              type="button"
               disabled={createMutation.isPending}
               className="min-w-[140px]"
+              onClick={() => {
+                console.log('Button clicked!');
+                const formValues = form.getValues();
+                console.log('Form values:', formValues);
+                console.log('Selected platforms:', selectedPlatforms);
+                
+                const submitData = {
+                  ...formValues,
+                  platforms: selectedPlatforms,
+                };
+                
+                console.log('Submitting data:', submitData);
+                createMutation.mutate(submitData);
+              }}
             >
               {createMutation.isPending 
                 ? (editingCampaign ? 'Updating...' : 'Creating...') 
