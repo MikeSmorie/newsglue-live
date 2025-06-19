@@ -552,6 +552,21 @@ export default function Module6() {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <button
+                              className="p-1 text-gray-400 hover:text-green-600"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleNewsJackPDFExport(item.id, item.headline);
+                              }}
+                            >
+                              <File className="h-3 w-3" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>Export NewsJack PDF</TooltipContent>
+                        </Tooltip>
+                        
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
                               className="p-1 text-gray-400 hover:text-yellow-600"
                               onClick={(e) => {
                                 e.stopPropagation();
