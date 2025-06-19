@@ -54,22 +54,89 @@ const DEFAULT_PLATFORMS = [
   { id: 'instagram', name: 'Instagram', icon: '📷' },
   { id: 'youtube', name: 'YouTube', icon: '🎥' },
   { id: 'tiktok', name: 'TikTok', icon: '🎵' },
-  { id: 'blog', name: 'Blog', icon: '📝' }
+  { id: 'blog', name: 'Blog', icon: '📝' },
+  { id: 'pinterest', name: 'Pinterest', icon: '📌' },
+  { id: 'google-business', name: 'Google Business Profile', icon: '🏢' }
 ];
 
-const DEFAULT_CHANNEL_CONFIG: ChannelConfig = {
-  tone: 'Professional',
-  wordCount: 280,
-  contentRatio: '70/30 (70% news, 30% campaign)',
-  enabled: true
+// Platform-specific default configurations
+const getPlatformDefaults = (platformId: string): ChannelConfig => {
+  const defaults: Record<string, ChannelConfig> = {
+    'twitter': {
+      tone: 'Punchy + Informative',
+      wordCount: 280,
+      contentRatio: '30/70 (30% news, 70% campaign)',
+      enabled: true
+    },
+    'facebook': {
+      tone: 'Conversational + Provocative',
+      wordCount: 500,
+      contentRatio: '35/65 (35% news, 65% campaign)',
+      enabled: true
+    },
+    'linkedin': {
+      tone: 'Professional',
+      wordCount: 300,
+      contentRatio: '40/60 (40% news, 60% campaign)',
+      enabled: true
+    },
+    'instagram': {
+      tone: 'Trendy + Visual',
+      wordCount: 150,
+      contentRatio: '30/70 (30% news, 70% campaign)',
+      enabled: true
+    },
+    'blog': {
+      tone: 'Thought-Provoking + Informative',
+      wordCount: 800,
+      contentRatio: '50/50 (50% news, 50% campaign)',
+      enabled: true
+    },
+    'pinterest': {
+      tone: 'Inspirational',
+      wordCount: 200,
+      contentRatio: '30/70 (30% news, 70% campaign)',
+      enabled: true
+    },
+    'google-business': {
+      tone: 'Clear + Localized',
+      wordCount: 300,
+      contentRatio: '35/65 (35% news, 65% campaign)',
+      enabled: true
+    }
+  };
+  
+  return defaults[platformId] || {
+    tone: 'Professional',
+    wordCount: 280,
+    contentRatio: '70/30 (70% news, 30% campaign)',
+    enabled: true
+  };
 };
 
-const TONE_OPTIONS = ['Professional', 'Casual', 'Authoritative', 'Friendly', 'Engaging', 'Educational'];
+const TONE_OPTIONS = [
+  'Professional',
+  'Casual', 
+  'Authoritative',
+  'Friendly',
+  'Engaging',
+  'Educational',
+  'Punchy + Informative',
+  'Conversational + Provocative',
+  'Trendy + Visual',
+  'Thought-Provoking + Informative',
+  'Inspirational',
+  'Clear + Localized'
+];
+
 const CONTENT_RATIO_OPTIONS = [
-  '70/30 (70% news, 30% campaign)',
+  '30/70 (30% news, 70% campaign)',
+  '35/65 (35% news, 65% campaign)',
+  '40/60 (40% news, 60% campaign)',
+  '50/50 (50% news, 50% campaign)',
   '60/40 (60% news, 40% campaign)',
-  '80/20 (80% news, 20% campaign)',
-  '50/50 (50% news, 50% campaign)'
+  '70/30 (70% news, 30% campaign)',
+  '80/20 (80% news, 20% campaign)'
 ];
 
 export default function Module2() {
@@ -122,12 +189,7 @@ export default function Module2() {
         const newConfigs = { ...socialSettings.channelConfig || {} };
         campaign.channels.forEach(ch => {
           if (!newConfigs[ch.platform]) {
-            const defaultConfig = { ...DEFAULT_CHANNEL_CONFIG };
-            // Set appropriate default for Twitter character count
-            if (ch.platform === 'twitter') {
-              defaultConfig.wordCount = 280;
-            }
-            newConfigs[ch.platform] = defaultConfig;
+            newConfigs[ch.platform] = getPlatformDefaults(ch.platform);
           }
         });
         setChannelConfigs(newConfigs);
@@ -198,12 +260,7 @@ export default function Module2() {
     const newConfigs = { ...channelConfigs };
     DEFAULT_PLATFORMS.forEach(platform => {
       if (!newConfigs[platform.id]) {
-        const defaultConfig = { ...DEFAULT_CHANNEL_CONFIG };
-        // Set appropriate default for Twitter character count
-        if (platform.id === 'twitter') {
-          defaultConfig.wordCount = 280;
-        }
-        newConfigs[platform.id] = defaultConfig;
+        newConfigs[platform.id] = getPlatformDefaults(platform.id);
       }
     });
     setChannelConfigs(newConfigs);
@@ -334,7 +391,7 @@ export default function Module2() {
                           onClick={() => {
                             setChannelConfigs(prev => ({
                               ...prev,
-                              [platform.id]: { ...DEFAULT_CHANNEL_CONFIG }
+                              [platform.id]: getPlatformDefaults(platform.id)
                             }));
                           }}
                         >
@@ -389,7 +446,19 @@ export default function Module2() {
                         <CardContent className="pt-0 space-y-4">
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="space-y-2">
-                              <Label>Tone</Label>
+                              <div className="flex items-center gap-2">
+                                <Label>Tone</Label>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger>
+                                      <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>This tone guides the voice used in your NewsJack content for this platform. Editable per audience expectations.</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </div>
                               <Select
                                 value={config.tone}
                                 onValueChange={(value) => 
