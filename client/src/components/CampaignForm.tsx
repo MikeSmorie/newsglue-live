@@ -1,4 +1,4 @@
-// [CAMPAIGN FORM COMPONENT] - FULL FILE REPLACEMENT
+// [CAMPAIGN FORM COMPONENT] - NewsJack methodology focused
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { HelpCircle } from 'lucide-react';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 
@@ -28,7 +28,7 @@ export default function CampaignForm() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
-      toast({ title: 'Campaign Created', description: 'Your campaign has been saved.' });
+      toast({ title: 'Campaign Created', description: 'Your NewsJack campaign has been saved.' });
       reset();
     },
     onError: () => {
@@ -37,104 +37,107 @@ export default function CampaignForm() {
   });
 
   const onSubmit = (data: any) => {
+    console.log('NewsJack campaign data:', data);
     mutation.mutate(data);
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div>
-        <Label htmlFor="name">
-          Campaign Name
-          <Tooltip>
-            <TooltipTrigger>
-              <HelpCircle className="inline h-4 w-4 ml-1 text-muted-foreground" />
-            </TooltipTrigger>
-            <TooltipContent>
-              The internal name for this campaign. Choose something short and recognizable.
-            </TooltipContent>
-          </Tooltip>
-        </Label>
-        <Input id="name" {...register('name')} required />
-      </div>
+    <TooltipProvider>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div>
+          <Label htmlFor="name">
+            Campaign Name
+            <Tooltip>
+              <TooltipTrigger>
+                <HelpCircle className="inline h-4 w-4 ml-1 text-muted-foreground" />
+              </TooltipTrigger>
+              <TooltipContent>
+                The internal name for this campaign. Choose something short and recognizable.
+              </TooltipContent>
+            </Tooltip>
+          </Label>
+          <Input id="name" {...register('name')} required />
+        </div>
 
-      <div>
-        <Label htmlFor="url">
-          Website URL
-          <Tooltip>
-            <TooltipTrigger>
-              <HelpCircle className="inline h-4 w-4 ml-1 text-muted-foreground" />
-            </TooltipTrigger>
-            <TooltipContent>
-              Paste the company's homepage or About page. We'll scrape it for key context.
-            </TooltipContent>
-          </Tooltip>
-        </Label>
-        <Input id="url" {...register('website_url')} required />
-      </div>
+        <div>
+          <Label htmlFor="url">
+            Website URL
+            <Tooltip>
+              <TooltipTrigger>
+                <HelpCircle className="inline h-4 w-4 ml-1 text-muted-foreground" />
+              </TooltipTrigger>
+              <TooltipContent>
+                Paste the company's homepage or About page. We'll scrape it for key context.
+              </TooltipContent>
+            </Tooltip>
+          </Label>
+          <Input id="url" {...register('website_url')} required />
+        </div>
 
-      <div>
-        <Label htmlFor="cta_url">
-          CTA URL
-          <Tooltip>
-            <TooltipTrigger>
-              <HelpCircle className="inline h-4 w-4 ml-1 text-muted-foreground" />
-            </TooltipTrigger>
-            <TooltipContent>
-              Where should news-driven traffic be sent? Paste a product or landing page URL.
-            </TooltipContent>
-          </Tooltip>
-        </Label>
-        <Input id="cta_url" {...register('cta_url')} />
-      </div>
+        <div>
+          <Label htmlFor="cta_url">
+            CTA URL
+            <Tooltip>
+              <TooltipTrigger>
+                <HelpCircle className="inline h-4 w-4 ml-1 text-muted-foreground" />
+              </TooltipTrigger>
+              <TooltipContent>
+                Where should news-driven traffic be sent? Paste a product or landing page URL.
+              </TooltipContent>
+            </Tooltip>
+          </Label>
+          <Input id="cta_url" {...register('cta_url')} />
+        </div>
 
-      <div>
-        <Label htmlFor="emotionalObjective">
-          Emotional Campaign Objective
-          <Tooltip>
-            <TooltipTrigger>
-              <HelpCircle className="inline h-4 w-4 ml-1 text-muted-foreground" />
-            </TooltipTrigger>
-            <TooltipContent>
-              What emotional response should the audience feel? E.g. urgency, hope, outrage, safety, belonging.
-            </TooltipContent>
-          </Tooltip>
-        </Label>
-        <Input id="emotionalObjective" {...register('emotional_objective')} />
-      </div>
+        <div>
+          <Label htmlFor="emotionalObjective">
+            Emotional Campaign Objective
+            <Tooltip>
+              <TooltipTrigger>
+                <HelpCircle className="inline h-4 w-4 ml-1 text-muted-foreground" />
+              </TooltipTrigger>
+              <TooltipContent>
+                What emotional response should the audience feel? E.g. urgency, hope, outrage, safety, belonging.
+              </TooltipContent>
+            </Tooltip>
+          </Label>
+          <Input id="emotionalObjective" {...register('emotional_objective')} />
+        </div>
 
-      <div>
-        <Label htmlFor="painPoint">
-          Pain-Focused Audience Description
-          <Tooltip>
-            <TooltipTrigger>
-              <HelpCircle className="inline h-4 w-4 ml-1 text-muted-foreground" />
-            </TooltipTrigger>
-            <TooltipContent>
-              Describe your audience's current pain, fear, frustration, or unmet need.
-            </TooltipContent>
-          </Tooltip>
-        </Label>
-        <Textarea id="painPoint" {...register('audience_pain')} />
-      </div>
+        <div>
+          <Label htmlFor="painPoint">
+            Pain-Focused Audience Description
+            <Tooltip>
+              <TooltipTrigger>
+                <HelpCircle className="inline h-4 w-4 ml-1 text-muted-foreground" />
+              </TooltipTrigger>
+              <TooltipContent>
+                Describe your audience's current pain, fear, frustration, or unmet need.
+              </TooltipContent>
+            </Tooltip>
+          </Label>
+          <Textarea id="painPoint" {...register('audience_pain')} />
+        </div>
 
-      <div>
-        <Label htmlFor="additionalData">
-          Additional Data
-          <Tooltip>
-            <TooltipTrigger>
-              <HelpCircle className="inline h-4 w-4 ml-1 text-muted-foreground" />
-            </TooltipTrigger>
-            <TooltipContent>
-              Any extra context (mission, competitors, tone, etc) useful for tailoring your campaign.
-            </TooltipContent>
-          </Tooltip>
-        </Label>
-        <Textarea id="additionalData" {...register('additional_data')} />
-      </div>
+        <div>
+          <Label htmlFor="additionalData">
+            Additional Data
+            <Tooltip>
+              <TooltipTrigger>
+                <HelpCircle className="inline h-4 w-4 ml-1 text-muted-foreground" />
+              </TooltipTrigger>
+              <TooltipContent>
+                Any extra context (mission, competitors, tone, etc) useful for tailoring your campaign.
+              </TooltipContent>
+            </Tooltip>
+          </Label>
+          <Textarea id="additionalData" {...register('additional_data')} />
+        </div>
 
-      <Button type="submit" className="w-full">
-        Save Campaign
-      </Button>
-    </form>
+        <Button type="submit" className="w-full" disabled={mutation.isPending}>
+          {mutation.isPending ? 'Saving...' : 'Save Campaign'}
+        </Button>
+      </form>
+    </TooltipProvider>
   );
 }
