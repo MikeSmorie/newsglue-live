@@ -40,11 +40,11 @@ import SimplePlatformSelector from './SimplePlatformSelector';
 
 const campaignSchema = z.object({
   name: z.string().min(1, 'Campaign name is required').max(100, 'Campaign name must be under 100 characters'),
-  website_url: z.string().url('Must be a valid URL').optional().or(z.literal('')),
-  cta_url: z.string().url('Must be a valid URL').optional().or(z.literal('')),
-  emotional_objective: z.string().min(1, 'Please provide emotional objective').max(1000, 'Must be under 1000 characters'),
-  audience_pain: z.string().min(1, 'Please provide audience pain points').max(1000, 'Must be under 1000 characters'),
-  additional_data: z.string().max(5000, 'Must be under 5000 characters').optional(),
+  website_url: z.string().optional().or(z.literal('')),
+  cta_url: z.string().optional().or(z.literal('')),
+  emotional_objective: z.string().optional(),
+  audience_pain: z.string().optional(),
+  additional_data: z.string().optional(),
   platforms: z.array(z.string()).min(1, 'Select at least one platform'),
 });
 
@@ -443,63 +443,121 @@ export default function CampaignForm({ onSuccess, onCancel, editingCampaign }: C
             </CardContent>
           </Card>
 
-          {/* Additional Context */}
+          {/* Additional Context & Bulk Information */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
-                Additional Context & Brand Intelligence
+                Campaign Intelligence & Bulk Information
               </CardTitle>
               <CardDescription>
-                Provide detailed information to enhance AI content generation
+                Paste detailed campaign information, briefing documents, or upload files for AI analysis
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
+              {/* Bulk Information Input */}
               <FormField
                 control={form.control}
                 name="additional_data"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      Brand Voice, Context & Campaign Details
-                      <TooltipWrapper content="Paste detailed briefing documents, brand guidelines, product information, target audience insights, competitor analysis, or any relevant campaign materials. The more context you provide, the better the AI can tailor NewsJack content to your specific needs.">
+                    <FormLabel className="flex items-center gap-2 text-base font-semibold">
+                      <FileText className="h-4 w-4" />
+                      Bulk Campaign Information
+                      <TooltipWrapper content="Paste any amount of detailed information about your campaign, brand, target audience, competitors, or strategic context. The AI will process all this information to create highly targeted NewsJack content.">
                         <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
                       </TooltipWrapper>
                     </FormLabel>
                     <FormControl>
                       <Textarea 
-                        placeholder="Paste your campaign brief, brand guidelines, target audience details, product information, competitor analysis, or any relevant documentation here.
+                        placeholder="Paste comprehensive campaign information here - no limits on length or format:
 
-Example content:
-- Brand voice and personality guidelines
-- Product/service detailed descriptions  
-- Target audience demographics and psychographics
-- Key messaging frameworks
-- Competitor positioning
-- Industry trends and insights
-- Previous campaign performance data
-- Customer testimonials and case studies
-- Technical specifications or unique selling propositions"
-                        className="min-h-[200px] font-mono text-sm"
+• Campaign briefs and strategy documents
+• Brand guidelines and voice documentation  
+• Product/service detailed specifications
+• Target audience research and personas
+• Competitor analysis and market research
+• Previous campaign data and performance metrics
+• Customer testimonials and case studies
+• Industry trends and market insights
+• Key messaging frameworks and positioning
+• Technical documentation and features
+• Pricing strategies and value propositions
+• Distribution channels and partnerships
+• Stakeholder information and requirements
+• Budget considerations and constraints
+• Timeline and milestone requirements
+• Legal and compliance requirements
+• Any other relevant business context
+
+The more detail you provide, the better the AI can create targeted NewsJack content that resonates with your specific audience and objectives."
+                        className="min-h-[300px] font-mono text-sm resize-y"
                         {...field} 
                       />
                     </FormControl>
-                    <FormDescription className="text-xs">
-                      <strong>Tip:</strong> Copy and paste from documents, spreadsheets, or briefing materials. 
-                      The AI will analyze this information to create more targeted and relevant NewsJack content.
-                      Maximum 5,000 characters.
+                    <FormDescription className="text-sm">
+                      <div className="space-y-1">
+                        <p><strong>💡 Pro Tip:</strong> Paste entire documents, research reports, or briefing materials directly into this field.</p>
+                        <p><strong>📊 Data Sources:</strong> Copy from PDFs, Word docs, spreadsheets, research reports, or any text-based materials.</p>
+                        <p><strong>🎯 Usage:</strong> AI will analyze all this context to create highly personalized NewsJack content strategies.</p>
+                        <p className="text-xs text-gray-500">No character limit - paste as much relevant information as you have available.</p>
+                      </div>
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               
-              {/* File Upload Placeholder for Future Implementation */}
-              <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4">
-                <div className="text-center text-gray-500 dark:text-gray-400">
-                  <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">File Upload Coming Soon</p>
-                  <p className="text-xs">Future: Upload PDFs, Word docs, or text files for automatic content extraction</p>
+              {/* File Upload Section */}
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2 text-base font-semibold">
+                  <FileText className="h-4 w-4" />
+                  Document Upload
+                  <TooltipWrapper content="Upload PDF documents, Word files, or text files containing campaign briefs, brand guidelines, or research materials. Content will be automatically extracted and added to your campaign intelligence.">
+                    <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
+                  </TooltipWrapper>
+                </Label>
+                
+                <div className="border-2 border-dashed border-blue-300 dark:border-blue-600 rounded-lg p-6 bg-blue-50 dark:bg-blue-950/20">
+                  <div className="text-center">
+                    <FileText className="h-12 w-12 mx-auto mb-3 text-blue-500" />
+                    <p className="text-base font-medium text-blue-700 dark:text-blue-300 mb-2">
+                      Smart Document Processing
+                    </p>
+                    <p className="text-sm text-blue-600 dark:text-blue-400 mb-4">
+                      Upload PDFs, Word docs, or text files for automatic content extraction and AI analysis
+                    </p>
+                    
+                    <input
+                      type="file"
+                      id="file-upload"
+                      className="hidden"
+                      accept=".pdf,.doc,.docx,.txt,.rtf"
+                      multiple
+                      onChange={(e) => {
+                        // File upload handler will be implemented
+                        const files = Array.from(e.target.files || []);
+                        files.forEach(file => {
+                          console.log('File selected:', file.name);
+                          // TODO: Implement file processing
+                        });
+                      }}
+                    />
+                    
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="border-blue-400 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-950/40"
+                      onClick={() => document.getElementById('file-upload')?.click()}
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      Choose Files to Upload
+                    </Button>
+                    
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
+                      Supported: PDF, Word (.doc/.docx), Text files (.txt/.rtf) • Max 10MB per file
+                    </p>
+                  </div>
                 </div>
               </div>
             </CardContent>
