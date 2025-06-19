@@ -1,0 +1,167 @@
+import { Router } from 'express';
+import { db } from '../db/index.js';
+import { newsItems, users } from '../db/schema.js';
+import { eq, and } from 'drizzle-orm';
+import { requireAuth } from '../middleware/auth.js';
+import { generateLandingPageContent, createSlug, saveLandingPageHTML } from '../services/landing-page-service.js';
+import path from 'path';
+import fs from 'fs';
+
+const router = Router();
+
+// POST /api/landing-page/generate - Generate landing page content
+router.post('/generate', requireAuth, async (req, res) => {
+  try {
+    const { headline, content, campaignData } = req.body;
+    
+    if (!headline || !content) {
+      return res.status(400).json({ error: 'Headline and content are required' });
+    }
+
+    const landingPageContent = await generateLandingPageContent(headline, content, campaignData);
+    
+    res.json({
+      success: true,
+      content: landingPageContent
+    });
+  } catch (error) {
+    console.error('Error generating landing page:', error);
+    res.status(500).json({ error: 'Failed to generate landing page content' });
+  }
+});
+
+// POST /api/landing-page/:newsjackId/toggle - Toggle landing page publication
+router.post('/:newsjackId/toggle', requireAuth, async (req, res) => {
+  try {
+    const { newsjackId } = req.params;
+    const userId = req.user!.id;
+
+    // Find the news item and verify ownership
+    const newsItem = await db.query.newsItems.findFirst({
+      where: and(
+        eq(newsItems.id, parseInt(newsjackId)),
+        eq(newsItems.userId, userId)
+      )
+    });
+
+    if (!newsItem) {
+      return res.status(404).json({ error: 'News item not found' });
+    }
+
+    // Check if blog content exists in platformOutputs
+    const platformOutputs = newsItem.platformOutputs as any;
+    const blogContent = platformOutputs?.blog?.content;
+    
+    if (!blogContent) {
+      return res.status(400).json({ error: 'No blog content available for this news item' });
+    }
+
+    // Generate slug from headline
+    const slug = createSlug(newsItem.headline);
+    
+    // Set status to generating
+    await db.update(newsItems)
+      .set({
+        platformOutputs: {
+          ...platformOutputs,
+          blog: {
+            ...platformOutputs.blog,
+            landingPageStatus: 'generating',
+            landingPageSlug: slug
+          }
+        },
+        updatedAt: new Date()
+      })
+      .where(eq(newsItems.id, parseInt(newsjackId)));
+
+    // Generate and save landing page HTML
+    const landingPageUrl = await saveLandingPageHTML(newsItem, slug, blogContent);
+
+    // Update status to published
+    await db.update(newsItems)
+      .set({
+        platformOutputs: {
+          ...platformOutputs,
+          blog: {
+            ...platformOutputs.blog,
+            landingPageStatus: 'published',
+            landingPageSlug: slug,
+            landingPageUrl: landingPageUrl
+          }
+        },
+        updatedAt: new Date()
+      })
+      .where(eq(newsItems.id, parseInt(newsjackId)));
+
+    res.json({
+      success: true,
+      status: 'published',
+      slug: slug,
+      url: landingPageUrl
+    });
+
+  } catch (error) {
+    console.error('Error toggling landing page:', error);
+    
+    // Reset status on error
+    try {
+      const newsItem = await db.query.newsItems.findFirst({
+        where: eq(newsItems.id, parseInt(req.params.newsjackId))
+      });
+      
+      if (newsItem) {
+        const platformOutputs = newsItem.platformOutputs as any;
+        await db.update(newsItems)
+          .set({
+            platformOutputs: {
+              ...platformOutputs,
+              blog: {
+                ...platformOutputs.blog,
+                landingPageStatus: 'unpublished'
+              }
+            }
+          })
+          .where(eq(newsItems.id, parseInt(req.params.newsjackId)));
+      }
+    } catch (resetError) {
+      console.error('Error resetting status:', resetError);
+    }
+    
+    res.status(500).json({ error: 'Failed to toggle landing page' });
+  }
+});
+
+// GET /api/landing-page/:newsjackId/status - Get landing page status
+router.get('/:newsjackId/status', requireAuth, async (req, res) => {
+  try {
+    const { newsjackId } = req.params;
+    const userId = req.user!.id;
+
+    const newsItem = await db.query.newsItems.findFirst({
+      where: and(
+        eq(newsItems.id, parseInt(newsjackId)),
+        eq(newsItems.userId, userId)
+      )
+    });
+
+    if (!newsItem) {
+      return res.status(404).json({ error: 'News item not found' });
+    }
+
+    const platformOutputs = newsItem.platformOutputs as any;
+    const blogData = platformOutputs?.blog || {};
+
+    res.json({
+      success: true,
+      status: blogData.landingPageStatus || 'unpublished',
+      slug: blogData.landingPageSlug || null,
+      url: blogData.landingPageUrl || null
+    });
+
+  } catch (error) {
+    console.error('Error getting landing page status:', error);
+    res.status(500).json({ error: 'Failed to get landing page status' });
+  }
+});
+
+export default router;

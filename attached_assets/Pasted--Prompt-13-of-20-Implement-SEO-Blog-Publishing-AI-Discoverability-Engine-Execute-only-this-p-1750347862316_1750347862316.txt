@@ -1,0 +1,74 @@
+
+🧠 Prompt 13 of 20 – Implement SEO Blog Publishing & AI Discoverability Engine
+
+Execute only this prompt and don’t try to interpret or anticipate what comes next.
+
+
+
+Purpose:
+
+Integrate the blog publishing and AI discoverability system from the prior NewsGlue version into this current build for the first time. This is not a “restore” — it’s a clean, first-time implementation.
+
+
+
+Scope:
+
+Allow instant publishing of blog-style NewsJacks to external SEO-optimized landing pages
+
+Auto-generate schema.org, OpenGraph, and sitemap.xml for AI and search engine indexing
+
+Ensure each published item has a live URL and toggle indicator with publishing status
+
+// ✅ IMPLEMENT: SEO Blog Publishing & AI Discoverability System
+
+// 1. FRONTEND – Blog Output Frame in Module 6
+
+// a. Add SEO toggle next to each blog output (client/src/components/blog-output.tsx):
+<SeoLandingPageButton 
+  newsjackId={newsjack.id}
+  initialStatus={newsjack.landingPageStatus}
+  initialUrl={newsjack.landingPageUrl}
+/>
+
+// b. Component: client/src/components/seo-landing-page-button.tsx
+• Toggle invokes POST /api/landing-page/:newsjackId/toggle
+• Button states: "Create", "Creating…", "Published ✅" with clickable link
+• Auto-refresh published status every 10 seconds post-toggle
+
+// 2. BACKEND – Landing Page Services
+
+// a. Routes (server/routes/landing-page.ts)
+• POST /generate → generateLandingPageContent()
+• POST /:newsjackId/toggle → calls generateLandingPage()
+• GET /:newsjackId/status → returns { slug, status, url }
+
+// b. Service Logic (server/landing-page/service.ts)
+• createSlug() from headline
+• Write blog HTML to public/landing-pages/${slug}.html
+• Return https://seo-landing-host-michaelsthewrit.replit.app/news/${slug}
+
+// 3. SEO + AI ENHANCEMENTS – template.ts
+
+// a. Inject in HTML template
+• Title, Description, Keywords, Canonical URL
+• OpenGraph tags (og:title, og:image, og:description)
+• schema.org JSON-LD for Article + Organization
+• AI-only discovery <div style="display:none"> block with campaign metadata
+
+// 4. SITEMAP
+
+// a. Route (server/routes/ai-sitemap.ts)
+• Serve dynamic sitemap at /ai-sitemap.xml
+• Includes <loc> and <lastmod> for all published landingPageSlugs
+
+// 5. DATABASE
+
+• Extend newsjackOutputs with: landingPageStatus, landingPageSlug, landingPageUrl
+• Update via toggle + generation routes above
+• Validate ownership before generating
+
+// 6. FILE STORAGE
+
+• Ensure /public/landing-pages directory exists
+• Create if missing using fs.mkdirSync with recursive=true
+• Save each blog as static HTML page to that directory

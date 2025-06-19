@@ -38,6 +38,8 @@ import newsitemsRouter from "./routes/newsitems";
 import newsItemsRouter from "./routes/news-items";
 import websiteScraperRouter from "./routes/website-scraper";
 import pdfRouter from "./routes/pdf";
+import landingPageRouter from "./routes/landing-page.js";
+import aiSitemapRouter from "./routes/ai-sitemap.js";
 import { db } from "../db";
 import { users } from "../db/schema";
 import { eq, and, or, desc, asc, sql } from "drizzle-orm";
@@ -231,6 +233,23 @@ export async function registerRoutes(app: Express) {
    * GET /api/pdf/campaign-dossier/:campaignId - Generate Campaign Dossier PDF
    */
   app.use("/api/pdf", requireAuth, pdfRouter);
+
+  /**
+   * LANDING PAGE API
+   * Auth: Required
+   * Role: User/Admin/Supergod
+   * POST /api/landing-page/generate - Generate landing page content
+   * POST /api/landing-page/:newsjackId/toggle - Toggle landing page publication
+   * GET /api/landing-page/:newsjackId/status - Get landing page status
+   */
+  app.use("/api/landing-page", requireAuth, landingPageRouter);
+
+  /**
+   * AI SITEMAP API
+   * Auth: Public
+   * GET /ai-sitemap.xml - Dynamic sitemap for published landing pages
+   */
+  app.use("/", aiSitemapRouter);
 
   /**
    * DATA PROTECTION API
