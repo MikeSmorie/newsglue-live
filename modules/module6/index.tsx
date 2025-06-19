@@ -442,7 +442,7 @@ export default function Module6() {
                     {/* Headline with Tooltip */}
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <h4 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2 leading-tight">
+                        <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2 line-clamp-2 leading-tight">
                           {item.headline}
                         </h4>
                       </TooltipTrigger>
@@ -452,7 +452,7 @@ export default function Module6() {
                     </Tooltip>
 
                     {/* Date and Generation Status */}
-                    <div className="flex items-center justify-between text-xs text-gray-500">
+                    <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
                       <span>{new Date(item.createdAt).toLocaleDateString()}</span>
                       <div className="flex items-center gap-1">
                         {getGeneratedPlatforms(item).length > 0 ? (
