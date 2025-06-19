@@ -347,11 +347,40 @@ export const announcementResponsesRelations = relations(announcementResponses, (
   })
 }));
 
+// Campaign backups table
+export const backups = pgTable("backups", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  campaignId: uuid("campaign_id").references(() => campaigns.id, { onDelete: "set null" }),
+  name: text("name").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  jsonPayload: text("json_payload").notNull(),
+  isDeleted: boolean("is_deleted").notNull().default(false)
+});
+
+// Backup relations
+export const backupsRelations = relations(backups, ({ one }) => ({
+  user: one(users, {
+    fields: [backups.userId],
+    references: [users.id]
+  }),
+  campaign: one(campaigns, {
+    fields: [backups.campaignId],
+    references: [campaigns.id]
+  })
+}));
+
 // News items schema and types
 export const insertNewsItemSchema = createInsertSchema(newsItems);
 export const selectNewsItemSchema = createSelectSchema(newsItems);
 export type InsertNewsItem = typeof newsItems.$inferInsert;
 export type SelectNewsItem = typeof newsItems.$inferSelect;
+
+// Backup schema and types
+export const insertBackupSchema = createInsertSchema(backups);
+export const selectBackupSchema = createSelectSchema(backups);
+export type InsertBackup = typeof backups.$inferInsert;
+export type SelectBackup = typeof backups.$inferSelect;
 
 
 

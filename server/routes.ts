@@ -244,6 +244,19 @@ export async function registerRoutes(app: Express) {
   app.use("/api/data-protection", requireAuth, dataProtectionRoutes);
 
   /**
+   * BACKUP & RESTORE API
+   * Auth: Required
+   * Role: User/Admin/Supergod
+   * POST /api/backup/create - Create campaign backup
+   * GET /api/backup/list - List user backups
+   * POST /api/backup/upload - Upload and restore backup
+   * DELETE /api/backup/:id - Delete backup
+   * GET /api/backup/download/:id - Download backup file
+   */
+  const { default: backupRoutes } = await import("./routes/backup.js");
+  app.use("/api/backup", requireAuth, backupRoutes);
+
+  /**
    * MODULE REFACTORING TESTS
    * Auth: None (public testing endpoints)
    * Role: Public access for testing refactored modules
