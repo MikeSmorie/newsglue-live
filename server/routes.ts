@@ -224,6 +224,15 @@ export async function registerRoutes(app: Express) {
   app.use("/api/website-scraper", websiteScraperRouter);
 
   /**
+   * PDF GENERATION API
+   * Auth: Required
+   * Role: User/Admin/Supergod
+   * GET /api/pdf/newsjack/:newsItemId - Generate NewsJack PDF for specific news item
+   * GET /api/pdf/campaign-dossier/:campaignId - Generate Campaign Dossier PDF
+   */
+  app.use("/api/pdf", requireAuth, pdfRouter);
+
+  /**
    * MODULE REFACTORING TESTS
    * Auth: None (public testing endpoints)
    * Role: Public access for testing refactored modules
