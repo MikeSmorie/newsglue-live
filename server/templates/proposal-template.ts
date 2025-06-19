@@ -5,10 +5,12 @@ interface ProposalTemplateData {
   campaignData: any;
   newsItems: any[];
   platformOutputs: any[];
+  metrics?: any;
+  outputs?: any[];
 }
 
 export function generateProposalHTML(data: ProposalTemplateData): string {
-  const { clientName, proposalDate, validUntil, campaignData, newsItems, platformOutputs } = data;
+  const { clientName, proposalDate, validUntil, campaignData, newsItems, platformOutputs, metrics, outputs } = data;
   
   return `
 <!DOCTYPE html>
@@ -332,6 +334,63 @@ export function generateProposalHTML(data: ProposalTemplateData): string {
                 <p><strong>Content Performance:</strong> Our NewsJack methodology typically achieves 40-60% higher engagement rates compared to traditional content, as it leverages the natural momentum of trending topics while maintaining authentic brand messaging.</p>
             </div>
         </div>
+        
+        <!-- Performance Highlights -->
+        ${metrics ? `
+        <div class="section page-break">
+            <h3>📊 Performance Highlights</h3>
+            
+            <div class="metrics-summary">
+                <p>NewsGlue AI generated <strong>${metrics.totalOutputs || 0} outputs</strong> across multiple platforms in <strong>${outputs && outputs.length > 0 ? Math.round(outputs.reduce((sum, output) => sum + output.generationDurationSeconds, 0)) : 0} seconds</strong> — saving an estimated <strong>${Math.round((metrics.totalTimeSavedSeconds || 0) / 3600 * 10) / 10} hours</strong> and <strong>$${metrics.totalCostSaved || '0.00'}</strong> at $${metrics.hourlyRate || '40.00'}/hour.</p>
+            </div>
+            
+            <div class="metrics-grid">
+                <div class="metric-item">
+                    <div class="metric-label">Efficiency Score:</div>
+                    <div class="metric-value">${metrics.efficiencyScore || '0.00'}%</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-label">Compliance Score:</div>
+                    <div class="metric-value">${metrics.complianceScore || '0.00'}%</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-label">CTA Inclusion Rate:</div>
+                    <div class="metric-value">${metrics.ctaPresenceRate || '0.00'}%</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-label">Cost Savings:</div>
+                    <div class="metric-value">$${metrics.totalCostSaved || '0.00'} USD</div>
+                </div>
+            </div>
+            
+            <div class="highlight-box">
+                <p><strong>Efficiency Impact:</strong> These results demonstrate how NewsGlue dramatically accelerates content creation while maintaining high brand alignment and action-driving quality. The AI-powered system consistently delivers professional-grade content in seconds rather than hours.</p>
+            </div>
+            
+            ${outputs && outputs.length > 0 ? `
+            <div class="platform-breakdown">
+                <h4>Platform Performance Breakdown</h4>
+                <div class="platform-metrics">
+                    ${Object.entries(outputs.reduce((acc, output) => {
+                        const platform = output.platform;
+                        if (!acc[platform]) {
+                            acc[platform] = { count: 0, avgTime: 0, totalTime: 0 };
+                        }
+                        acc[platform].count += 1;
+                        acc[platform].totalTime += output.generationDurationSeconds;
+                        acc[platform].avgTime = Math.round(acc[platform].totalTime / acc[platform].count);
+                        return acc;
+                    }, {})).map(([platform, stats]) => `
+                    <div class="platform-stat">
+                        <span class="platform-name">${platform.charAt(0).toUpperCase() + platform.slice(1)}:</span>
+                        <span>${stats.count} outputs, ${stats.avgTime}s avg generation time</span>
+                    </div>
+                    `).join('')}
+                </div>
+            </div>
+            ` : ''}
+        </div>
+        ` : ''}
         
         <!-- Next Steps -->
         <div class="section">
