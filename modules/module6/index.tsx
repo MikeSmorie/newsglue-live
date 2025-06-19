@@ -70,17 +70,20 @@ export default function Module6() {
   });
 
   // Fetch news queue for selected campaign
-  const { data: newsQueue = [], refetch: refetchQueue } = useQuery<NewsItem[]>({
+  const { data: queueData, refetch: refetchQueue } = useQuery({
     queryKey: ['/api/queue/fetch', selectedCampaign?.id],
     queryFn: async () => {
-      if (!selectedCampaign?.id) return [];
+      if (!selectedCampaign?.id) return { newsItems: [] };
       const res = await fetch(`/api/queue/fetch/${selectedCampaign.id}`, { credentials: 'include' });
       if (!res.ok) throw new Error('Failed to fetch queue');
       const data = await res.json();
-      return data.newsItems || [];
+      // Handle both array and object responses
+      return Array.isArray(data) ? { newsItems: data } : data;
     },
     enabled: !!selectedCampaign?.id
   });
+
+  const newsQueue = queueData?.newsItems || queueData || [];
 
   // Generate newsjack content mutation
   const generateContentMutation = useMutation({
@@ -173,6 +176,16 @@ export default function Module6() {
       setSelectedCampaign(campaigns[0]);
     }
   }, [campaigns, selectedCampaign]);
+
+  // Debug logging
+  useEffect(() => {
+    console.log('Module 6 Debug:', {
+      selectedCampaign: selectedCampaign?.campaignName,
+      newsQueueLength: newsQueue.length,
+      filteredItemsLength: filteredItems.length,
+      queueData
+    });
+  }, [selectedCampaign, newsQueue, filteredItems, queueData]);
 
   const StatusBadge = ({ status }: { status: string }) => {
     const statusConfig: any = {
