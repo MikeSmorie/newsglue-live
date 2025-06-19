@@ -44,6 +44,8 @@ import { db } from "../db";
 import { users } from "../db/schema";
 import { eq, and, or, desc, asc, sql } from "drizzle-orm";
 import { logEvent } from "../lib/logs";
+import path from 'path';
+import fs from 'fs';
 
 // Simple auth checks using passport
 const requireAuth = (req: any, res: any, next: any) => {
@@ -250,6 +252,31 @@ export async function registerRoutes(app: Express) {
    * GET /ai-sitemap.xml - Dynamic sitemap for published landing pages
    */
   app.use("/", aiSitemapRouter);
+
+  /**
+   * LANDING PAGE STATIC SERVING
+   * Auth: Public
+   * GET /news/:slug - Serve static landing page HTML files
+   */
+  app.get('/news/:slug', (req, res) => {
+    const { slug } = req.params;
+    const filePath = path.join(process.cwd(), 'public', 'landing-pages', `${slug}.html`);
+    
+    if (fs.existsSync(filePath)) {
+      res.sendFile(filePath);
+    } else {
+      res.status(404).send(`
+        <!DOCTYPE html>
+        <html>
+          <head><title>404 - Page Not Found</title></head>
+          <body>
+            <h1>404 - Page Not Found</h1>
+            <p>The requested landing page "${slug}" does not exist.</p>
+          </body>
+        </html>
+      `);
+    }
+  });
 
   /**
    * DATA PROTECTION API
