@@ -607,13 +607,21 @@ The more detail you provide, the better the AI can create targeted NewsJack cont
                 const formValues = form.getValues();
                 console.log('Form values:', formValues);
                 console.log('Selected platforms:', selectedPlatforms);
+                console.log('Scraped data:', scrapedData);
                 
+                // Ensure scraped data is included if available
                 const submitData = {
                   ...formValues,
                   platforms: selectedPlatforms,
+                  // Include scraped data if available
+                  ...(scrapedData && {
+                    additional_data: scrapedData.content ? 
+                      (formValues.additional_data || '') + '\n\nWebsite Analysis:\n' + scrapedData.content :
+                      formValues.additional_data
+                  })
                 };
                 
-                console.log('Submitting data:', submitData);
+                console.log('Final submit data:', submitData);
                 createMutation.mutate(submitData);
               }}
             >

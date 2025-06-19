@@ -1,7 +1,7 @@
 import express from 'express';
 import { z } from 'zod';
 import { db } from '../../../db';
-import { campaigns, insertCampaignSchema } from '../../../db/schema';
+import { campaigns, campaignChannels, insertCampaignSchema } from '../../../db/schema';
 import { eq, and, like, desc, asc } from 'drizzle-orm';
 
 const requireAuth = (req: any, res: any, next: any) => {
@@ -20,6 +20,7 @@ const campaignCreateSchema = z.object({
   audience_pain: z.string().optional(),
   additional_data: z.string().optional(),
   status: z.enum(["draft", "active", "archived"]).optional().default("draft"),
+  platforms: z.array(z.string()).optional(),
 });
 
 const campaignUpdateSchema = z.object({
@@ -161,6 +162,24 @@ router.put('/:id', requireAuth, async (req, res) => {
         eq(campaigns.userId, req.user!.id)
       ))
       .returning();
+
+    // Handle platform channels if provided
+    if (validatedData.platforms && Array.isArray(validatedData.platforms)) {
+      // Delete existing channels for this campaign
+      await db.delete(campaignChannels)
+        .where(eq(campaignChannels.campaignId, req.params.id));
+      
+      // Insert new channels
+      if (validatedData.platforms.length > 0) {
+        const channelData = validatedData.platforms.map(platform => ({
+          campaignId: req.params.id,
+          platform: platform,
+          enabled: true,
+        }));
+        
+        await db.insert(campaignChannels).values(channelData);
+      }
+    }
 
     res.json(updatedCampaign[0]);
   } catch (error) {
