@@ -22,7 +22,7 @@ export default function CampaignForm() {
   }, []);
 
   const mutation = useMutation({
-    mutationFn: async (data) => {
+    mutationFn: async (data: any) => {
       // First create the campaign
       const res = await fetch('/api/campaigns', {
         method: 'POST',
@@ -60,17 +60,8 @@ export default function CampaignForm() {
   });
 
   const onSubmit = (data: any) => {
-    // Map form fields to database schema
-    const campaignData = {
-      name: data.name,
-      website_url: data.website_url,
-      cta_url: data.cta_url,
-      emotional_objective: data.emotional_objective,
-      audience_pain: data.audience_pain,
-      additional_data: data.additional_data,
-    };
-    console.log('NewsJack campaign data:', campaignData);
-    mutation.mutate(campaignData);
+    console.log('NewsJack campaign data:', data);
+    mutation.mutate(data);
   };
 
   return (
@@ -167,7 +158,7 @@ export default function CampaignForm() {
         </div>
 
         <div className="border-t pt-4">
-          <SocialChannelsSelector
+          <SocialChannelsSelectorSimple
             selectedPlatforms={selectedPlatforms}
             onSelectionChange={handlePlatformChange}
             disabled={mutation.isPending}
