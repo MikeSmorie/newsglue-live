@@ -263,11 +263,11 @@ Efficiency Score: ${campaignMetrics.efficiencyScore}%`;
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Cost Saved</p>
-                    <p className="text-3xl font-bold text-emerald-700 dark:text-emerald-400">
+                    <p className="text-3xl font-bold text-emerald-800 dark:text-emerald-400">
                       ${campaignMetrics.totalCostSaved}
                     </p>
                   </div>
-                  <DollarSign className="h-8 w-8 text-emerald-700 dark:text-emerald-400" />
+                  <DollarSign className="h-8 w-8 text-emerald-800 dark:text-emerald-400" />
                 </div>
               </CardContent>
             </Card>
@@ -277,11 +277,11 @@ Efficiency Score: ${campaignMetrics.efficiencyScore}%`;
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Efficiency</p>
-                    <p className="text-3xl font-bold text-purple-700 dark:text-purple-400">
+                    <p className="text-3xl font-bold text-purple-800 dark:text-purple-400">
                       {campaignMetrics.efficiencyScore}%
                     </p>
                   </div>
-                  <TrendingUp className="h-8 w-8 text-purple-700 dark:text-purple-400" />
+                  <TrendingUp className="h-8 w-8 text-purple-800 dark:text-purple-400" />
                 </div>
               </CardContent>
             </Card>
