@@ -141,9 +141,12 @@ export function Sidebar() {
     <div className="flex h-full w-64 flex-col border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
       <div className="p-6">
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Omega-8</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Clean Core</p>
+          <div className="flex items-center space-x-3">
+            <img 
+              src="/assets/newsglue-logo.png" 
+              alt="NewsGlue Logo" 
+              className="h-12 w-auto"
+            />
           </div>
           {isSupergod && (
             <Badge variant="destructive" className="text-xs px-2 py-1">
