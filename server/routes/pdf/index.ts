@@ -479,14 +479,16 @@ const generateCampaignDossierHTML = (campaign: any, newsItemsData: any[], channe
         </div>
 
         <div class="page-break">
-            <div class="section" id="section3">
-                <h2>📰 NewsJack Content & Analytics</h2>
+            <div class="section" id="module6">
+                <h2>Module 6: NewsJack Content & Analytics</h2>
                 ${newsItemsContent}
             </div>
         </div>
 
         <div class="page-break">
-            ${performanceBenchmarkHTML}
+            <div id="performance">
+                ${performanceBenchmarkHTML}
+            </div>
         </div>
 
         <div class="footer">
