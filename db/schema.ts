@@ -292,6 +292,19 @@ export const announcementResponses = pgTable("announcement_responses", {
   readByAdminAt: timestamp("read_by_admin_at")
 });
 
+// News items table for Module 3 -> Module 6 workflow
+export const newsItems = pgTable("news_items", {
+  id: serial("id").primaryKey(),
+  campaignId: text("campaign_id").notNull().references(() => campaigns.id),
+  headline: text("headline").notNull(),
+  sourceUrl: text("source_url").notNull(),
+  content: text("content").notNull(),
+  contentType: text("content_type").notNull().default("external"), // 'external' | 'internal'
+  status: text("status").notNull().default("draft"), // 'draft' | 'processing' | 'completed' | 'failed'
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
 // Add relations for the new tables
 export const adminAnnouncementsRelations = relations(adminAnnouncements, ({ one, many }) => ({
   sender: one(users, {
@@ -321,6 +334,20 @@ export const announcementResponsesRelations = relations(announcementResponses, (
   user: one(users, {
     fields: [announcementResponses.userId],
     references: [users.id]
+  })
+}));
+
+// News items schema and types
+export const insertNewsItemSchema = createInsertSchema(newsItems);
+export const selectNewsItemSchema = createSelectSchema(newsItems);
+export type InsertNewsItem = typeof newsItems.$inferInsert;
+export type SelectNewsItem = typeof newsItems.$inferSelect;
+
+// Add news items relations
+export const newsItemsRelations = relations(newsItems, ({ one }) => ({
+  campaign: one(campaigns, {
+    fields: [newsItems.campaignId],
+    references: [campaigns.id]
   })
 }));
 
