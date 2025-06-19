@@ -408,12 +408,12 @@ export default function Module6() {
                 <p className="text-xs mt-1">Add items from Module 4 or 5</p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-gray-100 dark:divide-gray-700">
                 {filteredItems.map((item) => (
                   <div
                     key={item.id}
-                    className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${
-                      selectedNewsItem?.id === item.id ? 'bg-blue-50 border-r-2 border-blue-500' : ''
+                    className={`p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                      selectedNewsItem?.id === item.id ? 'bg-blue-50 dark:bg-blue-900/20 border-r-2 border-blue-500' : ''
                     }`}
                     onClick={() => setSelectedNewsItem(item)}
                   >
