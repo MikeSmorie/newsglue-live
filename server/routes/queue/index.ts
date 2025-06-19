@@ -183,7 +183,7 @@ Audience Pain: ${campaign.audiencePain || 'Not provided'}
 
 PLATFORM REQUIREMENTS:
 - Platform: ${platform}
-- Target Length: ${platform === 'blog' ? '800 words' : platform === 'twitter' ? '280 characters' : platform === 'linkedin' ? '3000 characters' : platform === 'instagram' ? '2200 characters' : '1000 characters'}
+- Target Length: ${platform === 'blog' ? '1200-2000 words (comprehensive article)' : platform === 'twitter' ? '280 characters' : platform === 'linkedin' ? '3000 characters' : platform === 'instagram' ? '2200 characters' : '1000 characters'}
 - News/Campaign Ratio: ${newsRatio}% news focus, ${campaignRatio}% campaign focus
 - Tone: ${platformConfig?.tone || 'Professional'}
 
@@ -199,7 +199,7 @@ CRITICAL: Always include the campaign CTA URL (${campaign.ctaUrl || campaign.web
 
 Respond with JSON in this format:
 {
-  "content": "Your generated content here - ${platform === 'blog' ? 'aim for 800 words with multiple paragraphs, subheadings, and comprehensive coverage' : 'concise and platform-optimized'}",
+  "content": "Your generated content here - ${platform === 'blog' ? 'Write a comprehensive 1200-2000 word article with multiple sections, subheadings (use ## for H2, ### for H3), bullet points, and in-depth analysis. Include introduction, main body with detailed explanations, examples, and conclusion. Use markdown formatting for structure.' : 'concise and platform-optimized'}",
   "hashtags": ["relevant", "hashtags", "for", "the", "platform"],
   "cta": "Call-to-action with URL: ${campaign.ctaUrl || campaign.websiteUrl || 'Learn more'}",
   "ctaUrl": "${campaign.ctaUrl || campaign.websiteUrl || ''}",
@@ -215,7 +215,7 @@ Respond with JSON in this format:
           model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
           messages: [{ role: "user", content: prompt }],
           response_format: { type: "json_object" },
-          max_tokens: platform === 'blog' ? 2000 : 1000
+          max_tokens: platform === 'blog' ? 4000 : 1000
         });
 
         const generatedContent = JSON.parse(response.choices[0].message.content || '{}');

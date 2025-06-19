@@ -721,7 +721,11 @@ export default function Module6() {
                           </div>
                           
                           <div className="p-6">
-                            <div className="bg-white dark:bg-gray-900 p-4 rounded border text-sm leading-relaxed whitespace-pre-wrap font-mono text-gray-900 dark:text-white">
+                            <div className={`bg-white dark:bg-gray-900 p-6 rounded border leading-relaxed text-gray-900 dark:text-white ${
+                              activeChannel === 'blog' 
+                                ? 'text-base whitespace-pre-wrap font-serif max-h-96 overflow-y-auto' 
+                                : 'text-sm whitespace-pre-wrap font-mono'
+                            }`}>
                               {selectedNewsItem.platformOutputs[activeChannel].content}
                             </div>
                           </div>
