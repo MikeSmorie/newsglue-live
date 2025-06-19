@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { db } from '../../../db/index.js';
 import { campaigns, newsItems, campaignChannels } from '../../../db/schema.js';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 // Simple auth middleware
 const requireAuth = (req: any, res: any, next: any) => {
@@ -629,7 +629,7 @@ router.get('/campaign-dossier/:campaignId', requireAuth, async (req, res) => {
     });
 
     // Fetch campaign channels for Module 2 data
-    const campaignChannels = await db.query.campaignChannels.findMany({
+    const channelsData: any[] = await db.query.campaignChannels.findMany({
       where: eq(campaignChannels.campaignId, campaignId)
     });
 
@@ -749,6 +749,53 @@ router.get('/campaign-dossier/:campaignId', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Campaign PDF generation error:', error);
     res.status(500).json({ error: 'Failed to generate campaign dossier PDF' });
+  }
+});
+
+// Add route alias for the button that calls /api/pdf/dossier/
+router.get('/dossier/:campaignId', requireAuth, async (req, res) => {
+  try {
+    const { campaignId } = req.params;
+    const userId = req.user!.id;
+    
+    // Fetch campaign details with ownership verification
+    const campaign = await db.query.campaigns.findFirst({
+      where: and(
+        eq(campaigns.id, campaignId),
+        eq(campaigns.userId, userId)
+      )
+    });
+
+    if (!campaign) {
+      return res.status(404).json({ error: 'Campaign not found' });
+    }
+
+    // Fetch all news items for this campaign
+    const campaignNewsItems = await db.query.newsItems.findMany({
+      where: eq(newsItems.campaignId, campaignId),
+      orderBy: (newsItems, { desc }) => [desc(newsItems.createdAt)]
+    });
+
+    // Fetch campaign channels for Module 2 data
+    const channels = await db.query.campaignChannels.findMany({
+      where: eq(campaignChannels.campaignId, campaignId)
+    });
+
+    // Generate comprehensive HTML content using enhanced generator
+    const htmlContent = generateCampaignDossierHTML(campaign, campaignNewsItems, channels || []);
+    
+    // Format filename as specified: campaign-dossier-[campaign-name]-[date].html
+    const campaignSlug = campaign.campaignName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+    const dateSlug = new Date().toISOString().split('T')[0];
+    const filename = `campaign-dossier-${campaignSlug}-${dateSlug}.html`;
+    
+    res.setHeader('Content-Type', 'text/html');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(htmlContent);
+
+  } catch (error) {
+    console.error('Campaign dossier generation error:', error);
+    res.status(500).json({ error: 'Failed to generate campaign dossier' });
   }
 });
 
