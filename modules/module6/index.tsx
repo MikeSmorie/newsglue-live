@@ -53,7 +53,8 @@ export default function Module6() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [editingContent, setEditingContent] = useState<{platform: string; content: any} | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [activeChannel, setActiveChannel] = useState<string>('twitter');
+  const [bulkSelectMode, setBulkSelectMode] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -98,7 +99,6 @@ export default function Module6() {
       toast({
         title: "Content Generated",
         description: "Newsjack content has been generated for all platforms.",
-        variant: "default"
       });
       refetchQueue();
     },
@@ -124,12 +124,11 @@ export default function Module6() {
       return res.json();
     },
     onSuccess: () => {
+      refetchQueue();
       toast({
         title: "Status Updated",
         description: "News item status has been updated.",
-        variant: "default"
       });
-      refetchQueue();
     }
   });
 
@@ -144,55 +143,39 @@ export default function Module6() {
       return res.json();
     },
     onSuccess: () => {
+      refetchQueue();
+      setSelectedNewsItem(null);
       toast({
         title: "Item Deleted",
         description: "News item has been removed from the queue.",
-        variant: "default"
       });
-      refetchQueue();
-      if (selectedNewsItem && selectedItems.includes(selectedNewsItem.id)) {
-        setSelectedNewsItem(null);
+    }
+  });
+
+  // Filter news items by status
+  const filteredItems = newsQueue.filter(item => 
+    statusFilter === 'all' || item.status === statusFilter
+  );
+
+  // Set first available channel when news item changes
+  useEffect(() => {
+    if (selectedNewsItem?.platformOutputs) {
+      const availableChannels = Object.keys(selectedNewsItem.platformOutputs);
+      if (availableChannels.length > 0 && !availableChannels.includes(activeChannel)) {
+        setActiveChannel(availableChannels[0]);
       }
     }
-  });
+  }, [selectedNewsItem, activeChannel]);
 
-  // Update content mutation
-  const updateContentMutation = useMutation({
-    mutationFn: async ({ id, platform, content }: { id: number; platform: string; content: any }) => {
-      const res = await fetch(`/api/queue/update-content/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ platform, content })
-      });
-      if (!res.ok) throw new Error('Failed to update content');
-      return res.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Content Updated",
-        description: "Platform content has been updated successfully.",
-        variant: "default"
-      });
-      refetchQueue();
-      setEditingContent(null);
-    }
-  });
-
-  // Initialize with first campaign
+  // Auto-select first campaign if available
   useEffect(() => {
     if (campaigns.length > 0 && !selectedCampaign) {
       setSelectedCampaign(campaigns[0]);
     }
   }, [campaigns, selectedCampaign]);
 
-  // Filter news items based on status
-  const filteredNewsItems = newsQueue.filter(item => 
-    statusFilter === 'all' || item.status === statusFilter
-  );
-
-  const getStatusBadge = (status: NewsItem['status']) => {
-    const statusConfig = {
+  const StatusBadge = ({ status }: { status: string }) => {
+    const statusConfig: any = {
       draft: { color: 'bg-yellow-100 text-yellow-800', label: 'Draft' },
       active: { color: 'bg-green-100 text-green-800', label: 'Active' },
       archived: { color: 'bg-gray-100 text-gray-800', label: 'Archived' },
@@ -229,815 +212,621 @@ export default function Module6() {
     return Object.keys(item.platformOutputs);
   };
 
+  // Edit Content Modal Component
+  const EditContentModal = ({ isOpen, onClose, platform, content, onSave }: any) => (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Edit {platform} Content</DialogTitle>
+          <DialogDescription>
+            Make changes to the generated content for {platform}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <Textarea
+            defaultValue={content?.content || ''}
+            rows={8}
+            className="w-full"
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={() => onSave(content)}>Save Changes</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+
   return (
-    <TooltipProvider>
-      <div className="container mx-auto px-4 py-8 space-y-6">
-        {/* Header */}
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-start">
-              <div>
-                <CardTitle className="text-xl font-bold text-gray-900">6 Execution Engine</CardTitle>
-                <CardDescription>
-                  Generate and manage newsjack content across all platforms
-                </CardDescription>
-              </div>
-              <div className="flex gap-2">
-                {selectedItems.length > 0 && (
+    <div className="h-screen flex bg-gray-50">
+      <TooltipProvider>
+        {/* Panel 2: Left Column - News Item List */}
+        <div className="w-96 bg-white border-r border-gray-200 flex flex-col">
+          {/* Header */}
+          <div className="p-4 border-b border-gray-200 bg-gray-50">
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">News Items</h2>
+            <p className="text-sm text-gray-600 mb-3">
+              Select a news item to generate or view newsjack content
+            </p>
+            
+            {/* Campaign Selection */}
+            <div className="mb-3">
+              <Select
+                value={selectedCampaign?.id || ''}
+                onValueChange={(value) => {
+                  const campaign = campaigns.find(c => c.id === value);
+                  setSelectedCampaign(campaign || null);
+                  setSelectedNewsItem(null);
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select campaign" />
+                </SelectTrigger>
+                <SelectContent>
+                  {campaigns.map((campaign) => (
+                    <SelectItem key={campaign.id} value={campaign.id}>
+                      {campaign.campaignName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Status Filter Buttons */}
+            <div className="flex flex-wrap gap-1">
+              <button 
+                className={`px-2 py-1 text-xs rounded ${statusFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                onClick={() => setStatusFilter('all')}
+              >
+                All
+              </button>
+              <button 
+                className={`px-2 py-1 text-xs rounded ${statusFilter === 'draft' ? 'bg-yellow-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                onClick={() => setStatusFilter('draft')}
+              >
+                Draft
+              </button>
+              <button 
+                className={`px-2 py-1 text-xs rounded ${statusFilter === 'active' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                onClick={() => setStatusFilter('active')}
+              >
+                Active
+              </button>
+              <button 
+                className={`px-2 py-1 text-xs rounded ${statusFilter === 'archived' ? 'bg-gray-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                onClick={() => setStatusFilter('archived')}
+              >
+                Archive
+              </button>
+              <button 
+                className={`px-2 py-1 text-xs rounded ${statusFilter === 'bin' ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                onClick={() => setStatusFilter('bin')}
+              >
+                Bin
+              </button>
+            </div>
+
+            {/* Bulk Selection Toggle */}
+            {filteredItems.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-gray-200">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-gray-600">Bulk Selection Mode</Label>
+                  <Checkbox
+                    checked={bulkSelectMode}
+                    onCheckedChange={setBulkSelectMode}
+                  />
+                </div>
+                {bulkSelectMode && selectedItems.length > 0 && (
                   <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full mt-2"
                     onClick={() => {
                       selectedItems.forEach(id => updateStatusMutation.mutate({ id, status: 'archived' }));
                       setSelectedItems([]);
                     }}
-                    size="sm"
-                    variant="outline"
                   >
                     Archive Selected ({selectedItems.length})
                   </Button>
                 )}
-                <Button
-                  onClick={() => refetchQueue()}
-                  size="sm"
-                  variant="outline"
-                >
-                  <RefreshCw className="mr-1 h-4 w-4" />
-                  Refresh
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-        </Card>
-
-        {/* Campaign Selection & Filters */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex flex-wrap gap-4 items-center">
-              <div className="flex-1 min-w-[200px]">
-                <Label htmlFor="campaign-select">Campaign</Label>
-                <Select
-                  value={selectedCampaign?.id || ''}
-                  onValueChange={(value) => {
-                    const campaign = campaigns.find(c => c.id === value);
-                    setSelectedCampaign(campaign || null);
-                    setSelectedNewsItem(null);
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select campaign" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {campaigns.map((campaign) => (
-                      <SelectItem key={campaign.id} value={campaign.id}>
-                        {campaign.campaignName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="status-filter">Filter by Status</Label>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="archived">Archived</SelectItem>
-                    <SelectItem value="bin">Bin</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {selectedCampaign && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Panel - News Queue */}
-            <div className="lg:col-span-1">
-              <Card className="h-[600px] flex flex-col">
-                <CardHeader className="flex-shrink-0">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <CardTitle className="text-lg">News Queue</CardTitle>
-                      <CardDescription>
-                        {filteredNewsItems.length} items in {selectedCampaign.campaignName}
-                      </CardDescription>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          if (selectedItems.length === filteredNewsItems.length) {
-                            setSelectedItems([]);
-                          } else {
-                            setSelectedItems(filteredNewsItems.map(item => item.id));
-                          }
-                        }}
-                        disabled={filteredNewsItems.length === 0}
-                      >
-                        {selectedItems.length === filteredNewsItems.length ? 'Deselect All' : 'Select All'}
-                      </Button>
-                      {selectedItems.length > 0 && (
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => {
-                            selectedItems.forEach(id => deleteItemMutation.mutate(id));
-                            setSelectedItems([]);
-                          }}
-                        >
-                          Delete ({selectedItems.length})
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="flex-1 overflow-hidden p-0">
-                  {filteredNewsItems.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-6">
-                      <Filter className="h-12 w-12 mb-4 opacity-50" />
-                      <p className="text-center">No news items found</p>
-                      <p className="text-sm text-center">Try changing the filter or add news in Module 3</p>
-                    </div>
-                  ) : (
-                    <div className="h-full overflow-y-auto">
-                      {filteredNewsItems
-                        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                        .map((item) => (
-                          <div
-                            key={item.id}
-                            className={`p-4 border-b cursor-pointer transition-colors ${
-                              selectedNewsItem?.id === item.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : 'hover:bg-gray-50'
-                            }`}
-                            onClick={() => {
-                              setSelectedNewsItem(item);
-                              // Scroll to top of right panel
-                              const rightPanel = document.getElementById('content-display-pane');
-                              if (rightPanel) {
-                                rightPanel.scrollTop = 0;
-                              }
-                            }}
-                          >
-                            <div className="space-y-2">
-                              {/* Header Row */}
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="flex items-start gap-2 flex-1">
-                                  <Checkbox
-                                    checked={selectedItems.includes(item.id)}
-                                    onCheckedChange={(checked) => {
-                                      if (checked) {
-                                        setSelectedItems(prev => [...prev, item.id]);
-                                      } else {
-                                        setSelectedItems(prev => prev.filter(id => id !== item.id));
-                                      }
-                                    }}
-                                    onClick={(e) => e.stopPropagation()}
-                                  />
-                                  <div className="flex-1 min-w-0">
-                                    <h4 className="font-medium text-sm leading-tight mb-1 line-clamp-2">{item.headline}</h4>
-                                  </div>
-                                </div>
-                                {getStatusBadge(item.status)}
-                              </div>
-
-                              {/* Source URL Row */}
-                              <div className="text-xs text-muted-foreground">
-                                <span className="truncate block">{item.sourceUrl}</span>
-                              </div>
-
-                              {/* Meta Row */}
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                  <span>{new Date(item.createdAt).toLocaleDateString()}</span>
-                                  <span>•</span>
-                                  <span className="capitalize">{item.contentType}</span>
-                                  {item.platformOutputs && (
-                                    <>
-                                      <span>•</span>
-                                      <Badge variant="outline" className="text-xs">
-                                        {getGeneratedPlatforms(item).length} platforms
-                                      </Badge>
-                                    </>
-                                  )}
-                                </div>
-
-                                {/* Action Icons */}
-                                <div className="flex gap-1">
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-7 w-7 p-0 bg-black hover:bg-gray-800 text-white hover:text-white"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          generateContentMutation.mutate(item.id);
-                                        }}
-                                        disabled={generateContentMutation.isPending}
-                                      >
-                                        <Sparkles className="h-3 w-3" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>Generate Content</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-7 w-7 p-0"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          window.open(item.sourceUrl, '_blank');
-                                        }}
-                                      >
-                                        <ExternalLink className="h-3 w-3" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>Open Source URL</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          deleteItemMutation.mutate(item.id);
-                                        }}
-                                        disabled={deleteItemMutation.isPending}
-                                      >
-                                        <Trash2 className="h-3 w-3" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>Delete Item</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Right Panel - Content Display Pane */}
-            <div className="lg:col-span-2">
-              <Card className="h-[600px] flex flex-col">
-                <CardHeader className="flex-shrink-0">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="text-lg">
-                        {selectedNewsItem ? selectedNewsItem.headline : 'Content Display'}
-                      </CardTitle>
-                      <CardDescription>
-                        {selectedNewsItem ? (
-                          <div className="space-y-1">
-                            <span>Campaign: {selectedCampaign.campaignName}</span>
-                            <br />
-                            <span className="text-xs">
-                              {selectedNewsItem.platformOutputs ? 
-                                `Generated for ${getGeneratedPlatforms(selectedNewsItem).length} platforms` : 
-                                'Ready for content generation'
-                              }
-                            </span>
-                          </div>
-                        ) : (
-                          'Select a news item to view or generate content'
-                        )}
-                      </CardDescription>
-                    </div>
-                    {selectedNewsItem && (
-                      <div className="flex gap-2">
-                        <Select
-                          value={selectedNewsItem.status}
-                          onValueChange={(status) => 
-                            updateStatusMutation.mutate({ id: selectedNewsItem.id, status })
-                          }
-                        >
-                          <SelectTrigger className="w-[120px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="draft">Draft</SelectItem>
-                            <SelectItem value="active">Active</SelectItem>
-                            <SelectItem value="archived">Archived</SelectItem>
-                            <SelectItem value="bin">Bin</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent id="content-display-pane" className="flex-1 overflow-y-auto">
-                  {!selectedNewsItem ? (
-                    <div className="text-center py-16 text-muted-foreground">
-                      <Sparkles className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                      <p className="text-lg mb-2">Select a news item to begin</p>
-                      <p className="text-sm">Choose an item from the queue to generate or view content</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-6">
-                      {/* News Item Details */}
-                      <div className="p-4 bg-gray-50 rounded-lg">
-                        <h4 className="font-semibold mb-2">News Content</h4>
-                        <p className="text-sm text-gray-700 mb-3 line-clamp-3">{selectedNewsItem.content}</p>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <a 
-                            href={selectedNewsItem.sourceUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 hover:text-blue-600"
-                          >
-                            <ExternalLink className="h-3 w-3" />
-                            View Source
-                          </a>
-                          <span>•</span>
-                          <span>{new Date(selectedNewsItem.createdAt).toLocaleDateString()}</span>
-                          <span>•</span>
-                          <span className="capitalize">{selectedNewsItem.contentType}</span>
-                        </div>
-                      </div>
-
-                      {/* Campaign Context */}
-                      {selectedCampaign && (
-                        <div className="p-4 bg-blue-50 rounded-lg">
-                          <h4 className="font-semibold mb-2">Campaign Context</h4>
-                          <div className="text-sm text-gray-700 space-y-1">
-                            <p><span className="font-medium">Campaign:</span> {selectedCampaign.campaignName}</p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Platform Generation Failsafe & Generate Button */}
-                      {!selectedNewsItem.platformOutputs && (
-                        <div className="text-center py-8">
-                          <Button
-                            onClick={() => generateContentMutation.mutate(selectedNewsItem.id)}
-                            disabled={generateContentMutation.isPending}
-                            className="bg-blue-600 hover:bg-blue-700"
-                            size="lg"
-                          >
-                            {generateContentMutation.isPending ? (
-                              <>
-                                <Clock className="mr-2 h-4 w-4 animate-spin" />
-                                Generating NewsJack Content...
-                              </>
-                            ) : (
-                              <>
-                                <Sparkles className="mr-2 h-4 w-4" />
-                                Generate NewsJack
-                              </>
-                            )}
-                          </Button>
-                          <p className="text-sm text-muted-foreground mt-2">
-                            AI will create platform-specific content following NewsJack methodology
-                          </p>
-                          
-                          {/* Platform Configuration Alert */}
-                          <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                            <div className="flex items-center gap-2 text-amber-800">
-                              <Zap className="h-4 w-4" />
-                              <span className="text-sm font-medium">Platform Configuration</span>
-                            </div>
-                            <p className="text-xs text-amber-700 mt-1">
-                              If generation fails, ensure platforms are configured in{' '}
-                              <a href="/module2" className="underline hover:text-amber-900">
-                                Module 2 Social Channels
-                              </a>
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Generated Content Display */}
-                      {selectedNewsItem.platformOutputs && (
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-center">
-                            <h4 className="font-semibold">Generated Content</h4>
-                            <div className="flex gap-2">
-                              <Button
-                                onClick={() => generateContentMutation.mutate(selectedNewsItem.id)}
-                                disabled={generateContentMutation.isPending}
-                                variant="outline"
-                                size="sm"
-                              >
-                                <RefreshCw className="mr-1 h-3 w-3" />
-                                Regenerate
-                              </Button>
-                              {selectedNewsItem.status === 'draft' && (
-                                <Button
-                                  onClick={() => updateStatusMutation.mutate({ id: selectedNewsItem.id, status: 'active' })}
-                                  size="sm"
-                                  className="bg-green-600 hover:bg-green-700"
-                                >
-                                  Publish to Active
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Generation Metadata */}
-                          {selectedNewsItem.generationMetrics && (
-                            <div className="p-3 bg-blue-50 rounded-lg">
-                              <h5 className="font-medium text-sm mb-2">Generation Metadata</h5>
-                              <div className="grid grid-cols-3 gap-4 text-xs">
-                                <div>
-                                  <span className="text-muted-foreground">Token Usage:</span>
-                                  <span className="ml-1 font-medium">{selectedNewsItem.generationMetrics.tokenUsage || 'N/A'}</span>
-                                </div>
-                                <div>
-                                  <span className="text-muted-foreground">Generation Time:</span>
-                                  <span className="ml-1 font-medium">{selectedNewsItem.generationMetrics.generationTime || 'N/A'}</span>
-                                </div>
-                                <div>
-                                  <span className="text-muted-foreground">Generated:</span>
-                                  <span className="ml-1 font-medium">{new Date(selectedNewsItem.updatedAt).toLocaleString()}</span>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Enhanced Channel Tabs */}
-                          <div className="border rounded-lg">
-                            <Tabs defaultValue={Object.keys(selectedNewsItem.platformOutputs)[0]} className="w-full">
-                              {/* Horizontal Tab Bar for Channels */}
-                              <div className="border-b bg-gray-50 px-4 py-2">
-                                <TabsList className="grid w-full grid-cols-4 bg-white">
-                                  {Object.entries(selectedNewsItem.platformOutputs).map(([platform]) => (
-                                    <TabsTrigger key={platform} value={platform} className="capitalize text-sm font-medium">
-                                      {platform}
-                                    </TabsTrigger>
-                                  ))}
-                                </TabsList>
-                              </div>
-
-                              {/* Content Frames per Channel */}
-                              {Object.entries(selectedNewsItem.platformOutputs).map(([platform, content]: [string, any]) => (
-                                <TabsContent key={platform} value={platform} className="p-4 space-y-4 m-0">
-                                  {/* Action Controls Header */}
-                                  <div className="flex justify-between items-center border-b pb-3">
-                                    <div className="flex items-center gap-3">
-                                      <h3 className="font-semibold text-lg capitalize">{platform} NewsJack</h3>
-                                      {content.manuallyEdited && (
-                                        <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700">
-                                          Manually Edited
-                                        </Badge>
-                                      )}
-                                      <Badge variant="outline" className="text-xs">
-                                        {new Date(content.generatedAt || selectedNewsItem.updatedAt).toLocaleString()}
-                                      </Badge>
-                                    </div>
-                                    
-                                    <div className="flex items-center gap-2">
-                                      <Select
-                                        value={selectedNewsItem.status}
-                                        onValueChange={(status) => 
-                                          updateStatusMutation.mutate({ id: selectedNewsItem.id, status })
-                                        }
-                                      >
-                                        <SelectTrigger className="w-[100px] h-8">
-                                          <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          <SelectItem value="draft">Draft</SelectItem>
-                                          <SelectItem value="active">Active</SelectItem>
-                                          <SelectItem value="archived">Archived</SelectItem>
-                                          <SelectItem value="bin">Bin</SelectItem>
-                                        </SelectContent>
-                                      </Select>
-                                      
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => setEditingContent({ platform, content })}
-                                      >
-                                        <Edit className="h-3 w-3 mr-1" />
-                                        Edit
-                                      </Button>
-                                      
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => updateStatusMutation.mutate({ id: selectedNewsItem.id, status: 'archived' })}
-                                      >
-                                        Archive
-                                      </Button>
-                                      
-                                      <Button
-                                        size="sm"
-                                        variant="destructive"
-                                        onClick={() => deleteItemMutation.mutate(selectedNewsItem.id)}
-                                      >
-                                        <Trash2 className="h-3 w-3" />
-                                      </Button>
-                                    </div>
-                                  </div>
-
-                                  {/* Content Display Frame */}
-                                  <div className="space-y-4">
-                                    {/* Generated Content */}
-                                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                                      <h4 className="font-medium text-sm mb-3 text-blue-800 flex items-center gap-2">
-                                        <Sparkles className="h-4 w-4" />
-                                        Generated NewsJack Content
-                                      </h4>
-                                      <div className="text-sm leading-relaxed whitespace-pre-wrap bg-white p-3 rounded border">
-                                        {content.content}
-                                      </div>
-                                    </div>
-
-                                    {/* Copy Controls */}
-                                    <div className="grid grid-cols-3 gap-2">
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => {
-                                          const fullContent = `${content.content}\n\nSource: ${selectedNewsItem.sourceUrl}\nCampaign: ${selectedCampaign.campaignName}${content.hashtags ? '\n\nHashtags: ' + content.hashtags.map(tag => '#' + tag).join(' ') : ''}${content.cta ? '\n\nCTA: ' + content.cta : ''}`;
-                                          handleCopyToClipboard(fullContent);
-                                        }}
-                                        className="w-full"
-                                      >
-                                        <Copy className="h-3 w-3 mr-1" />
-                                        Copy All
-                                      </Button>
-                                      
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => {
-                                          const urlsOnly = `Source: ${selectedNewsItem.sourceUrl}\nCampaign: ${selectedCampaign.campaignName}`;
-                                          handleCopyToClipboard(urlsOnly);
-                                        }}
-                                        className="w-full"
-                                      >
-                                        <ExternalLink className="h-3 w-3 mr-1" />
-                                        Copy URLs
-                                      </Button>
-                                      
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => {
-                                          const richText = `**${content.content}**\n\n${content.hashtags ? content.hashtags.map(tag => '#' + tag).join(' ') + '\n\n' : ''}${content.cta ? '*' + content.cta + '*' : ''}`;
-                                          handleCopyToClipboard(richText);
-                                        }}
-                                        className="w-full"
-                                      >
-                                        <Edit className="h-3 w-3 mr-1" />
-                                        Copy Rich
-                                      </Button>
-                                    </div>
-
-                                    {/* Additional Content Elements */}
-                                    {content.hashtags && content.hashtags.length > 0 && (
-                                      <div className="p-3 bg-gray-50 rounded-lg">
-                                        <h5 className="font-medium text-sm mb-2">Hashtags</h5>
-                                        <div className="flex flex-wrap gap-1">
-                                          {content.hashtags.map((tag: string, index: number) => (
-                                            <Badge key={index} variant="outline" className="text-xs bg-blue-50 text-blue-700">
-                                              #{tag}
-                                            </Badge>
-                                          ))}
-                                        </div>
-                                      </div>
-                                    )}
-
-                                    {content.cta && (
-                                      <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                                        <h5 className="font-medium text-sm mb-2 text-green-800">Call to Action</h5>
-                                        <p className="text-sm font-medium text-green-700">{content.cta}</p>
-                                      </div>
-                                    )}
-                                  </div>
-
-                                  {/* Performance & Compliance Metrics */}
-                                  <div className="mt-6 space-y-4">
-                                    <h4 className="font-semibold text-sm text-gray-800 border-b pb-2">Performance & Compliance Metrics</h4>
-                                    
-                                    {/* Word/Character Count Metrics */}
-                                    <div className="grid grid-cols-2 gap-4">
-                                      <div className="p-3 bg-purple-50 rounded-lg">
-                                        <h5 className="font-medium text-xs text-purple-800 mb-2">Character Count</h5>
-                                        <div className="space-y-1">
-                                          <div className="flex justify-between text-xs">
-                                            <span>Target:</span>
-                                            <span className="font-medium">{platform === 'twitter' ? '280' : platform === 'linkedin' ? '3000' : platform === 'instagram' ? '2200' : '1000'}</span>
-                                          </div>
-                                          <div className="flex justify-between text-xs">
-                                            <span>Actual:</span>
-                                            <span className="font-medium">{content.content.length}</span>
-                                          </div>
-                                          <div className="flex justify-between text-xs">
-                                            <span>Deviation:</span>
-                                            <span className={`font-medium ${Math.abs(content.content.length - (platform === 'twitter' ? 280 : platform === 'linkedin' ? 3000 : platform === 'instagram' ? 2200 : 1000)) / (platform === 'twitter' ? 280 : platform === 'linkedin' ? 3000 : platform === 'instagram' ? 2200 : 1000) * 100 < 10 ? 'text-green-600' : 'text-red-600'}`}>
-                                              {Math.round(Math.abs(content.content.length - (platform === 'twitter' ? 280 : platform === 'linkedin' ? 3000 : platform === 'instagram' ? 2200 : 1000)) / (platform === 'twitter' ? 280 : platform === 'linkedin' ? 3000 : platform === 'instagram' ? 2200 : 1000) * 100)}%
-                                            </span>
-                                          </div>
-                                        </div>
-                                      </div>
-
-                                      <div className="p-3 bg-orange-50 rounded-lg">
-                                        <h5 className="font-medium text-xs text-orange-800 mb-2">Word Count</h5>
-                                        <div className="space-y-1">
-                                          <div className="flex justify-between text-xs">
-                                            <span>Target:</span>
-                                            <span className="font-medium">{platform === 'twitter' ? '40' : platform === 'linkedin' ? '400' : platform === 'instagram' ? '300' : '150'}</span>
-                                          </div>
-                                          <div className="flex justify-between text-xs">
-                                            <span>Actual:</span>
-                                            <span className="font-medium">{content.content.split(/\s+/).length}</span>
-                                          </div>
-                                          <div className="flex justify-between text-xs">
-                                            <span>Deviation:</span>
-                                            <span className={`font-medium ${Math.abs(content.content.split(/\s+/).length - (platform === 'twitter' ? 40 : platform === 'linkedin' ? 400 : platform === 'instagram' ? 300 : 150)) / (platform === 'twitter' ? 40 : platform === 'linkedin' ? 400 : platform === 'instagram' ? 300 : 150) * 100 < 15 ? 'text-green-600' : 'text-red-600'}`}>
-                                              {Math.round(Math.abs(content.content.split(/\s+/).length - (platform === 'twitter' ? 40 : platform === 'linkedin' ? 400 : platform === 'instagram' ? 300 : 150)) / (platform === 'twitter' ? 40 : platform === 'linkedin' ? 400 : platform === 'instagram' ? 300 : 150) * 100)}%
-                                            </span>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-
-                                    {/* AI Timing Metrics */}
-                                    <div className="grid grid-cols-4 gap-3">
-                                      <div className="p-3 bg-blue-50 rounded-lg text-center">
-                                        <div className="flex items-center justify-center mb-1">
-                                          <Clock className="h-3 w-3 mr-1 text-blue-600" />
-                                          <span className="text-xs font-medium text-blue-800">Generation</span>
-                                        </div>
-                                        <p className="text-sm font-bold text-blue-600">
-                                          {selectedNewsItem.generationMetrics?.generationTime || '3.2s'}
-                                        </p>
-                                      </div>
-                                      
-                                      <div className="p-3 bg-gray-50 rounded-lg text-center">
-                                        <div className="flex items-center justify-center mb-1">
-                                          <span className="text-xs font-medium text-gray-600">Human Only</span>
-                                        </div>
-                                        <p className="text-sm font-bold text-gray-600">~45min</p>
-                                      </div>
-                                      
-                                      <div className="p-3 bg-green-50 rounded-lg text-center">
-                                        <div className="flex items-center justify-center mb-1">
-                                          <span className="text-xs font-medium text-green-600">Human + AI</span>
-                                        </div>
-                                        <p className="text-sm font-bold text-green-600">~8min</p>
-                                      </div>
-                                      
-                                      <div className="p-3 bg-emerald-50 rounded-lg text-center">
-                                        <div className="flex items-center justify-center mb-1">
-                                          <span className="text-xs font-medium text-emerald-600">Time Saved</span>
-                                          <span className="ml-1 text-emerald-600">✅</span>
-                                        </div>
-                                        <p className="text-sm font-bold text-emerald-600">82%</p>
-                                      </div>
-                                    </div>
-
-                                    {/* NewsJack Quality Metrics */}
-                                    {content.metrics && (
-                                      <div className="grid grid-cols-2 gap-4">
-                                        <div className="p-3 bg-orange-50 rounded-lg text-center">
-                                          <p className="text-xs text-muted-foreground mb-1">News Focus</p>
-                                          <p className="text-xl font-bold text-orange-600">{content.metrics.newsPercentage}%</p>
-                                          <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
-                                            <div 
-                                              className="bg-orange-500 h-1.5 rounded-full" 
-                                              style={{ width: `${content.metrics.newsPercentage}%` }}
-                                            ></div>
-                                          </div>
-                                        </div>
-                                        
-                                        <div className="p-3 bg-purple-50 rounded-lg text-center">
-                                          <p className="text-xs text-muted-foreground mb-1">Campaign Focus</p>
-                                          <p className="text-xl font-bold text-purple-600">{content.metrics.campaignPercentage}%</p>
-                                          <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
-                                            <div 
-                                              className="bg-purple-500 h-1.5 rounded-full" 
-                                              style={{ width: `${content.metrics.campaignPercentage}%` }}
-                                            ></div>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    )}
-
-                                    {content.metrics?.estimatedEngagement && (
-                                      <div className="p-3 bg-indigo-50 rounded-lg text-center">
-                                        <p className="text-xs text-muted-foreground mb-1">Estimated Engagement</p>
-                                        <p className="text-lg font-bold text-indigo-600">{content.metrics.estimatedEngagement}</p>
-                                      </div>
-                                    )}
-                                  </div>
-                                </TabsContent>
-                              ))}
-                            </Tabs>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        )}
-
-        {/* Content Editing Dialog */}
-        <Dialog open={!!editingContent} onOpenChange={() => setEditingContent(null)}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Edit {editingContent?.platform} Content</DialogTitle>
-              <DialogDescription>
-                Modify the generated content while maintaining NewsJack methodology
-              </DialogDescription>
-            </DialogHeader>
-            
-            {editingContent && (
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="edit-content">Content</Label>
-                  <Textarea
-                    id="edit-content"
-                    value={editingContent.content.content}
-                    onChange={(e) => setEditingContent(prev => prev ? {
-                      ...prev,
-                      content: { ...prev.content, content: e.target.value }
-                    } : null)}
-                    rows={6}
-                    className="resize-none"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="edit-hashtags">Hashtags (comma-separated)</Label>
-                  <Textarea
-                    id="edit-hashtags"
-                    value={editingContent.content.hashtags?.join(', ') || ''}
-                    onChange={(e) => setEditingContent(prev => prev ? {
-                      ...prev,
-                      content: { 
-                        ...prev.content, 
-                        hashtags: e.target.value.split(',').map(tag => tag.trim()).filter(Boolean)
-                      }
-                    } : null)}
-                    rows={2}
-                    className="resize-none"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="edit-cta">Call to Action</Label>
-                  <Textarea
-                    id="edit-cta"
-                    value={editingContent.content.cta || ''}
-                    onChange={(e) => setEditingContent(prev => prev ? {
-                      ...prev,
-                      content: { ...prev.content, cta: e.target.value }
-                    } : null)}
-                    rows={2}
-                    className="resize-none"
-                  />
-                </div>
               </div>
             )}
+          </div>
 
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setEditingContent(null)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={() => {
-                  if (editingContent && selectedNewsItem) {
-                    updateContentMutation.mutate({
-                      id: selectedNewsItem.id,
-                      platform: editingContent.platform,
-                      content: editingContent.content
-                    });
-                  }
-                }}
-                disabled={updateContentMutation.isPending}
-              >
-                {updateContentMutation.isPending ? 'Updating...' : 'Update Content'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-    </TooltipProvider>
+          {/* Scrollable News List */}
+          <div className="flex-1 overflow-y-auto">
+            {!selectedCampaign ? (
+              <div className="p-6 text-center text-gray-500">
+                <div className="text-4xl mb-3">📋</div>
+                <p className="text-sm">Select a campaign to view news items</p>
+              </div>
+            ) : filteredItems.length === 0 ? (
+              <div className="p-6 text-center text-gray-500">
+                <div className="text-4xl mb-3">📰</div>
+                <p className="text-sm">No news items found</p>
+                <p className="text-xs mt-1">Add items from Module 4 or 5</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {filteredItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${
+                      selectedNewsItem?.id === item.id ? 'bg-blue-50 border-r-2 border-blue-500' : ''
+                    }`}
+                    onClick={() => setSelectedNewsItem(item)}
+                  >
+                    {/* Row Header */}
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        {bulkSelectMode && (
+                          <Checkbox
+                            checked={selectedItems.includes(item.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedItems([...selectedItems, item.id]);
+                              } else {
+                                setSelectedItems(selectedItems.filter(id => id !== item.id));
+                              }
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        )}
+                        <StatusBadge status={item.status} />
+                      </div>
+                      
+                      {/* Inline Actions */}
+                      <div className="flex items-center gap-1">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <a
+                              href={item.sourceUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1 text-gray-400 hover:text-blue-600"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          </TooltipTrigger>
+                          <TooltipContent>View source</TooltipContent>
+                        </Tooltip>
+                        
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              className="p-1 text-gray-400 hover:text-yellow-600"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingContent({ platform: 'edit', content: item });
+                              }}
+                            >
+                              <Edit className="h-3 w-3" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>Edit item</TooltipContent>
+                        </Tooltip>
+                        
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              className="p-1 text-gray-400 hover:text-gray-600"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                updateStatusMutation.mutate({ id: item.id, status: 'archived' });
+                              }}
+                            >
+                              <Copy className="h-3 w-3" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>Archive</TooltipContent>
+                        </Tooltip>
+                        
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              className="p-1 text-gray-400 hover:text-red-600"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteItemMutation.mutate(item.id);
+                              }}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>Delete</TooltipContent>
+                        </Tooltip>
+                      </div>
+                    </div>
+
+                    {/* Headline with Tooltip */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <h4 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2 leading-tight">
+                          {item.headline}
+                        </h4>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-sm">
+                        <p>{item.headline}</p>
+                      </TooltipContent>
+                    </Tooltip>
+
+                    {/* Date and Generation Status */}
+                    <div className="flex items-center justify-between text-xs text-gray-500">
+                      <span>{new Date(item.createdAt).toLocaleDateString()}</span>
+                      <div className="flex items-center gap-1">
+                        {getGeneratedPlatforms(item).length > 0 ? (
+                          <div className="flex items-center gap-1 text-green-600">
+                            <Zap className="h-3 w-3" />
+                            <span className="font-medium">{getGeneratedPlatforms(item).length}</span>
+                          </div>
+                        ) : (
+                          <button
+                            className="p-1 text-blue-600 hover:bg-blue-100 rounded"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              generateContentMutation.mutate(item.id);
+                            }}
+                            disabled={generateContentMutation.isPending}
+                          >
+                            {generateContentMutation.isPending ? (
+                              <RefreshCw className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <Sparkles className="h-3 w-3" />
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Panel 3: Right Column - Content Display */}
+        <div className="flex-1 flex flex-col bg-white">
+          {!selectedNewsItem ? (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center max-w-md">
+                <div className="text-6xl mb-4">👆</div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Select a news item to begin</h3>
+                <p className="text-gray-600">
+                  Choose an item from the queue to generate or view NewsJack content
+                </p>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Header Area */}
+              <div className="p-6 border-b border-gray-200 bg-gray-50">
+                <h1 className="text-xl font-bold text-gray-900 mb-2">
+                  {selectedNewsItem.headline}
+                </h1>
+                <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                  <span>Campaign: {selectedCampaign?.campaignName}</span>
+                  <span>•</span>
+                  <a
+                    href={selectedNewsItem.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline flex items-center gap-1"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    Source URL
+                  </a>
+                  <span>•</span>
+                  <span>{new Date(selectedNewsItem.createdAt).toLocaleDateString()}</span>
+                </div>
+
+                {/* Channel Filter Tabs */}
+                {selectedNewsItem.platformOutputs && Object.keys(selectedNewsItem.platformOutputs).length > 0 && (
+                  <div className="flex gap-2">
+                    {Object.keys(selectedNewsItem.platformOutputs).map((channel) => (
+                      <button
+                        key={channel}
+                        className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors capitalize ${
+                          activeChannel === channel
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                        }`}
+                        onClick={() => setActiveChannel(channel)}
+                      >
+                        {channel}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Content Area */}
+              <div className="flex-1 p-6 overflow-y-auto">
+                {!selectedNewsItem.platformOutputs || Object.keys(selectedNewsItem.platformOutputs).length === 0 ? (
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center max-w-lg">
+                      <Sparkles className="mx-auto h-16 w-16 text-blue-500 mb-6" />
+                      <h3 className="text-xl font-medium text-gray-900 mb-3">Generate NewsJack Content</h3>
+                      <p className="text-gray-600 mb-6 leading-relaxed">
+                        Create AI-powered content for all social platforms using the NewsJack methodology: 
+                        Start with news, frame tension, introduce campaign, drive urgency.
+                      </p>
+                      <Button
+                        onClick={() => generateContentMutation.mutate(selectedNewsItem.id)}
+                        disabled={generateContentMutation.isPending}
+                        size="lg"
+                        className="px-8 py-3"
+                      >
+                        {generateContentMutation.isPending ? (
+                          <>
+                            <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                            Generating Content...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="mr-2 h-4 w-4" />
+                            Generate Content
+                          </>
+                        )}
+                      </Button>
+                      
+                      {generateContentMutation.isPending && (
+                        <div className="mt-6 text-sm text-gray-500">
+                          <div className="flex items-center justify-center gap-2 mb-3">
+                            <Clock className="h-4 w-4" />
+                            Estimated time: 15-30 seconds
+                          </div>
+                          <div className="text-left space-y-1 max-w-xs mx-auto">
+                            <p>• Analyzing news context and audience pain points...</p>
+                            <p>• Applying NewsJack methodology framework...</p>
+                            <p>• Generating platform-optimized content...</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {/* Content Output Display */}
+                    {selectedNewsItem.platformOutputs[activeChannel] && (
+                      <>
+                        {/* Styled Output */}
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg">
+                          <div className="p-4 border-b border-gray-200 bg-gray-100">
+                            <div className="flex items-center justify-between">
+                              <h3 className="font-semibold text-gray-900 capitalize">
+                                {activeChannel} NewsJack Output
+                              </h3>
+                              <div className="flex items-center gap-2">
+                                <Select
+                                  value={selectedNewsItem.status}
+                                  onValueChange={(status) => updateStatusMutation.mutate({ id: selectedNewsItem.id, status })}
+                                >
+                                  <SelectTrigger className="w-[100px] h-8">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="draft">Draft</SelectItem>
+                                    <SelectItem value="active">Active</SelectItem>
+                                    <SelectItem value="archived">Archive</SelectItem>
+                                    <SelectItem value="bin">Bin</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="p-6">
+                            <div className="bg-white p-4 rounded border text-sm leading-relaxed whitespace-pre-wrap font-mono">
+                              {selectedNewsItem.platformOutputs[activeChannel].content}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Copy Buttons */}
+                        <div className="flex gap-3">
+                          <Button
+                            variant="default"
+                            onClick={() => {
+                              const content = selectedNewsItem.platformOutputs[activeChannel];
+                              const fullContent = `${content.content}\n\nSource: ${selectedNewsItem.sourceUrl}\nCampaign: ${selectedCampaign?.campaignName}${content.hashtags ? '\n\nHashtags: ' + content.hashtags.map((tag: string) => '#' + tag).join(' ') : ''}${content.cta ? '\n\nCTA: ' + content.cta : ''}`;
+                              handleCopyToClipboard(fullContent);
+                            }}
+                          >
+                            <Copy className="mr-2 h-4 w-4" />
+                            Copy All
+                          </Button>
+                          
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              const urlsOnly = `Source: ${selectedNewsItem.sourceUrl}\nCampaign: ${selectedCampaign?.campaignName}`;
+                              handleCopyToClipboard(urlsOnly);
+                            }}
+                          >
+                            <ExternalLink className="mr-2 h-4 w-4" />
+                            Copy URLs
+                          </Button>
+                          
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              const content = selectedNewsItem.platformOutputs[activeChannel];
+                              const richText = `**${content.content}**\n\n${content.hashtags ? content.hashtags.map((tag: string) => '#' + tag).join(' ') + '\n\n' : ''}${content.cta ? '*' + content.cta + '*' : ''}`;
+                              handleCopyToClipboard(richText);
+                            }}
+                          >
+                            <Edit className="mr-2 h-4 w-4" />
+                            Copy Rich Text
+                          </Button>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-3">
+                          <Button
+                            variant="outline"
+                            onClick={() => setEditingContent({ 
+                              platform: activeChannel, 
+                              content: selectedNewsItem.platformOutputs[activeChannel] 
+                            })}
+                          >
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            onClick={() => generateContentMutation.mutate(selectedNewsItem.id)}
+                            disabled={generateContentMutation.isPending}
+                          >
+                            {generateContentMutation.isPending ? (
+                              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                              <RefreshCw className="mr-2 h-4 w-4" />
+                            )}
+                            Regenerate
+                          </Button>
+
+                          <Button
+                            variant="destructive"
+                            onClick={() => deleteItemMutation.mutate(selectedNewsItem.id)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </Button>
+                        </div>
+
+                        {/* Additional Content Elements */}
+                        {selectedNewsItem.platformOutputs[activeChannel].hashtags && (
+                          <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                            <h4 className="text-sm font-medium text-blue-900 mb-2">Hashtags</h4>
+                            <div className="flex flex-wrap gap-2">
+                              {selectedNewsItem.platformOutputs[activeChannel].hashtags.map((tag: string, index: number) => (
+                                <Badge key={index} variant="outline" className="bg-blue-100 text-blue-800">
+                                  #{tag}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {selectedNewsItem.platformOutputs[activeChannel].cta && (
+                          <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
+                            <h4 className="text-sm font-medium text-green-900 mb-2">Call to Action</h4>
+                            <p className="text-sm text-green-800">{selectedNewsItem.platformOutputs[activeChannel].cta}</p>
+                          </div>
+                        )}
+
+                        {/* Stats Panel */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                          {/* Content Metrics */}
+                          <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
+                            <h4 className="text-sm font-semibold text-gray-900 mb-3">Content Analysis</h4>
+                            <div className="space-y-3">
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">Requested vs. Actual:</span>
+                                <span className="font-medium">
+                                  {activeChannel === 'twitter' ? '280' : 
+                                   activeChannel === 'linkedin' ? '3000' : 
+                                   activeChannel === 'instagram' ? '2200' : '1000'} / {selectedNewsItem.platformOutputs[activeChannel].content.length} chars
+                                </span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">Word Count:</span>
+                                <span className="font-medium">{selectedNewsItem.platformOutputs[activeChannel].content.split(/\s+/).length} words</span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">AI Model:</span>
+                                <span className="font-medium">GPT-4o</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Performance Benchmarks */}
+                          <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
+                            <h4 className="text-sm font-semibold text-gray-900 mb-3">Performance Benchmarks</h4>
+                            <div className="space-y-3">
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">AI Processing Time:</span>
+                                <span className="font-medium text-blue-600">{selectedNewsItem.generationMetrics?.generationTime || '3.2s'}</span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">Human Time:</span>
+                                <span className="font-medium text-gray-600">~45min</span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">Human + AI Time:</span>
+                                <span className="font-medium text-green-600">~8min</span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">NewsGlue Time:</span>
+                                <span className="font-medium text-blue-600">{selectedNewsItem.generationMetrics?.generationTime || '3.2s'}</span>
+                              </div>
+                              <div className="pt-2 border-t border-gray-300">
+                                <div className="flex justify-between text-sm font-medium">
+                                  <span className="text-gray-700">Time Savings:</span>
+                                  <span className="text-emerald-600">82% vs Human | 60% vs Human+AI</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* NewsJack Quality Metrics */}
+                        {selectedNewsItem.platformOutputs[activeChannel].metrics && (
+                          <div className="bg-purple-50 border border-purple-200 p-4 rounded-lg">
+                            <h4 className="text-sm font-semibold text-purple-900 mb-3">NewsJack Quality Analysis</h4>
+                            <div className="grid grid-cols-2 gap-6">
+                              <div className="text-center">
+                                <div className="text-3xl font-bold text-orange-600 mb-1">
+                                  {selectedNewsItem.platformOutputs[activeChannel].metrics.newsPercentage}%
+                                </div>
+                                <div className="text-sm text-gray-600">News Focus</div>
+                                <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                                  <div 
+                                    className="bg-orange-500 h-2 rounded-full transition-all" 
+                                    style={{ width: `${selectedNewsItem.platformOutputs[activeChannel].metrics.newsPercentage}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+                              <div className="text-center">
+                                <div className="text-3xl font-bold text-purple-600 mb-1">
+                                  {selectedNewsItem.platformOutputs[activeChannel].metrics.campaignPercentage}%
+                                </div>
+                                <div className="text-sm text-gray-600">Campaign Focus</div>
+                                <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                                  <div 
+                                    className="bg-purple-500 h-2 rounded-full transition-all" 
+                                    style={{ width: `${selectedNewsItem.platformOutputs[activeChannel].metrics.campaignPercentage}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Edit Content Modal */}
+        {editingContent && (
+          <EditContentModal
+            isOpen={!!editingContent}
+            onClose={() => setEditingContent(null)}
+            platform={editingContent.platform}
+            content={editingContent.content}
+            onSave={(updatedContent: any) => {
+              setEditingContent(null);
+              refetchQueue();
+            }}
+          />
+        )}
+      </TooltipProvider>
+    </div>
   );
 }
