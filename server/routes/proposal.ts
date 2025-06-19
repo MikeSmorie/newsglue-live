@@ -10,14 +10,40 @@ import path from "path";
 
 const router = express.Router();
 
+// Get system Chromium path
+const getChromiumPath = () => {
+  const possiblePaths = [
+    '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
+    '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium-browser',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/chromium',
+    '/usr/bin/google-chrome'
+  ];
+  
+  const fs = require('fs');
+  for (const path of possiblePaths) {
+    try {
+      if (fs.existsSync(path)) {
+        return path;
+      }
+    } catch (e) {
+      continue;
+    }
+  }
+  return null; // Use default puppeteer chrome
+};
+
 // Generate binary PDF using Puppeteer
 const generateProposalPDF = async (clientName: string, htmlContent: string, templateData: any): Promise<Buffer> => {
   let browser;
   
   try {
-    // Launch browser with optimized settings for Replit
-    browser = await puppeteer.launch({
-      headless: 'new',
+    const chromiumPath = getChromiumPath();
+    console.log(`Using Chromium at: ${chromiumPath || 'default puppeteer chrome'}`);
+    
+    // Configure launch options
+    const launchOptions: any = {
+      headless: true,
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -29,10 +55,23 @@ const generateProposalPDF = async (clientName: string, htmlContent: string, temp
         '--disable-features=VizDisplayCompositor',
         '--disable-extensions',
         '--disable-default-apps',
-        '--no-zygote'
+        '--no-zygote',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+        '--disable-blink-features=AutomationControlled',
+        '--disable-ipc-flooding-protection'
       ],
-      timeout: 15000
-    });
+      timeout: 20000
+    };
+    
+    // Only set executablePath if we found a system chromium
+    if (chromiumPath) {
+      launchOptions.executablePath = chromiumPath;
+    }
+    
+    // Launch browser
+    browser = await puppeteer.launch(launchOptions);
 
     const page = await browser.newPage();
     
