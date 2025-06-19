@@ -70,6 +70,7 @@ router.post('/', requireAuth, async (req, res) => {
     
     const newCampaign = await db.insert(campaigns).values({
       campaignName: validatedData.name,
+      name: null, // Set to null to avoid constraint violation
       websiteUrl: validatedData.website_url || null,
       ctaUrl: validatedData.cta_url || null,
       emotionalObjective: validatedData.emotional_objective || null,

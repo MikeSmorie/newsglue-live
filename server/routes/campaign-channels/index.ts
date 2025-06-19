@@ -60,6 +60,14 @@ const AVAILABLE_PLATFORMS = [
     icon: 'Video',
     maxLength: 150,
     style: 'Fast-paced news reaction with emotional storytelling and viral elements'
+  },
+  {
+    id: 'blog',
+    name: 'Blog',
+    description: 'Long-form newsjacking content with SEO optimization and detailed analysis that establishes authority.',
+    icon: 'FileText',
+    maxLength: 10000,
+    style: 'Authoritative, SEO-optimized content that positions news within broader industry context'
   }
 ];
 
