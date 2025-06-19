@@ -6,8 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Download, FileText, Copy, Loader2 } from 'lucide-react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useMutation } from '@tanstack/react-query';
+import { useCampaignContext } from '@/hooks/use-campaign-context';
 
 interface Campaign {
   id: string;
@@ -28,30 +28,24 @@ interface ProposalData {
 }
 
 export default function Module7() {
-  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [clientName, setClientName] = useState('');
   const [proposalData, setProposalData] = useState<ProposalData | null>(null);
   const [activeTab, setActiveTab] = useState('form');
   const { toast } = useToast();
-
-  // Fetch campaigns
-  const { data: campaigns = [] } = useQuery({
-    queryKey: ['/api/campaigns'],
-    queryFn: async () => {
-      const res = await fetch('/api/campaigns', { credentials: 'include' });
-      if (!res.ok) throw new Error('Failed to fetch campaigns');
-      return res.json();
-    }
-  });
+  const { activeCampaignId, activeCampaign } = useCampaignContext();
 
   // Generate proposal mutation
   const generateProposalMutation = useMutation({
-    mutationFn: async ({ campaignId, clientName }: { campaignId: string; clientName: string }) => {
+    mutationFn: async (clientName: string) => {
+      if (!activeCampaignId) {
+        throw new Error('No active campaign available');
+      }
+      
       const response = await fetch('/api/proposal/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ campaignId, clientName })
+        body: JSON.stringify({ campaignId: activeCampaignId, clientName })
       });
       
       if (!response.ok) {
@@ -80,7 +74,7 @@ export default function Module7() {
 
   // Download handlers
   const handleDownload = async (format: 'pdf' | 'html' | 'docx') => {
-    if (!proposalData || !selectedCampaign) return;
+    if (!proposalData || !activeCampaignId) return;
     
     try {
       const response = await fetch(`/api/proposal/download/${format}`, {
@@ -88,7 +82,7 @@ export default function Module7() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          campaignId: selectedCampaign.id,
+          campaignId: activeCampaignId,
           clientName: proposalData.clientName
         })
       });
