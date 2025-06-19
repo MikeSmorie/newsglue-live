@@ -185,7 +185,7 @@ router.post('/download/:format', requireAuth, async (req, res) => {
       const pdfContent = generateProposalPDFContent(clientName, html, templateData);
       
       res.setHeader('Content-Type', 'text/html');
-      res.setHeader('Content-Disposition', `attachment; filename="${clientName.replace(/\s+/g, '-')}-proposal-${Date.now()}.pdf"`);
+      res.setHeader('Content-Disposition', `attachment; filename="${clientName.replace(/\s+/g, '-')}-proposal-${Date.now()}.html"`);
       return res.send(pdfContent);
     }
 
