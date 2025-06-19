@@ -42,9 +42,9 @@ const campaignSchema = z.object({
   name: z.string().min(1, 'Campaign name is required').max(100, 'Campaign name must be under 100 characters'),
   website_url: z.string().url('Must be a valid URL').optional().or(z.literal('')),
   cta_url: z.string().url('Must be a valid URL').optional().or(z.literal('')),
-  emotional_objective: z.string().min(10, 'Please provide at least 10 characters').max(500, 'Must be under 500 characters'),
-  audience_pain: z.string().min(10, 'Please provide at least 10 characters').max(500, 'Must be under 500 characters'),
-  additional_data: z.string().max(1000, 'Must be under 1000 characters').optional(),
+  emotional_objective: z.string().min(1, 'Please provide emotional objective').max(1000, 'Must be under 1000 characters'),
+  audience_pain: z.string().min(1, 'Please provide audience pain points').max(1000, 'Must be under 1000 characters'),
+  additional_data: z.string().max(5000, 'Must be under 5000 characters').optional(),
   platforms: z.array(z.string()).min(1, 'Select at least one platform'),
 });
 
@@ -60,6 +60,14 @@ export default function CampaignForm({ onSuccess, onCancel, editingCampaign }: C
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Load existing platform selections when editing
+  React.useEffect(() => {
+    if (editingCampaign?.channels) {
+      const platforms = editingCampaign.channels.map((ch: any) => ch.platform);
+      setSelectedPlatforms(platforms);
+    }
+  }, [editingCampaign]);
 
   const form = useForm<CampaignFormData>({
     resolver: zodResolver(campaignSchema),
@@ -342,38 +350,60 @@ export default function CampaignForm({ onSuccess, onCancel, editingCampaign }: C
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
-                Additional Context (Optional)
+                Additional Context & Brand Intelligence
               </CardTitle>
               <CardDescription>
-                Provide extra information to enhance AI content generation
+                Provide detailed information to enhance AI content generation
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <FormField
                 control={form.control}
                 name="additional_data"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
-                      Brand Voice & Context
-                      <TooltipWrapper content="Share your brand personality, key messaging, industry context, or any specific requirements for how news should be connected to your brand.">
+                      Brand Voice, Context & Campaign Details
+                      <TooltipWrapper content="Paste detailed briefing documents, brand guidelines, product information, target audience insights, competitor analysis, or any relevant campaign materials. The more context you provide, the better the AI can tailor NewsJack content to your specific needs.">
                         <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
                       </TooltipWrapper>
                     </FormLabel>
                     <FormControl>
                       <Textarea 
-                        placeholder="e.g., We're a B2B SaaS with a friendly but authoritative tone. Focus on productivity and efficiency themes. Avoid overly technical jargon. We serve mid-market companies in finance and healthcare..."
-                        className="min-h-[120px]"
+                        placeholder="Paste your campaign brief, brand guidelines, target audience details, product information, competitor analysis, or any relevant documentation here.
+
+Example content:
+- Brand voice and personality guidelines
+- Product/service detailed descriptions  
+- Target audience demographics and psychographics
+- Key messaging frameworks
+- Competitor positioning
+- Industry trends and insights
+- Previous campaign performance data
+- Customer testimonials and case studies
+- Technical specifications or unique selling propositions"
+                        className="min-h-[200px] font-mono text-sm"
                         {...field} 
                       />
                     </FormControl>
-                    <FormDescription>
-                      Help AI understand your unique brand context and voice
+                    <FormDescription className="text-xs">
+                      <strong>Tip:</strong> Copy and paste from documents, spreadsheets, or briefing materials. 
+                      The AI will analyze this information to create more targeted and relevant NewsJack content.
+                      Maximum 5,000 characters.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+              
+              {/* File Upload Placeholder for Future Implementation */}
+              <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4">
+                <div className="text-center text-gray-500 dark:text-gray-400">
+                  <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">File Upload Coming Soon</p>
+                  <p className="text-xs">Future: Upload PDFs, Word docs, or text files for automatic content extraction</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
 

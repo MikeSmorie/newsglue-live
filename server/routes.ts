@@ -35,6 +35,7 @@ import newsjackRouter from "./routes/newsjack.js";
 import campaignsRouter from "./routes/campaigns/index";
 import campaignChannelRoutes from "./routes/campaign-channels";
 import newsitemsRouter from "./routes/newsitems";
+import websiteScraperRouter from "./routes/website-scraper";
 import { db } from "../db";
 import { users } from "../db/schema";
 import { eq, and, or, desc, asc, sql } from "drizzle-orm";
