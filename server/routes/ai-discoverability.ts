@@ -151,12 +151,12 @@ router.post('/reping/:newsjackId', async (req, res) => {
     const { newsjackId } = req.params;
     
     // Update last AI crawl timestamp
-    await db.update(newsjackOutputs)
+    await db.update(newsItems)
       .set({ 
         lastAICrawlAt: new Date(),
         updatedAt: new Date()
       })
-      .where(eq(newsjackOutputs.id, parseInt(newsjackId)));
+      .where(eq(newsItems.id, parseInt(newsjackId)));
 
     // In a real implementation, this would:
     // 1. Submit to IndexNow API
@@ -184,8 +184,8 @@ router.get('/:newsjackId/status', async (req, res) => {
     const { newsjackId } = req.params;
     
     // Get the NewsJack output
-    const output = await db.query.newsjackOutputs.findFirst({
-      where: eq(newsjackOutputs.id, parseInt(newsjackId))
+    const output = await db.query.newsItems.findFirst({
+      where: eq(newsItems.id, parseInt(newsjackId))
     });
 
     if (!output) {
@@ -255,9 +255,9 @@ router.post('/export/pdf', async (req, res) => {
 router.post('/export/csv', async (req, res) => {
   try {
     // Fetch all blog outputs for CSV export
-    const outputs = await db.query.newsjackOutputs.findMany({
-      where: eq(newsjackOutputs.contentType, 'blog'),
-      orderBy: [desc(newsjackOutputs.createdAt)]
+    const outputs = await db.query.newsItems.findMany({
+      where: eq(newsItems.contentType, 'blog'),
+      orderBy: [desc(newsItems.createdAt)]
     });
 
     const csvHeaders = [

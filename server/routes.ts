@@ -42,6 +42,7 @@ import pdfRouter from "./routes/pdf";
 import landingPageRouter from "./routes/landing-page.js";
 import aiSitemapRouter from "./routes/ai-sitemap.js";
 import proposalRouter from "./routes/proposal";
+import aiDiscoverabilityRouter from "./routes/ai-discoverability";
 import { db } from "../db";
 import { users } from "../db/schema";
 import { eq, and, or, desc, asc, sql } from "drizzle-orm";
@@ -276,6 +277,19 @@ export async function registerRoutes(app: Express) {
    * GET /ai-sitemap.xml - Dynamic sitemap for published landing pages
    */
   app.use("/", aiSitemapRouter);
+
+  /**
+   * AI DISCOVERABILITY API
+   * Auth: Required
+   * Role: User/Admin/Supergod
+   * GET /api/discoverability/audit - Get AI discoverability audit data
+   * GET /api/discoverability/sitemap - Get sitemap status and entries
+   * POST /api/discoverability/reping/:newsjackId - Re-ping AI indexing
+   * GET /api/discoverability/:newsjackId/status - Validate metadata
+   * POST /api/discoverability/export/pdf - Export AI indexing report
+   * POST /api/discoverability/export/csv - Export metadata validation
+   */
+  app.use("/api/discoverability", requireAuth, aiDiscoverabilityRouter);
 
   /**
    * LANDING PAGE STATIC SERVING
