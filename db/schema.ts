@@ -607,11 +607,30 @@ export const campaigns = pgTable("campaigns", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Campaign channels table for social platform targeting
+export const campaignChannels = pgTable("campaign_channels", {
+  id: serial("id").primaryKey(),
+  campaignId: uuid("campaign_id").notNull().references(() => campaigns.id, { onDelete: "cascade" }),
+  platform: text("platform").notNull(), // 'twitter', 'linkedin', 'instagram', etc.
+  enabled: boolean("enabled").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Campaigns relations
-export const campaignsRelations = relations(campaigns, ({ one }) => ({
+export const campaignsRelations = relations(campaigns, ({ one, many }) => ({
   user: one(users, {
     fields: [campaigns.userId],
     references: [users.id],
+  }),
+  channels: many(campaignChannels),
+}));
+
+// Campaign channels relations
+export const campaignChannelsRelations = relations(campaignChannels, ({ one }) => ({
+  campaign: one(campaigns, {
+    fields: [campaignChannels.campaignId],
+    references: [campaigns.id],
   }),
 }));
 
@@ -621,3 +640,10 @@ export const selectCampaignSchema = createSelectSchema(campaigns);
 
 export type InsertCampaign = typeof campaigns.$inferInsert;
 export type SelectCampaign = typeof campaigns.$inferSelect;
+
+// Campaign channels schemas
+export const insertCampaignChannelSchema = createInsertSchema(campaignChannels);
+export const selectCampaignChannelSchema = createSelectSchema(campaignChannels);
+
+export type InsertCampaignChannel = typeof campaignChannels.$inferInsert;
+export type SelectCampaignChannel = typeof campaignChannels.$inferSelect;

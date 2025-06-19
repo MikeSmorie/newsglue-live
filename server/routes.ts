@@ -33,6 +33,7 @@ import { registerAnalyticsRoutes } from "./routes/analytics";
 
 import newsjackRouter from "./routes/newsjack.js";
 import campaignsRouter from "./routes/campaigns/index";
+import campaignChannelRoutes from "./routes/campaign-channels";
 import newsitemsRouter from "./routes/newsitems";
 import { db } from "../db";
 import { users } from "../db/schema";
