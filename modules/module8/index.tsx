@@ -191,6 +191,32 @@ Efficiency Score: ${campaignMetrics.efficiencyScore}%`;
     toast({ title: "Metrics copied to clipboard" });
   };
 
+  const handleRegenerateData = async () => {
+    if (!activeCampaignId) return;
+    
+    try {
+      const response = await fetch(`/api/metrics/reset/${activeCampaignId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (!response.ok) throw new Error('Regeneration failed');
+
+      queryClient.invalidateQueries({ queryKey: ['/api/metrics/campaign', activeCampaignId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/metrics/outputs', activeCampaignId] });
+
+      toast({
+        title: "Sample data regenerated",
+        description: "Beautiful statistics have been restored"
+      });
+    } catch (error) {
+      toast({
+        title: "Regeneration failed", 
+        variant: "destructive"
+      });
+    }
+  };
+
   // Transform data for charts
   const platformData = outputMetrics.reduce((acc: any[], metric) => {
     const existing = acc.find(item => item.platform === metric.platform);
@@ -404,6 +430,10 @@ Efficiency Score: ${campaignMetrics.efficiencyScore}%`;
                 <Button onClick={handleCopyMetrics} variant="outline" className="w-full">
                   <Copy className="mr-2 h-4 w-4" />
                   Copy Summary
+                </Button>
+                <Button onClick={handleRegenerateData} variant="outline" className="w-full">
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  Regenerate Sample Data
                 </Button>
               </CardContent>
             </Card>

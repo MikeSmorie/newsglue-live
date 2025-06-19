@@ -316,4 +316,37 @@ async function generateMetricsPDF(html: string, data: any): Promise<Buffer> {
   }
 }
 
+// Reset and regenerate sample metrics for demonstration
+router.post('/reset/:campaignId', async (req, res) => {
+  try {
+    const { campaignId } = req.params;
+    
+    // Delete existing metrics
+    await db.delete(outputMetrics).where(eq(outputMetrics.campaignId, campaignId));
+    await db.delete(campaignMetrics).where(eq(campaignMetrics.campaignId, campaignId));
+    
+    // Create fresh sample data
+    await createSampleMetrics(campaignId);
+    
+    // Fetch the newly created metrics
+    const newMetrics = await db.query.campaignMetrics.findFirst({
+      where: eq(campaignMetrics.campaignId, campaignId)
+    });
+    
+    const newOutputs = await db.query.outputMetrics.findMany({
+      where: eq(outputMetrics.campaignId, campaignId)
+    });
+    
+    res.json({ 
+      success: true, 
+      message: 'Sample metrics regenerated successfully',
+      metrics: newMetrics,
+      outputs: newOutputs.length
+    });
+  } catch (error) {
+    console.error('Error resetting sample metrics:', error);
+    res.status(500).json({ error: 'Failed to reset sample metrics' });
+  }
+});
+
 export default router;
