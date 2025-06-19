@@ -145,6 +145,19 @@ export async function registerRoutes(app: Express) {
   app.use("/api/admin/ai-routing", requireSupergod, aiRoutingRouter);
 
   /**
+   * METRICS TRACKING ROUTES
+   * Auth: Required
+   * Role: User/Admin/Supergod
+   * GET /api/metrics/campaign/:campaignId - Get campaign metrics
+   * GET /api/metrics/outputs/:campaignId - Get output metrics
+   * PUT /api/metrics/campaign/:campaignId/rate - Update hourly rate
+   * POST /api/metrics/log-output - Log new output metrics
+   * POST /api/metrics/export/:campaignId/csv - Export CSV
+   * POST /api/metrics/export/:campaignId/pdf - Export PDF
+   */
+  app.use("/api/metrics", metricsRoutes);
+
+  /**
    * AI DEMO UTILITIES
    * Auth: Required
    * Role: User/Admin/Supergod

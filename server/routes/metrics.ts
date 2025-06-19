@@ -2,6 +2,7 @@ import express from "express";
 import { db } from "../../db/index.js";
 import { campaignMetrics, outputMetrics, campaigns, newsItems } from "../../db/schema.js";
 import { eq, desc, and } from "drizzle-orm";
+import { createSampleMetrics } from "../utils/sample-metrics.js";
 
 const router = express.Router();
 
@@ -174,8 +175,8 @@ router.post('/log-output', async (req, res) => {
       generationDurationSeconds: generationDuration,
       wordCount: wordCount || 0,
       characterCount: characterCount || 0,
-      toneMatchRating: toneMatchRating ? parseFloat(toneMatchRating).toFixed(2) : null,
-      qualityRating: qualityRating ? parseFloat(qualityRating).toFixed(2) : null,
+      toneMatchRating: toneMatchRating ? parseFloat(toneMatchRating).toFixed(2) : undefined,
+      qualityRating: qualityRating ? parseFloat(qualityRating).toFixed(2) : undefined,
       complianceCheck: complianceCheck !== false,
       ctaPresent: ctaPresent === true,
       urlPresent: urlPresent === true,
@@ -367,6 +368,7 @@ router.post('/export/:campaignId/pdf', async (req, res) => {
 
     // Use existing PDF generation (reuse from proposal module)
     const puppeteer = await import('puppeteer');
+    const fs = await import('fs');
     
     const getChromiumPath = () => {
       const possiblePaths = [
@@ -376,7 +378,6 @@ router.post('/export/:campaignId/pdf', async (req, res) => {
         '/usr/bin/google-chrome'
       ];
       
-      const fs = await import('fs');
       for (const path of possiblePaths) {
         try {
           if (fs.existsSync(path)) {
@@ -393,7 +394,7 @@ router.post('/export/:campaignId/pdf', async (req, res) => {
     console.log('Using Chromium at:', chromiumPath);
 
     const browser = await puppeteer.launch({
-      executablePath: chromiumPath,
+      executablePath: chromiumPath || undefined,
       headless: true,
       args: [
         '--no-sandbox',
@@ -423,6 +424,24 @@ router.post('/export/:campaignId/pdf', async (req, res) => {
   } catch (error) {
     console.error('Error exporting PDF:', error);
     res.status(500).json({ error: 'Failed to export PDF' });
+  }
+});
+
+// Generate sample metrics for testing
+router.post('/generate-sample/:campaignId', async (req, res) => {
+  try {
+    const { campaignId } = req.params;
+    
+    const success = await createSampleMetrics(campaignId);
+    
+    if (success) {
+      res.json({ success: true, message: 'Sample metrics generated successfully' });
+    } else {
+      res.status(500).json({ error: 'Failed to generate sample metrics' });
+    }
+  } catch (error) {
+    console.error('Error generating sample metrics:', error);
+    res.status(500).json({ error: 'Failed to generate sample metrics' });
   }
 });
 

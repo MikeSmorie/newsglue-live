@@ -137,6 +137,22 @@ export default function Module8() {
     }
   });
 
+  // Generate sample metrics mutation
+  const generateSampleMutation = useMutation({
+    mutationFn: async (campaignId: string) => {
+      const response = await fetch(`/api/metrics/generate-sample/${campaignId}`, {
+        method: 'POST'
+      });
+      if (!response.ok) throw new Error('Failed to generate sample metrics');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/metrics/campaign', selectedCampaign] });
+      queryClient.invalidateQueries({ queryKey: ['/api/metrics/outputs', selectedCampaign] });
+      toast({ title: "Sample metrics generated successfully" });
+    }
+  });
+
   const handleUpdateRate = () => {
     if (selectedCampaign && hourlyRate) {
       updateHourlyRateMutation.mutate({ campaignId: selectedCampaign, rate: hourlyRate });
@@ -146,6 +162,12 @@ export default function Module8() {
   const handleExport = (format: 'pdf' | 'csv') => {
     if (selectedCampaign) {
       exportMetricsMutation.mutate({ campaignId: selectedCampaign, format });
+    }
+  };
+
+  const handleGenerateSample = () => {
+    if (selectedCampaign) {
+      generateSampleMutation.mutate(selectedCampaign);
     }
   };
 
