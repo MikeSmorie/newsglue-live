@@ -27,7 +27,7 @@ interface NewsItem {
   sourceUrl: string;
   content: string;
   contentType: 'external' | 'internal';
-  status: 'draft' | 'sent' | 'complete' | 'error';
+  status: 'draft' | 'active' | 'archived' | 'bin';
   createdAt: string;
   updatedAt: string;
 }
@@ -331,12 +331,20 @@ export default function Module3() {
   const getStatusBadge = (status: NewsItem['status']) => {
     const statusConfig = {
       draft: { color: 'bg-yellow-100 text-yellow-800', label: 'Draft' },
-      sent: { color: 'bg-blue-100 text-blue-800', label: 'Sent' },
-      complete: { color: 'bg-green-100 text-green-800', label: 'Complete' },
-      error: { color: 'bg-red-100 text-red-800', label: 'Error' }
+      active: { color: 'bg-green-100 text-green-800', label: 'Active' },
+      archived: { color: 'bg-gray-100 text-gray-800', label: 'Archived' },
+      bin: { color: 'bg-red-100 text-red-800', label: 'Bin' }
     };
 
     const config = statusConfig[status];
+    if (!config) {
+      return (
+        <Badge className="bg-gray-100 text-gray-800 border-0">
+          Unknown
+        </Badge>
+      );
+    }
+    
     return (
       <Badge className={`${config.color} border-0`}>
         {config.label}
@@ -346,12 +354,12 @@ export default function Module3() {
 
   const getStatusTooltip = (status: NewsItem['status']) => {
     const tooltips = {
-      draft: 'News item is queued and waiting for Module 6 to be ready',
-      sent: 'News item has been successfully sent to Module 6 for processing',
-      complete: 'News item has been fully processed and executed',
-      error: 'An error occurred during processing - click to review and resubmit'
+      draft: 'News item is queued and waiting for processing',
+      active: 'News item is active and ready for content generation',
+      archived: 'News item has been archived',
+      bin: 'News item has been moved to bin'
     };
-    return tooltips[status];
+    return tooltips[status] || 'Unknown status';
   };
 
   const handleGoToModule6 = () => {
