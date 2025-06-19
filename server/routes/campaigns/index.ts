@@ -14,8 +14,8 @@ const router = express.Router();
 // Validation schema for campaign creation/update - NewsJack focused
 const campaignCreateSchema = z.object({
   name: z.string().min(1, "Campaign name is required"),
-  website_url: z.string().url().optional().or(z.literal("")),
-  cta_url: z.string().url().optional().or(z.literal("")),
+  website_url: z.string().optional(),
+  cta_url: z.string().optional(),
   emotional_objective: z.string().optional(),
   audience_pain: z.string().optional(),
   additional_data: z.string().optional(),
@@ -101,8 +101,12 @@ router.put('/:id', requireAuth, async (req, res) => {
 
     const updatedCampaign = await db.update(campaigns)
       .set({
-        ...validatedData,
-        campaignUrl: validatedData.campaignUrl || null,
+        name: validatedData.name,
+        websiteUrl: validatedData.website_url || null,
+        ctaUrl: validatedData.cta_url || null,
+        emotionalObjective: validatedData.emotional_objective || null,
+        audiencePain: validatedData.audience_pain || null,
+        additionalData: validatedData.additional_data || null,
         updatedAt: new Date(),
       })
       .where(and(

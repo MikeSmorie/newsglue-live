@@ -36,8 +36,12 @@ export default function CampaignForm() {
     },
   });
 
+  const onSubmit = (data: any) => {
+    mutation.mutate(data);
+  };
+
   return (
-    <form onSubmit={handleSubmit((data) => mutation.mutate(data))} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div>
         <Label htmlFor="name">
           Campaign Name

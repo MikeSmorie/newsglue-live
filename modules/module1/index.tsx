@@ -8,16 +8,12 @@ import { PlusCircle, Calendar, Globe, Target } from 'lucide-react';
 
 interface Campaign {
   id: string;
-  campaignName: string;
-  campaignUrl?: string;
+  name: string;
   websiteUrl?: string;
+  ctaUrl?: string;
+  emotionalObjective?: string;
+  audiencePain?: string;
   additionalData?: string;
-  tone?: string;
-  strategy_q1?: string;
-  strategy_q2?: string;
-  strategy_q3?: string;
-  strategy_q4?: string;
-  strategy_q5?: string;
   createdAt: string;
   updatedAt: string;
 }
