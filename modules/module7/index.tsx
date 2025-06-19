@@ -264,23 +264,30 @@ export default function Module7() {
             <TabsContent value="preview" className="space-y-6">
               {proposalData && (
                 <>
-                  <div className="flex flex-wrap gap-3">
-                    <Button onClick={() => handleDownload('pdf')} variant="default">
-                      <Download className="mr-2 h-4 w-4" />
-                      Print to PDF
-                    </Button>
-                    <Button onClick={() => handleDownload('html')} variant="outline">
-                      <Download className="mr-2 h-4 w-4" />
-                      Download HTML
-                    </Button>
-                    <Button onClick={() => handleDownload('docx')} variant="outline">
-                      <Download className="mr-2 h-4 w-4" />
-                      Download Word
-                    </Button>
-                    <Button onClick={handleCopyRichText} variant="outline">
-                      <Copy className="mr-2 h-4 w-4" />
-                      Copy Rich Text
-                    </Button>
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap gap-3">
+                      <Button onClick={() => handleDownload('docx')} variant="default">
+                        <Download className="mr-2 h-4 w-4" />
+                        Download Word Document
+                      </Button>
+                      <Button onClick={() => handleDownload('html')} variant="outline">
+                        <Download className="mr-2 h-4 w-4" />
+                        Download HTML
+                      </Button>
+                      <Button onClick={() => handleDownload('pdf')} variant="outline">
+                        <Download className="mr-2 h-4 w-4" />
+                        Open Printable Version
+                      </Button>
+                      <Button onClick={handleCopyRichText} variant="outline">
+                        <Copy className="mr-2 h-4 w-4" />
+                        Copy Rich Text
+                      </Button>
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      <p><strong>Word Document:</strong> Full proposal with comprehensive content sections</p>
+                      <p><strong>Printable Version:</strong> Opens browser-optimized page for PDF printing</p>
+                      <p><strong>Copy Rich Text:</strong> Complete formatted proposal for pasting into emails or documents</p>
+                    </div>
                   </div>
                   
                   <div className="border rounded-lg bg-white dark:bg-gray-900 p-6 max-h-96 overflow-y-auto">
