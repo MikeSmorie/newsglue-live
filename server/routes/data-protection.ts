@@ -12,7 +12,7 @@ const router = express.Router();
 router.get('/backups', requireAuth, async (req, res) => {
   try {
     const { table } = req.query;
-    const backups = await listBackups(table as string, req.user.id);
+    const backups = await listBackups(table as string, req.user?.id);
     res.json({ success: true, backups });
   } catch (error) {
     console.error('Error listing backups:', error);

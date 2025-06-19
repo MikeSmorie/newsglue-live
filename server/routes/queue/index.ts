@@ -270,7 +270,7 @@ Respond with JSON in this format:
 });
 
 // PUT /api/queue/update-content/:id - Update platform content manually
-router.put('/update-content/:id', requireAuth, async (req, res) => {
+router.put('/update-content/:id', requireAuth, protectNewsItems, async (req, res) => {
   try {
     const itemId = parseInt(req.params.id);
     const { platform, content } = req.body;

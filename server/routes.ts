@@ -233,6 +233,17 @@ export async function registerRoutes(app: Express) {
   app.use("/api/pdf", requireAuth, pdfRouter);
 
   /**
+   * DATA PROTECTION API
+   * Auth: Required
+   * Role: User/Admin/Supergod
+   * GET /api/data-protection/backups - List all backups for user
+   * POST /api/data-protection/backup - Create manual backup
+   * POST /api/data-protection/restore/:backupId - Restore from backup
+   */
+  const { default: dataProtectionRoutes } = await import("./routes/data-protection.js");
+  app.use("/api/data-protection", requireAuth, dataProtectionRoutes);
+
+  /**
    * MODULE REFACTORING TESTS
    * Auth: None (public testing endpoints)
    * Role: Public access for testing refactored modules
