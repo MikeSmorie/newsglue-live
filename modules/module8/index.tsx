@@ -294,11 +294,11 @@ Efficiency Score: ${campaignMetrics.efficiencyScore}%`;
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Cost Saved</p>
-                    <p className="text-3xl font-bold text-emerald-800 dark:text-emerald-400">
+                    <p className="text-3xl font-bold text-green-800 dark:text-emerald-400">
                       ${campaignMetrics.totalCostSaved}
                     </p>
                   </div>
-                  <DollarSign className="h-8 w-8 text-emerald-800 dark:text-emerald-400" />
+                  <DollarSign className="h-8 w-8 text-green-800 dark:text-emerald-400" />
                 </div>
               </CardContent>
             </Card>
