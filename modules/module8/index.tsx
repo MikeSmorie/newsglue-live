@@ -339,7 +339,17 @@ Efficiency Score: ${campaignMetrics.efficiencyScore}%`;
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Efficiency</p>
+                    <div className="flex items-center gap-1">
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Efficiency</p>
+                      <UITooltip>
+                        <TooltipTrigger>
+                          <HelpCircle className="h-3 w-3 text-gray-400" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-sm">Percentage of output time saved compared to total time if done manually. Higher = faster system.</p>
+                        </TooltipContent>
+                      </UITooltip>
+                    </div>
                     <p className="text-3xl font-bold text-purple-800 dark:text-purple-400">
                       {campaignMetrics.efficiencyScore}%
                     </p>
@@ -386,15 +396,45 @@ Efficiency Score: ${campaignMetrics.efficiencyScore}%`;
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Compliance Score</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm text-gray-600 dark:text-gray-300">Compliance Score</span>
+                    <UITooltip>
+                      <TooltipTrigger>
+                        <HelpCircle className="h-3 w-3 text-gray-400" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-sm">Percentage of outputs that followed campaign tone, CTA inclusion, and length compliance.</p>
+                      </TooltipContent>
+                    </UITooltip>
+                  </div>
                   <Badge variant="secondary">{campaignMetrics.complianceScore}%</Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-300">CTA Presence</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm text-gray-600 dark:text-gray-300">CTA Presence</span>
+                    <UITooltip>
+                      <TooltipTrigger>
+                        <HelpCircle className="h-3 w-3 text-gray-400" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-sm">Percentage of outputs that contain an effective call to action (CTA).</p>
+                      </TooltipContent>
+                    </UITooltip>
+                  </div>
                   <Badge variant="secondary">{campaignMetrics.ctaPresenceRate}%</Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Quality Rating</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm text-gray-600 dark:text-gray-300">Quality Rating</span>
+                    <UITooltip>
+                      <TooltipTrigger>
+                        <HelpCircle className="h-3 w-3 text-gray-400" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-sm">AI-evaluated subjective quality score (1–5 scale) per platform benchmark.</p>
+                      </TooltipContent>
+                    </UITooltip>
+                  </div>
                   <Badge variant="secondary">
                     {outputMetrics.length > 0 
                       ? Math.round(outputMetrics.reduce((acc, m) => acc + parseFloat(m.qualityRating), 0) / outputMetrics.length * 10) / 10
@@ -440,7 +480,19 @@ Efficiency Score: ${campaignMetrics.efficiencyScore}%`;
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="platform" />
                       <YAxis />
-                      <Tooltip />
+                      <Tooltip 
+                        formatter={(value, name, props) => [
+                          `${value} outputs`,
+                          `Platform: ${props.payload.platform}`
+                        ]}
+                        labelFormatter={(label) => `Platform: ${label}`}
+                        contentStyle={{
+                          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '8px'
+                        }}
+                      />
                       <Legend />
                       <Bar dataKey="outputs" fill="#3b82f6" name="Outputs" />
                     </BarChart>
@@ -468,7 +520,15 @@ Efficiency Score: ${campaignMetrics.efficiencyScore}%`;
                           <Cell key={`cell-${index}`} fill={entry.fill} />
                         ))}
                       </Pie>
-                      <Tooltip />
+                      <Tooltip 
+                        formatter={(value, name) => [`${value} outputs`, `Platform: ${name}`]}
+                        contentStyle={{
+                          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '8px'
+                        }}
+                      />
                     </PieChart>
                   </ResponsiveContainer>
                 </CardContent>
