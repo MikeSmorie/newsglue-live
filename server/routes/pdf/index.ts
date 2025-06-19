@@ -117,51 +117,55 @@ const generateNewsJackHTML = (newsItem: any, campaign: any) => {
 
 // Generate Campaign Dossier HTML content
 const generateCampaignDossierHTML = (campaign: any, newsItemsData: any[], channels: any[]) => {
-  // Generate Module 1 - Campaign Builder section with comprehensive data
+  // Generate Module 1 - Campaign Builder section with actual data
   const campaignBuilderContent = `
     <div class="section" id="module1">
       <h2>Module 1: Campaign Configuration</h2>
       <table class="info-table">
-        <tr><th>Campaign Name</th><td>${campaign.campaignName || 'Not provided'}</td></tr>
+        <tr><th>Campaign Name</th><td>${campaign.campaignName || campaign.name || 'Not provided'}</td></tr>
         <tr><th>Website URL</th><td>${campaign.websiteUrl ? `<a href="${campaign.websiteUrl}" target="_blank">${campaign.websiteUrl}</a>` : 'Not provided'}</td></tr>
         <tr><th>Call-to-Action URL</th><td>${campaign.ctaUrl ? `<a href="${campaign.ctaUrl}" target="_blank">${campaign.ctaUrl}</a>` : 'Not provided'}</td></tr>
-        <tr><th>Target Audience</th><td>${campaign.targetAudience || 'Not provided'}</td></tr>
-        <tr><th>Brand Description</th><td>${campaign.brandDescription || 'Not provided'}</td></tr>
-        <tr><th>Key Messages</th><td>${campaign.keyMessages || 'Not provided'}</td></tr>
-        <tr><th>Brand Voice</th><td>${campaign.brandVoice || 'Not provided'}</td></tr>
-        <tr><th>Content Guidelines</th><td>${campaign.contentGuidelines || 'Not provided'}</td></tr>
         <tr><th>Emotional Objective</th><td>${campaign.emotionalObjective || 'Not provided'}</td></tr>
-        <tr><th>Audience Pain Points</th><td>${campaign.audiencePainPoints || campaign.audiencePain || 'Not provided'}</td></tr>
-        <tr><th>Brand Archetype</th><td>${campaign.brandArchetype || 'Not provided'}</td></tr>
-        <tr><th>Additional Data</th><td>${campaign.additionalData || 'Not provided'}</td></tr>
-        <tr><th>Campaign Status</th><td><span class="status-${campaign.status || 'active'}">${campaign.status || 'Active'}</span></td></tr>
+        <tr><th>Audience Pain Points</th><td>${campaign.audiencePain || 'Not provided'}</td></tr>
+        <tr><th>Additional Context</th><td>${campaign.additionalData || 'Not provided'}</td></tr>
+        <tr><th>Website Analysis</th><td>${campaign.websiteAnalysis || 'Not analyzed yet'}</td></tr>
+        <tr><th>Campaign Status</th><td><span class="status-${campaign.status || 'active'}">${(campaign.status || 'Active').charAt(0).toUpperCase() + (campaign.status || 'Active').slice(1)}</span></td></tr>
         <tr><th>Created Date</th><td>${formatDate(campaign.createdAt)}</td></tr>
         <tr><th>Last Updated</th><td>${formatDate(campaign.updatedAt || campaign.createdAt)}</td></tr>
       </table>
     </div>
   `;
 
-  // Generate Module 2 - Social Channel Settings section with comprehensive platform data
+  // Generate Module 2 - Social Channel Settings section with actual socialSettings data
+  const socialSettings = campaign.socialSettings || {};
+  const channelConfig = socialSettings.channelConfig || {};
+  const apiEnabled = socialSettings.apiEnabled || false;
+  
   let channelsContent = '';
+  
+  // Get active channels from both channels table and socialSettings
+  const activeChannels = new Set();
   if (channels && channels.length > 0) {
-    const channelsRows = channels.map(channel => {
-      const platform = channel.platform || 'Unknown Platform';
-      const enabled = channel.enabled !== undefined ? (channel.enabled ? 'Enabled' : 'Disabled') : 'Not provided';
-      const tone = channel.tone || channel.brandTone || 'Not provided';
-      const wordLimit = channel.wordLimit || channel.characterLimit || channel.maxLength || 'Not provided';
-      const contentRatio = channel.newsContentRatio || channel.contentRatio || 'Not provided';
-      const postingFrequency = channel.postingFrequency || 'Not provided';
-      const hashtagStrategy = channel.hashtagStrategy || 'Not provided';
+    channels.forEach(ch => activeChannels.add(ch.platform));
+  }
+  Object.keys(channelConfig).forEach(platform => activeChannels.add(platform));
+  
+  if (activeChannels.size > 0) {
+    const channelsRows = Array.from(activeChannels).map(platform => {
+      const channelData = channels.find(ch => ch.platform === platform);
+      const config = channelConfig[platform] || {};
+      const enabled = channelData?.enabled !== undefined ? (channelData.enabled ? 'Enabled' : 'Disabled') : 'Configured';
+      const tone = config.tone || 'Default';
+      const wordCount = config.wordCount || 'Not set';
+      const contentRatio = config.contentRatio || 'Not set';
       
       return `
         <tr>
           <td><strong>${platform.charAt(0).toUpperCase() + platform.slice(1)}</strong></td>
           <td><span class="status-${enabled.toLowerCase()}">${enabled}</span></td>
           <td>${tone}</td>
-          <td>${wordLimit}</td>
-          <td>${contentRatio}${typeof contentRatio === 'number' ? '%' : ''}</td>
-          <td>${postingFrequency}</td>
-          <td>${hashtagStrategy}</td>
+          <td>${wordCount}${typeof wordCount === 'number' ? ' words' : ''}</td>
+          <td>${contentRatio}</td>
         </tr>
       `;
     }).join('');
@@ -174,22 +178,27 @@ const generateCampaignDossierHTML = (campaign: any, newsItemsData: any[], channe
             <th>Platform</th>
             <th>Status</th>
             <th>Brand Tone</th>
-            <th>Content Limits</th>
-            <th>News/Campaign Mix</th>
-            <th>Posting Frequency</th>
-            <th>Hashtag Strategy</th>
+            <th>Word Count</th>
+            <th>Content Ratio</th>
           </tr>
           ${channelsRows}
         </table>
         
         <div class="subsection">
-          <h4>Platform-Specific Notes:</h4>
-          ${channels.map(channel => {
-            if (channel.notes || channel.specificSettings) {
+          <h4>API Configuration:</h4>
+          <p><strong>API Integration:</strong> ${apiEnabled ? 'Enabled' : 'Disabled'}</p>
+          <p><strong>Thumbnail Settings:</strong> ${socialSettings.thumbnailOrder ? Object.keys(socialSettings.thumbnailOrder).length + ' platforms configured' : 'Default settings'}</p>
+        </div>
+        
+        <div class="subsection">
+          <h4>Platform-Specific Configuration:</h4>
+          ${Array.from(activeChannels).map(platform => {
+            const config = channelConfig[platform];
+            if (config && config.enabled !== false) {
               return `
                 <div class="platform-notes">
-                  <strong>${(channel.platform || 'Platform').charAt(0).toUpperCase() + (channel.platform || 'Platform').slice(1)}:</strong>
-                  <p>${channel.notes || channel.specificSettings || 'No specific notes'}</p>
+                  <strong>${platform.charAt(0).toUpperCase() + platform.slice(1)}:</strong>
+                  <p>Tone: ${config.tone || 'Default'} | Word Count: ${config.wordCount || 'Not set'} | Content Mix: ${config.contentRatio || 'Not set'}</p>
                 </div>
               `;
             }
@@ -777,6 +786,19 @@ router.get('/dossier/:campaignId', requireAuth, async (req, res) => {
     // Fetch campaign channels for Module 2 data
     const channels = await db.query.campaignChannels.findMany({
       where: eq(campaignChannels.campaignId, campaignId)
+    });
+
+    // Debug log to see what data we're working with
+    console.log('Campaign Dossier Debug:', {
+      campaignId,
+      campaignName: campaign.campaignName,
+      websiteUrl: campaign.websiteUrl,
+      ctaUrl: campaign.ctaUrl,
+      emotionalObjective: campaign.emotionalObjective,
+      audiencePain: campaign.audiencePain,
+      socialSettings: campaign.socialSettings,
+      channelsData: channels.length,
+      newsItems: campaignNewsItems.length
     });
 
     // Generate comprehensive HTML content using enhanced generator
