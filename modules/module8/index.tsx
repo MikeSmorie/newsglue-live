@@ -187,10 +187,10 @@ Efficiency Score: ${campaignMetrics.efficiencyScore}%`;
       <div className="container max-w-7xl mx-auto p-6">
         <div className="text-center py-12">
           <BarChart3 className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-          <h3 className="text-xl font-medium text-gray-900 mb-2">
+          <h3 className="text-xl font-medium text-gray-900 dark:text-gray-100 mb-2">
             No Campaign Available
           </h3>
-          <p className="text-gray-500 mb-6">
+          <p className="text-gray-500 dark:text-gray-400 mb-6">
             Create a campaign in Module 1 to view performance metrics.
           </p>
         </div>
@@ -236,10 +236,10 @@ Efficiency Score: ${campaignMetrics.efficiencyScore}%`;
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Total Outputs</p>
-                    <p className="text-3xl font-bold text-blue-600">{campaignMetrics.totalOutputs}</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Outputs</p>
+                    <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{campaignMetrics.totalOutputs}</p>
                   </div>
-                  <FileText className="h-8 w-8 text-blue-600" />
+                  <FileText className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                 </div>
               </CardContent>
             </Card>
@@ -248,12 +248,12 @@ Efficiency Score: ${campaignMetrics.efficiencyScore}%`;
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Time Saved</p>
-                    <p className="text-3xl font-bold text-green-600">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Time Saved</p>
+                    <p className="text-3xl font-bold text-green-600 dark:text-green-400">
                       {Math.round(campaignMetrics.totalTimeSavedSeconds / 60)}m
                     </p>
                   </div>
-                  <Clock className="h-8 w-8 text-green-600" />
+                  <Clock className="h-8 w-8 text-green-600 dark:text-green-400" />
                 </div>
               </CardContent>
             </Card>
@@ -262,12 +262,12 @@ Efficiency Score: ${campaignMetrics.efficiencyScore}%`;
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Cost Saved</p>
-                    <p className="text-3xl font-bold text-emerald-600">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Cost Saved</p>
+                    <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
                       ${campaignMetrics.totalCostSaved}
                     </p>
                   </div>
-                  <DollarSign className="h-8 w-8 text-emerald-600" />
+                  <DollarSign className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
                 </div>
               </CardContent>
             </Card>
@@ -276,12 +276,12 @@ Efficiency Score: ${campaignMetrics.efficiencyScore}%`;
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Efficiency</p>
-                    <p className="text-3xl font-bold text-purple-600">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Efficiency</p>
+                    <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">
                       {campaignMetrics.efficiencyScore}%
                     </p>
                   </div>
-                  <TrendingUp className="h-8 w-8 text-purple-600" />
+                  <TrendingUp className="h-8 w-8 text-purple-600 dark:text-purple-400" />
                 </div>
               </CardContent>
             </Card>
@@ -323,15 +323,15 @@ Efficiency Score: ${campaignMetrics.efficiencyScore}%`;
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Compliance Score</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">Compliance Score</span>
                   <Badge variant="secondary">{campaignMetrics.complianceScore}%</Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">CTA Presence</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">CTA Presence</span>
                   <Badge variant="secondary">{campaignMetrics.ctaPresenceRate}%</Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Quality Rating</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">Quality Rating</span>
                   <Badge variant="secondary">
                     {outputMetrics.length > 0 
                       ? Math.round(outputMetrics.reduce((acc, m) => acc + parseFloat(m.qualityRating), 0) / outputMetrics.length * 10) / 10
