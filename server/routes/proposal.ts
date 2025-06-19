@@ -392,6 +392,40 @@ router.post('/download/:format', requireAuth, async (req, res) => {
       item.platformOutputs && Object.keys(item.platformOutputs as any).length > 0
     );
 
+    // Fetch campaign metrics from Module 8
+    let metrics = await db.query.campaignMetrics.findFirst({
+      where: eq(campaignMetrics.campaignId, campaignId)
+    });
+
+    // Get output metrics for detailed calculations
+    const outputs = await db.query.outputMetrics.findMany({
+      where: eq(outputMetrics.campaignId, campaignId)
+    });
+
+    // Calculate real-time metrics if outputs exist
+    if (outputs.length > 0 && metrics) {
+      const totalOutputs = outputs.length;
+      const totalTimeSaved = outputs.reduce((sum, output) => sum + output.timeSavedSeconds, 0);
+      const totalCostSaved = outputs.reduce((sum, output) => sum + parseFloat(output.costSaved), 0);
+      const complianceCount = outputs.filter(output => output.complianceCheck).length;
+      const ctaCount = outputs.filter(output => output.ctaPresent).length;
+      
+      const complianceScore = (complianceCount / totalOutputs * 100).toFixed(2);
+      const ctaPresenceRate = (ctaCount / totalOutputs * 100).toFixed(2);
+      const efficiencyScore = Math.min(100, (totalTimeSaved / (totalOutputs * 1800) * 100)).toFixed(2);
+      
+      // Update metrics object with calculated values
+      metrics = {
+        ...metrics,
+        totalOutputs,
+        totalTimeSavedSeconds: totalTimeSaved,
+        totalCostSaved: totalCostSaved.toFixed(2),
+        complianceScore,
+        ctaPresenceRate,
+        efficiencyScore
+      };
+    }
+
     // Prepare template data
     const proposalDate = new Date().toLocaleDateString();
     const validUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString();
@@ -402,7 +436,9 @@ router.post('/download/:format', requireAuth, async (req, res) => {
       validUntil,
       campaignData: campaign,
       newsItems: newsItemsWithContent,
-      platformOutputs: []
+      platformOutputs: [],
+      metrics: metrics || null,
+      outputs: outputs || []
     };
 
     const html = generateProposalHTML(templateData);

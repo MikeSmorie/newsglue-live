@@ -196,6 +196,72 @@ export function generateProposalHTML(data: ProposalTemplateData): string {
             font-weight: 600;
         }
         
+        .metrics-summary {
+            background: #f8f9fa;
+            border-left: 4px solid #4A90E2;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 6px;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 25px 0;
+        }
+        
+        .metric-item {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .metric-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .metric-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #4A90E2;
+        }
+        
+        .platform-breakdown {
+            margin-top: 25px;
+        }
+        
+        .platform-metrics {
+            background: #f9f9f9;
+            border-radius: 6px;
+            padding: 20px;
+            margin-top: 15px;
+        }
+        
+        .platform-stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .platform-stat:last-child {
+            border-bottom: none;
+        }
+        
+        .platform-stat .platform-name {
+            font-weight: 600;
+            color: #333;
+            text-transform: capitalize;
+        }
+        
         .footer {
             margin-top: 60px;
             padding-top: 30px;
