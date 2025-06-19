@@ -9,7 +9,7 @@ import { HelpCircle } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
-import SocialChannelsSelectorSimple from './SocialChannelsSelectorSimple';
+import PlatformSelector from './PlatformSelector';
 
 export default function CampaignForm() {
   const { register, handleSubmit, reset } = useForm();
@@ -158,8 +158,7 @@ export default function CampaignForm() {
         </div>
 
         <div className="border-t pt-4">
-          <SocialChannelsSelectorSimple
-            selectedPlatforms={selectedPlatforms}
+          <PlatformSelector
             onSelectionChange={handlePlatformChange}
             disabled={mutation.isPending}
           />
