@@ -26,6 +26,21 @@ const modules = {
   10: lazy(() => import("../../../modules/module10")),
 };
 
+// Module names mapping
+const moduleNames = {
+  "1": "1 Campaign Builder",
+  "2": "2 Social Channels", 
+  "3": "3 User Inputted News",
+  "4": "4 News Search",
+  "5": "5 Google Keyword",
+  "6": "6 Execution Module",
+  "7": "7 Proposal Builder",
+  "8": "8 Metrics Tracker",
+  "9": "9 AI Discoverability",
+  "10": "10 AI Intelligence",
+  "omega-10": "10 AI Intelligence"
+};
+
 interface ModuleViewProps {
   moduleId?: string;
 }
@@ -35,6 +50,8 @@ export default function ModuleView({ moduleId }: ModuleViewProps) {
   const [, navigate] = useLocation();
   const id = moduleId || params.id;
   const moduleNumber = parseInt(id || '0');
+  
+  const displayName = moduleNames[id as keyof typeof moduleNames] || `Module ${id}`;
   
   // Check if module exists and load it
   const ModuleComponent = modules[moduleNumber as keyof typeof modules];
@@ -53,7 +70,7 @@ export default function ModuleView({ moduleId }: ModuleViewProps) {
             <div className="flex items-center space-x-2">
               <Grid3X3 className="h-6 w-6 text-gray-600 dark:text-gray-400" />
               <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-                {moduleNames[id as keyof typeof moduleNames] || `Module ${id}`}
+                {displayName}
               </h1>
             </div>
           </div>
@@ -77,24 +94,6 @@ export default function ModuleView({ moduleId }: ModuleViewProps) {
     );
   }
 
-  // Get the proper module name
-  const moduleNames = {
-    "1": "1 Campaign Builder",
-    "2": "2 Social Channels", 
-    "3": "3 User Inputted News",
-    "4": "4 News Search",
-    "5": "5 Google Keyword",
-    "6": "6 Execution Module",
-    "7": "7 Proposal Builder",
-    "8": "8 Metrics Tracker",
-    "9": "9 AI Discoverability",
-    "10": "10 AI Intelligence",
-    "omega-10": "10 AI Intelligence"
-  };
-  
-  const moduleName = moduleNames[id as keyof typeof moduleNames] || `Module ${id}`;
-  const displayName = moduleName;
-
   return (
     <div className="space-y-6">
       {/* Header Section */}
@@ -108,65 +107,42 @@ export default function ModuleView({ moduleId }: ModuleViewProps) {
           <div className="flex items-center space-x-2">
             <Grid3X3 className="h-6 w-6 text-gray-600 dark:text-gray-400" />
             <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-              {moduleNames[id as keyof typeof moduleNames] || `Module ${id}`}
+              {displayName}
             </h1>
           </div>
         </div>
         
         <div className="flex items-center space-x-2">
-          <Badge variant="outline" className="text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-600">
-            Inactive
+          <Badge variant="outline" className="text-gray-500">
+            Coming Soon
           </Badge>
         </div>
       </div>
 
-      {/* Subheading */}
-      <div>
-        <p className="text-xl text-gray-600 dark:text-gray-400">
-          This module is currently inactive.
-        </p>
-      </div>
-
-      {/* Body Text */}
-      <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
-            <Package className="h-5 w-5" />
-            Module Information
+      {/* Module Placeholder Content */}
+      <Card className="border-dashed">
+        <CardHeader className="text-center">
+          <div className="flex justify-center mb-4">
+            <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-full">
+              <Package className="h-8 w-8 text-gray-600 dark:text-gray-400" />
+            </div>
+          </div>
+          <CardTitle className="text-gray-900 dark:text-white">
+            {displayName}
           </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <blockquote className="border-l-4 border-gray-300 dark:border-gray-600 pl-4 text-gray-700 dark:text-gray-300 italic">
-            "Modules are sealed functional containers assigned by the system developer. This space is reserved for application logic, tools, or features to be added in future phases. Users cannot build or modify modules directly."
-          </blockquote>
-        </CardContent>
-      </Card>
-
-      {/* Module Content Area (Reserved) */}
-      <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
-            <Lock className="h-5 w-5" />
-            Module Content Area (Reserved)
-          </CardTitle>
-          <CardDescription className="text-gray-600 dark:text-gray-400">
-            This space is reserved for system developer assignment
+          <CardDescription>
+            This module is currently under development and will be available soon.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-12 text-center bg-gray-50 dark:bg-gray-900">
-            <Grid3X3 className="h-12 w-12 mx-auto text-gray-400 dark:text-gray-500 mb-4" />
-            <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">
-              {displayName}
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              This module container is awaiting developer assignment.<br />
-              Functional components will be activated by the system administrator.
-            </p>
-            <div className="flex items-center justify-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-              <Lock className="h-4 w-4" />
-              <span>Read-Only Access</span>
+        <CardContent className="text-center">
+          <div className="space-y-4">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Module features and functionality are being built to enhance your workflow experience.
             </div>
+            <Button variant="outline" disabled>
+              <Lock className="h-4 w-4 mr-2" />
+              Module Locked
+            </Button>
           </div>
         </CardContent>
       </Card>
