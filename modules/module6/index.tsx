@@ -124,11 +124,16 @@ export default function Module6() {
       return res.json();
     },
     onSuccess: () => {
+      toast({
+        title: "Status Updated",
+        description: "News item status has been updated.",
+        variant: "default"
+      });
       refetchQueue();
     }
   });
 
-  // Delete news item mutation
+  // Delete item mutation
   const deleteItemMutation = useMutation({
     mutationFn: async (id: number) => {
       const res = await fetch(`/api/queue/delete/${id}`, {
@@ -217,10 +222,6 @@ export default function Module6() {
         variant: "destructive"
       });
     }
-  };
-
-  const getPlatformIcon = (platform: string) => {
-    return platform.charAt(0).toUpperCase() + platform.slice(1);
   };
 
   const getGeneratedPlatforms = (item: NewsItem) => {
@@ -498,186 +499,162 @@ export default function Module6() {
                       <p className="text-lg mb-2">Select a news item to begin</p>
                       <p className="text-sm">Choose an item from the queue to generate or view content</p>
                     </div>
-                  ) : !selectedNewsItem.platformOutputs ? (
-                    <div className="text-center py-16">
-                      <div className="space-y-4">
-                        <Sparkles className="h-16 w-16 mx-auto text-blue-500" />
-                        <div>
-                          <p className="text-lg font-medium mb-2">Ready to Generate Content</p>
-                          <p className="text-sm text-muted-foreground mb-4">
-                            Generate newsjack content for all enabled platforms
-                          </p>
-                          <Button 
-                            onClick={() => generateContentMutation.mutate(selectedNewsItem.id)}
-                            disabled={generateContentMutation.isPending}
-                            size="lg"
+                  ) : (
+                    <div className="space-y-6">
+                      {/* News Item Details */}
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <h4 className="font-semibold mb-2">News Content</h4>
+                        <p className="text-sm text-gray-700 mb-3 line-clamp-3">{selectedNewsItem.content}</p>
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <a 
+                            href={selectedNewsItem.sourceUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 hover:text-blue-600"
                           >
-                            {generateContentMutation.isPending ? (
-                              <>
-                                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                                Generating...
-                              </>
-                            ) : (
-                              <>
-                                <Sparkles className="mr-2 h-4 w-4" />
-                                Generate Newsjack Content
-                              </>
-                            )}
-                          </Button>
+                            <ExternalLink className="h-3 w-3" />
+                            View Source
+                          </a>
+                          <span>•</span>
+                          <span>{new Date(selectedNewsItem.createdAt).toLocaleDateString()}</span>
+                          <span>•</span>
+                          <span className="capitalize">{selectedNewsItem.contentType}</span>
                         </div>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {/* Generation Metrics */}
-                      {selectedNewsItem.generationMetrics && (
-                        <div className="p-3 bg-blue-50 rounded-lg">
-                          <div className="flex items-center gap-4 text-sm">
-                            <span className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {selectedNewsItem.generationMetrics.generationTime}ms
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Zap className="h-3 w-3" />
-                              {selectedNewsItem.generationMetrics.totalTokens} tokens
-                            </span>
-                            <span>
-                              {selectedNewsItem.generationMetrics.platformsGenerated} platforms
-                            </span>
+
+                      {/* Campaign Context */}
+                      {selectedCampaign && (
+                        <div className="p-4 bg-blue-50 rounded-lg">
+                          <h4 className="font-semibold mb-2">Campaign Context</h4>
+                          <div className="text-sm text-gray-700 space-y-1">
+                            <p><span className="font-medium">Campaign:</span> {selectedCampaign.campaignName}</p>
                           </div>
                         </div>
                       )}
 
-                      {/* Platform Tabs */}
-                      <Tabs defaultValue={Object.keys(selectedNewsItem.platformOutputs)[0]} className="w-full">
-                        <TabsList className="grid w-full grid-cols-4">
-                          {Object.keys(selectedNewsItem.platformOutputs).map((platform) => (
-                            <TabsTrigger key={platform} value={platform} className="capitalize">
-                              {getPlatformIcon(platform)}
-                            </TabsTrigger>
-                          ))}
-                        </TabsList>
-                        
-                        {Object.entries(selectedNewsItem.platformOutputs).map(([platform, output]: [string, any]) => (
-                          <TabsContent key={platform} value={platform} className="space-y-4">
-                            <div className="p-4 border rounded-lg bg-gray-50">
-                              <div className="flex justify-between items-start mb-3">
-                                <div className="flex gap-2">
-                                  <Badge variant="outline" className="capitalize">{platform}</Badge>
-                                  {output.manuallyEdited && (
-                                    <Badge variant="secondary">Edited</Badge>
-                                  )}
-                                </div>
-                                <div className="flex gap-1">
-                                  <Dialog>
-                                    <DialogTrigger asChild>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-6 px-2"
-                                        onClick={() => setEditingContent({ platform, content: output })}
-                                      >
-                                        <Edit className="h-3 w-3" />
-                                      </Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="max-w-2xl">
-                                      <DialogHeader>
-                                        <DialogTitle>Edit {platform} Content</DialogTitle>
-                                        <DialogDescription>
-                                          Modify the generated content for this platform
-                                        </DialogDescription>
-                                      </DialogHeader>
-                                      {editingContent && (
-                                        <div className="space-y-4">
-                                          <div>
-                                            <Label htmlFor="edit-content">Content</Label>
-                                            <Textarea
-                                              id="edit-content"
-                                              value={editingContent.content.content}
-                                              onChange={(e) => setEditingContent(prev => prev ? {
-                                                ...prev,
-                                                content: { ...prev.content, content: e.target.value }
-                                              } : null)}
-                                              rows={6}
-                                            />
-                                          </div>
-                                          <div>
-                                            <Label htmlFor="edit-cta">Call to Action</Label>
-                                            <Textarea
-                                              id="edit-cta"
-                                              value={editingContent.content.cta}
-                                              onChange={(e) => setEditingContent(prev => prev ? {
-                                                ...prev,
-                                                content: { ...prev.content, cta: e.target.value }
-                                              } : null)}
-                                              rows={2}
-                                            />
-                                          </div>
-                                        </div>
-                                      )}
-                                      <DialogFooter>
+                      {/* Generate NewsJack Button */}
+                      {!selectedNewsItem.platformOutputs && (
+                        <div className="text-center py-8">
+                          <Button
+                            onClick={() => generateContentMutation.mutate(selectedNewsItem.id)}
+                            disabled={generateContentMutation.isPending}
+                            className="bg-blue-600 hover:bg-blue-700"
+                            size="lg"
+                          >
+                            {generateContentMutation.isPending ? (
+                              <>
+                                <Clock className="mr-2 h-4 w-4 animate-spin" />
+                                Generating NewsJack Content...
+                              </>
+                            ) : (
+                              <>
+                                <Sparkles className="mr-2 h-4 w-4" />
+                                Generate NewsJack
+                              </>
+                            )}
+                          </Button>
+                          <p className="text-sm text-muted-foreground mt-2">
+                            AI will create platform-specific content following NewsJack methodology
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Generated Content Display */}
+                      {selectedNewsItem.platformOutputs && (
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center">
+                            <h4 className="font-semibold">Generated Content</h4>
+                            <Button
+                              onClick={() => generateContentMutation.mutate(selectedNewsItem.id)}
+                              disabled={generateContentMutation.isPending}
+                              variant="outline"
+                              size="sm"
+                            >
+                              <RefreshCw className="mr-1 h-3 w-3" />
+                              Regenerate
+                            </Button>
+                          </div>
+
+                          <Tabs defaultValue={Object.keys(selectedNewsItem.platformOutputs)[0]}>
+                            <TabsList className="grid w-full grid-cols-4">
+                              {Object.entries(selectedNewsItem.platformOutputs).map(([platform]) => (
+                                <TabsTrigger key={platform} value={platform} className="capitalize">
+                                  {platform}
+                                </TabsTrigger>
+                              ))}
+                            </TabsList>
+
+                            {Object.entries(selectedNewsItem.platformOutputs).map(([platform, content]: [string, any]) => (
+                              <TabsContent key={platform} value={platform} className="space-y-4">
+                                <Card>
+                                  <CardHeader className="pb-3">
+                                    <div className="flex justify-between items-center">
+                                      <CardTitle className="text-base capitalize">{platform} Content</CardTitle>
+                                      <div className="flex gap-2">
                                         <Button
-                                          onClick={() => {
-                                            if (editingContent) {
-                                              updateContentMutation.mutate({
-                                                id: selectedNewsItem.id,
-                                                platform: editingContent.platform,
-                                                content: editingContent.content
-                                              });
-                                            }
-                                          }}
-                                          disabled={updateContentMutation.isPending}
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => handleCopyToClipboard(content.content)}
                                         >
-                                          Save Changes
+                                          <Copy className="mr-1 h-3 w-3" />
+                                          Copy
                                         </Button>
-                                      </DialogFooter>
-                                    </DialogContent>
-                                  </Dialog>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-6 px-2"
-                                    onClick={() => handleCopyToClipboard(output.content)}
-                                  >
-                                    <Copy className="h-3 w-3" />
-                                  </Button>
-                                </div>
-                              </div>
-                              
-                              <div className="space-y-3">
-                                <div>
-                                  <p className="text-sm font-medium mb-1">Content:</p>
-                                  <p className="text-sm">{output.content}</p>
-                                </div>
-                                
-                                {output.hashtags && output.hashtags.length > 0 && (
-                                  <div>
-                                    <p className="text-sm font-medium mb-1">Hashtags:</p>
-                                    <p className="text-sm text-blue-600">
-                                      {output.hashtags.map((tag: string) => `#${tag}`).join(' ')}
-                                    </p>
-                                  </div>
-                                )}
-                                
-                                <div>
-                                  <p className="text-sm font-medium mb-1">Call to Action:</p>
-                                  <p className="text-sm">{output.cta}</p>
-                                </div>
-                                
-                                {output.metrics && (
-                                  <div className="pt-2 border-t">
-                                    <div className="flex gap-4 text-xs text-muted-foreground">
-                                      <span>News: {output.metrics.newsPercentage}%</span>
-                                      <span>Campaign: {output.metrics.campaignPercentage}%</span>
-                                      <span>Engagement: {output.metrics.estimatedEngagement}</span>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => setEditingContent({ platform, content })}
+                                        >
+                                          <Edit className="mr-1 h-3 w-3" />
+                                          Edit
+                                        </Button>
+                                      </div>
                                     </div>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </TabsContent>
-                        ))}
-                      </Tabs>
+                                  </CardHeader>
+                                  <CardContent className="space-y-4">
+                                    <div className="p-3 bg-gray-50 rounded-lg">
+                                      <h5 className="font-medium text-sm mb-2">Content</h5>
+                                      <p className="text-sm whitespace-pre-wrap">{content.content}</p>
+                                    </div>
+
+                                    {content.hashtags && content.hashtags.length > 0 && (
+                                      <div>
+                                        <h5 className="font-medium text-sm mb-2">Hashtags</h5>
+                                        <div className="flex flex-wrap gap-1">
+                                          {content.hashtags.map((tag: string, index: number) => (
+                                            <Badge key={index} variant="outline" className="text-xs">
+                                              #{tag}
+                                            </Badge>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {content.cta && (
+                                      <div>
+                                        <h5 className="font-medium text-sm mb-2">Call to Action</h5>
+                                        <p className="text-sm font-medium text-blue-600">{content.cta}</p>
+                                      </div>
+                                    )}
+
+                                    {content.metrics && (
+                                      <div className="grid grid-cols-2 gap-4 pt-2 border-t">
+                                        <div>
+                                          <p className="text-xs text-muted-foreground">News Focus</p>
+                                          <p className="text-sm font-medium">{content.metrics.newsPercentage}%</p>
+                                        </div>
+                                        <div>
+                                          <p className="text-xs text-muted-foreground">Campaign Focus</p>
+                                          <p className="text-sm font-medium">{content.metrics.campaignPercentage}%</p>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </CardContent>
+                                </Card>
+                              </TabsContent>
+                            ))}
+                          </Tabs>
+                        </div>
+                      )}
                     </div>
                   )}
                 </CardContent>
@@ -685,6 +662,87 @@ export default function Module6() {
             </div>
           </div>
         )}
+
+        {/* Content Editing Dialog */}
+        <Dialog open={!!editingContent} onOpenChange={() => setEditingContent(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Edit {editingContent?.platform} Content</DialogTitle>
+              <DialogDescription>
+                Modify the generated content while maintaining NewsJack methodology
+              </DialogDescription>
+            </DialogHeader>
+            
+            {editingContent && (
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="edit-content">Content</Label>
+                  <Textarea
+                    id="edit-content"
+                    value={editingContent.content.content}
+                    onChange={(e) => setEditingContent(prev => prev ? {
+                      ...prev,
+                      content: { ...prev.content, content: e.target.value }
+                    } : null)}
+                    rows={6}
+                    className="resize-none"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="edit-hashtags">Hashtags (comma-separated)</Label>
+                  <Textarea
+                    id="edit-hashtags"
+                    value={editingContent.content.hashtags?.join(', ') || ''}
+                    onChange={(e) => setEditingContent(prev => prev ? {
+                      ...prev,
+                      content: { 
+                        ...prev.content, 
+                        hashtags: e.target.value.split(',').map(tag => tag.trim()).filter(Boolean)
+                      }
+                    } : null)}
+                    rows={2}
+                    className="resize-none"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="edit-cta">Call to Action</Label>
+                  <Textarea
+                    id="edit-cta"
+                    value={editingContent.content.cta || ''}
+                    onChange={(e) => setEditingContent(prev => prev ? {
+                      ...prev,
+                      content: { ...prev.content, cta: e.target.value }
+                    } : null)}
+                    rows={2}
+                    className="resize-none"
+                  />
+                </div>
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditingContent(null)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  if (editingContent && selectedNewsItem) {
+                    updateContentMutation.mutate({
+                      id: selectedNewsItem.id,
+                      platform: editingContent.platform,
+                      content: editingContent.content
+                    });
+                  }
+                }}
+                disabled={updateContentMutation.isPending}
+              >
+                {updateContentMutation.isPending ? 'Updating...' : 'Update Content'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </TooltipProvider>
   );
