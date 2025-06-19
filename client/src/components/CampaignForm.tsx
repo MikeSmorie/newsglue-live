@@ -23,19 +23,19 @@ interface CampaignFormData {
   strategy_q5: string;
 }
 
-// Tooltip content for form fields
+// Tooltip content for form fields - NewsJack methodology focused
 const tooltips = {
-  campaignName: "Enter a short, memorable name for this campaign (used internally only).",
-  campaignUrl: "Paste the URL users should be sent to when they click on your NewsJack (e.g. product, signup, landing page).",
-  websiteUrl: "Enter the homepage or About URL of the company. The system will scrape this for brand insights.",
-  additionalData: "Upload documents or enter extended notes to help AI understand the brand, product, or tone.",
-  autoPopulate: "Click to auto-fill campaign data using content from the Website URL and uploaded documents.",
-  tone: "Select the brand archetype to shape tone. Examples: Sage (educational), Rebel (challenging), Hero (bold).",
-  strategy_q1: "What is the core objective? Examples: drive trial signups, spark conversation, position as thought leader.",
-  strategy_q2: "Describe the audience this campaign speaks to. Include traits, pains, desires (e.g. 'Tech founders under 35').",
-  strategy_q3: "Highlight why this solution stands out. What is your unfair advantage or market wedge?",
-  strategy_q4: "What do you want the reader to feel? (e.g., urgency, curiosity, outrage, validation, hope).",
-  strategy_q5: "Skip this if not relevant. Timeline is optional and typically unused for fast-moving news cycles."
+  campaignName: "Enter a short, memorable name for this campaign (used internally only). This helps you track NewsJack performance across different initiatives.",
+  campaignUrl: "Paste the URL users should be sent to when they click on your NewsJack (e.g. product page, signup form, landing page). This is where the emotional momentum converts to action.",
+  websiteUrl: "Enter the homepage or About URL of the company. The system will scrape this to understand brand voice, positioning, and key messaging for authentic NewsJack integration.",
+  additionalData: "Add documents, brand guidelines, or notes about tone, key messages, or positioning. This helps AI create NewsJacks that feel authentically 'on-brand' while leveraging news emotion.",
+  autoPopulate: "Click to auto-fill campaign data using scraped content from the Website URL and uploaded documents. Saves manual input while ensuring brand consistency.",
+  tone: "Select the brand archetype that shapes how you'll frame news stories. This determines whether you respond as educator (Sage), disruptor (Rebel), or challenger (Hero) to news events.",
+  strategy_q1: "What emotional outcome drives this campaign? Focus on feelings that news can trigger: urgency (limited time), curiosity (insider access), validation (you're right), or outrage (injustice).",
+  strategy_q2: "Who feels the pain that trending news exposes? Be specific about demographics, but focus on emotional triggers: 'Frustrated startup founders watching competitors raise millions' vs 'Tech founders under 35'.",
+  strategy_q3: "What makes your solution uniquely positioned to address what's happening in the news? Focus on timing, relevance, or contrarian positioning that sets you apart from reactive responses.",
+  strategy_q4: "What specific emotion should readers feel when they see news + your response? Target: shock (didn't see this coming), irony (this proves my point), conflict (this is wrong), or intrigue (there's more to this story).",
+  strategy_q5: "Timeline context helps with urgency framing. Most NewsJack opportunities are 24-48 hours max. Leave blank for evergreen campaigns that respond to recurring news themes."
 };
 
 const toneOptions = [
@@ -271,7 +271,7 @@ export default function CampaignForm({ onSuccess }: { onSuccess?: () => void }) 
             <div className="space-y-4">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Label htmlFor="strategy_q1">Primary Business Goal</Label>
+                  <Label htmlFor="strategy_q1">Emotional Campaign Objective</Label>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
@@ -283,7 +283,7 @@ export default function CampaignForm({ onSuccess }: { onSuccess?: () => void }) 
                 </div>
                 <Textarea
                   id="strategy_q1"
-                  placeholder="What is the core objective? Examples: drive trial signups, spark conversation..."
+                  placeholder="What emotional trigger drives this campaign? (urgency, curiosity, validation, outrage, shock, hope...)"
                   value={formData.strategy_q1}
                   onChange={(e) => handleInputChange('strategy_q1', e.target.value)}
                   rows={3}
@@ -292,7 +292,7 @@ export default function CampaignForm({ onSuccess }: { onSuccess?: () => void }) 
 
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Label htmlFor="strategy_q2">Target Audience</Label>
+                  <Label htmlFor="strategy_q2">Target Audience (Pain-Focused)</Label>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
@@ -304,7 +304,7 @@ export default function CampaignForm({ onSuccess }: { onSuccess?: () => void }) 
                 </div>
                 <Textarea
                   id="strategy_q2"
-                  placeholder="Describe the audience this campaign speaks to..."
+                  placeholder="Who feels the pain that trending news exposes? Focus on emotional triggers, not just demographics..."
                   value={formData.strategy_q2}
                   onChange={(e) => handleInputChange('strategy_q2', e.target.value)}
                   rows={3}
@@ -313,7 +313,7 @@ export default function CampaignForm({ onSuccess }: { onSuccess?: () => void }) 
 
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Label htmlFor="strategy_q3">What makes your product/service unique?</Label>
+                  <Label htmlFor="strategy_q3">NewsJack Positioning Hook</Label>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
@@ -325,7 +325,7 @@ export default function CampaignForm({ onSuccess }: { onSuccess?: () => void }) 
                 </div>
                 <Textarea
                   id="strategy_q3"
-                  placeholder="Highlight your unique value proposition and differentiators..."
+                  placeholder="What makes your solution uniquely positioned to address what's happening in the news right now?"
                   value={formData.strategy_q3}
                   onChange={(e) => handleInputChange('strategy_q3', e.target.value)}
                   rows={3}
@@ -334,7 +334,7 @@ export default function CampaignForm({ onSuccess }: { onSuccess?: () => void }) 
 
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Label htmlFor="strategy_q4">What emotional response do you want?</Label>
+                  <Label htmlFor="strategy_q4">Target Emotional Response</Label>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
@@ -346,7 +346,7 @@ export default function CampaignForm({ onSuccess }: { onSuccess?: () => void }) 
                 </div>
                 <Textarea
                   id="strategy_q4"
-                  placeholder="What do you want the reader to feel? (e.g., urgency, curiosity, validation...)"
+                  placeholder="Target: shock, irony, conflict, intrigue. What should readers feel when they see news + your response?"
                   value={formData.strategy_q4}
                   onChange={(e) => handleInputChange('strategy_q4', e.target.value)}
                   rows={3}
@@ -355,7 +355,7 @@ export default function CampaignForm({ onSuccess }: { onSuccess?: () => void }) 
 
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Label htmlFor="strategy_q5">Timeline</Label>
+                  <Label htmlFor="strategy_q5">NewsJack Timeline Context</Label>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
@@ -367,7 +367,7 @@ export default function CampaignForm({ onSuccess }: { onSuccess?: () => void }) 
                 </div>
                 <Textarea
                   id="strategy_q5"
-                  placeholder="Optional - Specify campaign duration and key milestones..."
+                  placeholder="Most NewsJack opportunities are 24-48 hours max. Leave blank for evergreen themes..."
                   value={formData.strategy_q5}
                   onChange={(e) => handleInputChange('strategy_q5', e.target.value)}
                   rows={3}

@@ -10,6 +10,8 @@ interface Campaign {
   id: string;
   campaignName: string;
   campaignUrl?: string;
+  websiteUrl?: string;
+  additionalData?: string;
   tone?: string;
   strategy_q1?: string;
   strategy_q2?: string;
@@ -111,11 +113,21 @@ export default function CampaignBuilder() {
                   </div>
                 )}
                 
+                {campaign.websiteUrl && (
+                  <div className="flex items-center gap-2 text-sm text-gray-400">
+                    <Globe className="h-3 w-3 text-green-400" />
+                    <div>
+                      <div className="text-xs text-gray-500 uppercase">Source URL</div>
+                      <span className="truncate text-green-300">{campaign.websiteUrl}</span>
+                    </div>
+                  </div>
+                )}
+                
                 {campaign.strategy_q2 && (
                   <div className="flex items-start gap-2 text-sm">
                     <Target className="h-3 w-3 mt-1 text-blue-400" />
                     <div>
-                      <div className="text-xs text-gray-500 uppercase">Target Audience</div>
+                      <div className="text-xs text-gray-500 uppercase">Pain-Focused Audience</div>
                       <div className="text-gray-300 line-clamp-2">{campaign.strategy_q2}</div>
                     </div>
                   </div>
@@ -123,8 +135,15 @@ export default function CampaignBuilder() {
 
                 {campaign.strategy_q1 && (
                   <div className="text-sm">
-                    <div className="text-xs text-gray-500 uppercase mb-1">Primary Goal</div>
+                    <div className="text-xs text-gray-500 uppercase mb-1">Emotional Objective</div>
                     <div className="text-gray-300 line-clamp-2">{campaign.strategy_q1}</div>
+                  </div>
+                )}
+
+                {campaign.strategy_q4 && (
+                  <div className="text-sm">
+                    <div className="text-xs text-gray-500 uppercase mb-1">Target Emotion</div>
+                    <div className="text-gray-300 line-clamp-2">{campaign.strategy_q4}</div>
                   </div>
                 )}
               </CardContent>
