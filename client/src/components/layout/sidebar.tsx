@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 
 const moduleItems = [
-  { id: 1, name: "1 Campaign Builder", href: "/module/1", icon: Grid3X3 },
+  { id: 1, name: "Campaign Builder", href: "/module/1", icon: Grid3X3, featured: true, description: "NewsJack Content Creation" },
   { id: 2, name: "2 Social Channels", href: "/module/2", icon: Grid3X3 },
   { id: 3, name: "3 User Inputted News", href: "/module/3", icon: Grid3X3 },
   { id: 4, name: "4 News Search", href: "/module/4", icon: Grid3X3 },
@@ -290,6 +290,7 @@ export function Sidebar() {
           </h3>
           {moduleItems.map((item) => {
             const Icon = item.icon;
+            const isFeatured = item.featured;
             return (
               <Button
                 key={item.href}
@@ -297,13 +298,19 @@ export function Sidebar() {
                 size="sm"
                 className={cn(
                   "w-full justify-start text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800",
-                  isActive(item.href) && "bg-gray-100 dark:bg-gray-800"
+                  isActive(item.href) && "bg-gray-100 dark:bg-gray-800",
+                  isFeatured && "border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-950/30"
                 )}
                 asChild
               >
                 <a href={item.href}>
                   <Icon className="mr-2 h-3 w-3" />
-                  {item.name}
+                  <div className="flex flex-col items-start">
+                    <span className={cn("text-sm", isFeatured && "font-semibold")}>{item.name}</span>
+                    {isFeatured && item.description && (
+                      <span className="text-xs opacity-80">{item.description}</span>
+                    )}
+                  </div>
                 </a>
               </Button>
             );
