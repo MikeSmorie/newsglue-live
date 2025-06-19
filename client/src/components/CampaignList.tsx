@@ -40,9 +40,10 @@ interface Campaign {
 interface CampaignListProps {
   onEditCampaign?: (campaign: Campaign) => void;
   onCreateNew?: () => void;
+  onBackupCampaign?: (campaign: Campaign) => void;
 }
 
-export default function CampaignList({ onEditCampaign, onCreateNew }: CampaignListProps) {
+export default function CampaignList({ onEditCampaign, onCreateNew, onBackupCampaign }: CampaignListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState('newest');
@@ -320,6 +321,15 @@ export default function CampaignList({ onEditCampaign, onCreateNew }: CampaignLi
                 >
                   <Copy className="h-4 w-4 mr-1" />
                   Clone
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onBackupCampaign?.(campaign)}
+                >
+                  <Shield className="h-4 w-4 mr-1" />
+                  Backup
                 </Button>
 
                 <AlertDialog>

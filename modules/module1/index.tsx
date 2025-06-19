@@ -65,6 +65,11 @@ export default function Module1() {
     setEditingCampaign(null);
   };
 
+  const handleBackupCampaign = (campaign: Campaign) => {
+    setSelectedCampaign(campaign);
+    setShowBackupModal(true);
+  };
+
   const getStatusBadge = (status: string) => {
     const variants = {
       draft: 'secondary',
@@ -259,6 +264,7 @@ export default function Module1() {
           <CampaignList
             onEditCampaign={handleEditCampaign}
             onCreateNew={handleCreateCampaign}
+            onBackupCampaign={handleBackupCampaign}
           />
         </TabsContent>
 
