@@ -91,7 +91,7 @@ app.get("/api/module/test", async (req, res) => {
 
 (async () => {
   // Register all API routes and create HTTP server
-  const server = registerRoutes(app);
+  await registerRoutes(app);
 
   // Global error handling middleware
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

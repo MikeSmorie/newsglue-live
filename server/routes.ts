@@ -68,7 +68,7 @@ const errorHandler = async (err: any, req: any, res: any, next: any) => {
   });
 };
 
-export function registerRoutes(app: Express) {
+export async function registerRoutes(app: Express) {
   // Basic CORS setup
   app.use(cors({
     origin: process.env.NODE_ENV === 'production' ? false : '*',
@@ -200,6 +200,19 @@ export function registerRoutes(app: Express) {
    * GET /api/news-items/:campaignId - Get news items for campaign
    */
   app.use("/api/news-items", requireAuth, newsItemsRouter);
+
+  /**
+   * QUEUE MANAGEMENT API
+   * Auth: Required
+   * Role: User/Admin/Supergod
+   * GET /api/queue/fetch/:campaignId - Get all news items for campaign
+   * PUT /api/queue/update-status/:id - Update news item status
+   * DELETE /api/queue/delete/:id - Delete news item from queue
+   * POST /api/queue/generate-newsjacks/:id - Generate newsjack content for all platforms
+   * PUT /api/queue/update-content/:id - Update platform content manually
+   */
+  const { default: queueRoutes } = await import("./routes/queue/index.js");
+  app.use("/api/queue", requireAuth, queueRoutes);
 
   /**
    * WEBSITE SCRAPER API
