@@ -8,11 +8,11 @@ import { createSampleMetrics } from "../utils/sample-metrics.js";
 async function calculateRealMetrics(campaignId: string) {
   try {
     // Get all news items for this campaign
-    const newsItems = await db.query.newsItems.findMany({
+    const campaignNewsItems = await db.query.newsItems.findMany({
       where: eq(newsItems.campaignId, campaignId)
     });
 
-    if (newsItems.length === 0) {
+    if (campaignNewsItems.length === 0) {
       // If no news items exist, fall back to sample data for demonstration
       return await createSampleMetrics(campaignId);
     }
@@ -25,7 +25,7 @@ async function calculateRealMetrics(campaignId: string) {
     let ctaCount = 0;
     const realOutputMetrics = [];
 
-    for (const newsItem of newsItems) {
+    for (const newsItem of campaignNewsItems) {
       const platformOutputs = newsItem.platformOutputs as any;
       if (platformOutputs && typeof platformOutputs === 'object') {
         
@@ -117,6 +117,28 @@ import puppeteer from "puppeteer";
 import { generateMetricsReportHTML } from "../templates/metrics-report-template.js";
 
 const router = express.Router();
+
+// Calculate real metrics from actual content generation
+router.post('/calculate-real/:campaignId', async (req, res) => {
+  try {
+    const { campaignId } = req.params;
+    
+    if (!campaignId) {
+      return res.status(400).json({ error: 'Campaign ID is required' });
+    }
+
+    const result = await calculateRealMetrics(campaignId);
+    
+    if (result) {
+      res.json({ success: true, message: 'Real metrics calculated successfully' });
+    } else {
+      res.status(500).json({ error: 'Failed to calculate real metrics' });
+    }
+  } catch (error) {
+    console.error('Error calculating real metrics:', error);
+    res.status(500).json({ error: 'Failed to calculate real metrics' });
+  }
+});
 
 // Get campaign metrics
 router.get('/:campaignId', async (req, res) => {
