@@ -5,8 +5,10 @@ import { eq } from "drizzle-orm";
 import { generateProposalHTML } from "../templates/proposal-template.js";
 import puppeteer from "puppeteer";
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
-import { createWriteStream, unlinkSync, existsSync } from "fs";
+import { createWriteStream, unlinkSync, existsSync, readFileSync } from "fs";
 import path from "path";
+import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 const router = express.Router();
 
@@ -20,7 +22,6 @@ const getChromiumPath = () => {
     '/usr/bin/google-chrome'
   ];
   
-  const fs = require('fs');
   for (const path of possiblePaths) {
     try {
       if (fs.existsSync(path)) {
