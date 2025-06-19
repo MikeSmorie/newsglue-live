@@ -157,6 +157,8 @@ router.post('/generate-newsjacks/:id', requireAuth, async (req, res) => {
       console.log('Added blog platform to generation:', platforms);
     }
 
+    // Preserve existing platform outputs but reset landing page status for republishing
+    const existingOutputs = newsItem.platformOutputs as any || {};
     const platformOutputs: any = {};
     let totalTokens = 0;
 
@@ -228,6 +230,17 @@ Respond with JSON in this format:
           platform,
           config: platformConfig
         };
+
+        // Reset landing page status for blog platform to allow republishing
+        if (platform === 'blog') {
+          platformOutputs[platform] = {
+            ...platformOutputs[platform],
+            landingPageStatus: 'unpublished',
+            landingPageSlug: null,
+            landingPageUrl: null,
+            landingPagePublishedAt: null
+          };
+        }
       } catch (error) {
         console.error(`Error generating content for ${platform}:`, error);
         platformOutputs[platform] = {
@@ -235,6 +248,17 @@ Respond with JSON in this format:
           platform,
           config: platformConfig
         };
+
+        // Reset landing page status even on error for blog platform
+        if (platform === 'blog') {
+          platformOutputs[platform] = {
+            ...platformOutputs[platform],
+            landingPageStatus: 'unpublished',
+            landingPageSlug: null,
+            landingPageUrl: null,
+            landingPagePublishedAt: null
+          };
+        }
       }
     }
 

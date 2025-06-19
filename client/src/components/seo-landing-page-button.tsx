@@ -19,6 +19,24 @@ export function SeoLandingPageButton({
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
+  // Fetch fresh status from server on mount
+  useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const response = await fetch(`/api/landing-page/${newsjackId}/status`);
+        if (response.ok) {
+          const data = await response.json();
+          setStatus(data.status);
+          setUrl(data.url);
+        }
+      } catch (error) {
+        console.error('Failed to fetch landing page status:', error);
+      }
+    };
+
+    fetchStatus();
+  }, [newsjackId]);
+
   // Auto-refresh status every 10 seconds after toggle
   useEffect(() => {
     let interval: NodeJS.Timeout;

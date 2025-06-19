@@ -846,6 +846,7 @@ export default function Module6() {
                           {/* SEO Landing Page Button for Blog Content */}
                           {activeChannel === 'blog' && (
                             <SeoLandingPageButton 
+                              key={`${selectedNewsItem.id}-${selectedNewsItem.platformOutputs.blog?.generatedAt}`}
                               newsjackId={selectedNewsItem.id.toString()}
                               initialStatus={selectedNewsItem.platformOutputs.blog?.landingPageStatus || 'unpublished'}
                               initialUrl={selectedNewsItem.platformOutputs.blog?.landingPageUrl}
