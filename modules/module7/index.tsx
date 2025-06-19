@@ -285,7 +285,7 @@ export default function Module7() {
                     </div>
                     <div className="text-sm text-gray-600 dark:text-gray-400">
                       <p><strong>Word Document:</strong> Full proposal with comprehensive content sections, NewsJack examples, and detailed methodology</p>
-                      <p><strong>Download PDF:</strong> Opens printable HTML page that automatically triggers your browser's print-to-PDF function</p>
+                      <p><strong>Download PDF:</strong> Generates actual PDF file using server-side rendering (fallback to printable page if needed)</p>
                       <p><strong>Copy Rich Text:</strong> Complete formatted proposal for pasting into emails or documents</p>
                     </div>
                   </div>
