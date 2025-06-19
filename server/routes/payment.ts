@@ -2,6 +2,9 @@ import express from "express";
 import { db } from "@db";
 import { paymentProviders, transactions } from "@db/schema";
 import { eq } from "drizzle-orm";
+import * as paypalProvider from "../../lib/payments/paypal/index.js";
+import * as flutterwaveProvider from "../../lib/payments/flutterwave/index.js";
+import * as solanaProvider from "../../lib/payments/solana/index.js";
 
 const router = express.Router();
 
@@ -36,12 +39,15 @@ router.post("/:provider/pay", async (req, res) => {
       return res.status(404).json({ error: "Payment provider not found or inactive" });
     }
 
-    // Dynamic import of payment provider module
-    let paymentModule;
-    try {
-      paymentModule = await import(`../../../lib/payments/${provider.toLowerCase()}/index.js`);
-    } catch (importError) {
-      console.error(`Failed to import provider ${provider}:`, importError);
+    // Static provider mapping
+    const providers = {
+      paypal: paypalProvider,
+      flutterwave: flutterwaveProvider,
+      solana: solanaProvider
+    };
+
+    const paymentModule = providers[provider.toLowerCase() as keyof typeof providers];
+    if (!paymentModule) {
       return res.status(500).json({ error: "Payment provider module not available" });
     }
 
