@@ -629,9 +629,7 @@ router.get('/campaign-dossier/:campaignId', requireAuth, async (req, res) => {
     });
 
     // Fetch campaign channels for Module 2 data
-    const channelsData: any[] = await db.query.campaignChannels.findMany({
-      where: eq(campaignChannels.campaignId, campaignId)
-    });
+    const channelsData = await db.select().from(campaignChannels).where(eq(campaignChannels.campaignId, campaignId));
 
     // Calculate metrics
     const totalNewsItems = campaignNewsItems.length;
@@ -735,7 +733,7 @@ router.get('/campaign-dossier/:campaignId', requireAuth, async (req, res) => {
     `;
 
     // Use the enhanced generator function for comprehensive content
-    const htmlContent = generateCampaignDossierHTML(campaign, campaignNewsItems, campaignChannels || []);
+    const htmlContent = generateCampaignDossierHTML(campaign, campaignNewsItems, channelsData || []);
     
     // Format filename as specified: campaign-dossier-[campaign-name]-[date].pdf
     const campaignSlug = campaign.campaignName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
