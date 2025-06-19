@@ -111,9 +111,9 @@ export class DataIntegrityMonitor {
     try {
       // Check for any news items with missing essential fields
       const corruptedItems = await db.execute(sql`
-        SELECT id, title, campaign_id 
+        SELECT id, headline, campaign_id 
         FROM news_items 
-        WHERE title IS NULL OR campaign_id IS NULL OR title = '' OR campaign_id = ''
+        WHERE headline IS NULL OR campaign_id IS NULL OR headline = '' OR campaign_id = ''
       `);
       
       if (corruptedItems.rows.length > 0) {
