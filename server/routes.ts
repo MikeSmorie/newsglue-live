@@ -35,6 +35,7 @@ import newsjackRouter from "./routes/newsjack.js";
 import campaignsRouter from "./routes/campaigns/index";
 import campaignChannelRoutes from "./routes/campaign-channels";
 import newsitemsRouter from "./routes/newsitems";
+import newsItemsRouter from "./routes/news-items";
 import websiteScraperRouter from "./routes/website-scraper";
 import { db } from "../db";
 import { users } from "../db/schema";
@@ -190,6 +191,15 @@ export function registerRoutes(app: Express) {
    * GET /api/newsitems/:id - Get specific news item
    */
   app.use("/api/newsitems", requireAuth, newsitemsRouter);
+
+  /**
+   * NEWS ITEMS SUBMISSION API (Module 3 -> Module 6)
+   * Auth: Required
+   * Role: User/Admin/Supergod
+   * POST /api/news-items/manual-submit - Submit news item to Module 6 queue
+   * GET /api/news-items/:campaignId - Get news items for campaign
+   */
+  app.use("/api/news-items", requireAuth, newsItemsRouter);
 
   /**
    * WEBSITE SCRAPER API

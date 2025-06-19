@@ -295,7 +295,7 @@ export const announcementResponses = pgTable("announcement_responses", {
 // News items table for Module 3 -> Module 6 workflow
 export const newsItems = pgTable("news_items", {
   id: serial("id").primaryKey(),
-  campaignId: text("campaign_id").notNull().references(() => campaigns.id),
+  campaignId: uuid("campaign_id").notNull().references(() => campaigns.id),
   headline: text("headline").notNull(),
   sourceUrl: text("source_url").notNull(),
   content: text("content").notNull(),
