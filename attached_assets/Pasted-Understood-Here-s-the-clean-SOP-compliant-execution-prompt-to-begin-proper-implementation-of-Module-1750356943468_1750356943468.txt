@@ -1,0 +1,75 @@
+Understood. Here’s the clean SOP-compliant execution prompt to begin proper implementation of Module 7: Proposal Builder.
+
+##########
+
+🧠 Prompt 14 of 20 – Implement Proposal Builder for Rapid Client Acquisition
+Execute only this prompt and don’t try to interpret or anticipate what comes next.
+
+⸻
+
+Purpose:
+Enable lightning-fast generation of personalized strategic proposals to impress potential clients using scraped campaign data and real newsjack examples.
+
+⸻
+
+Scope:
+	•	Allow interns to create proposals by entering only the client name
+	•	Auto-pull all relevant campaign data (name, URL, objectives, tone, platform targeting)
+	•	Include at least one full newsjack with attribution and performance metrics
+	•	Generate downloadable proposals in PDF, HTML, Word, and Rich Text formats
+	•	Proposal output must look exactly like the provided PDF sample
+
+⸻
+
+UI Requirements (client/src/routes/module7/index.tsx):
+	•	Form Input: Client Name
+	•	Date Fields: Auto-fill Proposal Date and Expiry Date (+30 days)
+	•	Button: Generate Proposal
+	•	Tabs: Preview / Download
+	•	Output:
+	•	Prepared For: Client Name + Org
+	•	Prepared By: Campaign / App Identity
+	•	Executive Summary
+	•	Client Understanding
+	•	Our Approach
+	•	NewsJack Example Breakdown (with actual outputs)
+
+⸻
+
+Backend (server/routes/proposal.ts):
+	•	POST /api/proposal/generate
+→ Accepts { campaignId, clientName }
+→ Fetches all required campaign + newsjack data
+→ Renders server-side template using handlebars or HTML + CSS
+→ Returns file or HTML blob
+
+⸻
+
+Template Content (server/templates/proposal-template.ts):
+	•	Build HTML doc styled like sample PDF
+	•	Embed:
+	•	Campaign Name, Website URL, Call to Action
+	•	Campaign tone, emotional objectives, audience pain
+	•	Full formatted newsjack (title, source URL, all platform outputs)
+	•	Footer: Page numbers, www.NewsGlue.io, date
+
+⸻
+
+PDF Generation (server/services/proposal-pdf.ts):
+	•	Use Puppeteer or pdf-lib to render the proposal to PDF
+	•	Save temp file and return downloadable response
+
+⸻
+
+Download Options:
+	•	PDF
+	•	HTML
+	•	Rich Text (copy to clipboard)
+	•	Word (.docx optional)
+
+⸻
+
+Notes:
+The design must match the uploaded example in-code-we-trust-2025-06-19.pdf exactly. Prioritize formatting clarity and whitespace.
+
+##########

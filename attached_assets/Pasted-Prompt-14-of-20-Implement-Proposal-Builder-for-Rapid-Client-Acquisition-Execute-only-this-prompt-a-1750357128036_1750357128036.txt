@@ -1,0 +1,78 @@
+Prompt 14 of 20 – Implement Proposal Builder for Rapid Client Acquisition
+Execute only this prompt and don’t try to interpret or anticipate what comes next.
+
+⸻
+
+Purpose:
+Enable lightning-fast generation of professional strategic proposals using scraped campaign data, live newsjack outputs, and campaign metadata.
+
+⸻
+
+Scope:
+	•	Generate proposals from a single client name input
+	•	Include real campaign data and newsjacked content
+	•	Match formatting of in-code-we-trust-2025-06-19.pdf
+	•	Embed company logo, brand details, and page structure
+	•	Export to PDF, HTML, Word (.docx), and Rich Text
+
+⸻
+
+Frontend (client/src/routes/module7/index.tsx):
+	•	Form Input: Client Name, auto-filled Proposal Date, Valid Until (+30 days)
+	•	Button: Generate Proposal
+	•	Tabs: Preview, Download Options
+	•	Downloads: PDF, HTML, Word (.docx), Copy Rich Text
+
+⸻
+
+Backend (server/routes/proposal.ts):
+	•	POST /api/proposal/generate
+→ Accepts { campaignId, clientName }
+→ Fetches: campaign name, website URL, CTA, tone, platforms, emotional hooks
+→ Includes at least one news item + all platform outputs with metadata
+→ Renders HTML template (styled)
+
+⸻
+
+Template (server/templates/proposal-template.ts):
+	•	Layout structure:
+	•	Header:
+	•	Logo: /public/assets/01 Logo-C-slogan.png
+	•	Prepared For: Client
+	•	Prepared By: NewsGlue | Cementing your brand to the news cycle
+	•	URL: NewsGlue.io
+	•	Email: Team@NewsGlue.io
+	•	Executive Summary
+	•	Client Understanding
+	•	Our Approach
+	•	Sample NewsJack Outputs (full multi-platform outputs + source URL + metrics)
+	•	Footer: page numbers, branding
+
+⸻
+
+PDF Generator (server/services/proposal-pdf.ts):
+	•	Use Puppeteer to render HTML to PDF
+	•	Embed logo
+	•	Add footer with:
+	•	"NewsGlue.io | Team@NewsGlue.io | Cementing your brand to the news cycle"
+	•	Page numbers
+
+⸻
+
+Download Actions:
+	•	PDF
+	•	HTML
+	•	DOCX
+	•	Rich Text (Copy to Clipboard)
+
+⸻
+
+Assets:
+	•	Brand logo: /public/assets/01 Logo-C-slogan.png
+	•	Use high-resolution image and properly sized margins
+	•	Font: match existing style or default to Open Sans / Arial for compatibility
+
+⸻
+
+Reminder:
+Design must visually match in-code-we-trust-2025-06-19.pdf. Emphasize clarity, visual spacing, and visual hierarchy.

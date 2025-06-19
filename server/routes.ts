@@ -40,6 +40,7 @@ import websiteScraperRouter from "./routes/website-scraper";
 import pdfRouter from "./routes/pdf";
 import landingPageRouter from "./routes/landing-page.js";
 import aiSitemapRouter from "./routes/ai-sitemap.js";
+import proposalRouter from "./routes/proposal.js";
 import { db } from "../db";
 import { users } from "../db/schema";
 import { eq, and, or, desc, asc, sql } from "drizzle-orm";
