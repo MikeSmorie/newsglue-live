@@ -414,20 +414,7 @@ export default function Module6() {
               </Select>
             </div>
 
-            {/* Campaign Dossier PDF Export */}
-            {selectedCampaign && (
-              <div className="mb-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCampaignDossierPDFExport}
-                  className="w-full flex items-center gap-2"
-                >
-                  <BookOpen className="h-4 w-4" />
-                  Export Campaign Dossier PDF
-                </Button>
-              </div>
-            )}
+
 
             {/* Status Filter Buttons */}
             <div className="flex flex-wrap gap-1">
