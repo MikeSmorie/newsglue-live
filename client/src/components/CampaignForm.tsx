@@ -173,9 +173,15 @@ export default function CampaignForm({ onSuccess, onCancel, editingCampaign }: C
       const data = await response.json();
       setScrapedData(data);
       
+      // Automatically append scraped content to the additional_data field
+      const currentAdditionalData = form.getValues('additional_data') || '';
+      const websiteAnalysis = `\n\n=== Website Analysis ===\nURL: ${url}\nTitle: ${data.title || 'N/A'}\nDescription: ${data.description || 'N/A'}\nContent Summary: ${data.content || 'N/A'}`;
+      
+      form.setValue('additional_data', currentAdditionalData + websiteAnalysis);
+      
       toast({
         title: 'Website Analyzed',
-        description: `Successfully extracted content from ${new URL(url).hostname}`,
+        description: `Successfully extracted content from ${new URL(url).hostname} and added to campaign data`,
       });
     } catch (error) {
       toast({
@@ -609,16 +615,9 @@ The more detail you provide, the better the AI can create targeted NewsJack cont
                 console.log('Selected platforms:', selectedPlatforms);
                 console.log('Scraped data:', scrapedData);
                 
-                // Ensure scraped data is included if available
                 const submitData = {
                   ...formValues,
                   platforms: selectedPlatforms,
-                  // Include scraped data if available
-                  ...(scrapedData && {
-                    additional_data: scrapedData.content ? 
-                      (formValues.additional_data || '') + '\n\nWebsite Analysis:\n' + scrapedData.content :
-                      formValues.additional_data
-                  })
                 };
                 
                 console.log('Final submit data:', submitData);
