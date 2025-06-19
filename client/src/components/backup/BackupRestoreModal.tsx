@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Download, Upload, Trash2, Shield, Clock, FileText, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Backup {
   id: string;
@@ -34,6 +35,7 @@ export function BackupRestoreModal({ isOpen, onClose, campaignId, campaignName }
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [restoreName, setRestoreName] = useState('');
   const [backupName, setBackupName] = useState('');
+  const [selectedBackupCampaign, setSelectedBackupCampaign] = useState<string>('');
 
   // Fetch user backups
   const { data: backupsData, isLoading } = useQuery({
@@ -43,6 +45,19 @@ export function BackupRestoreModal({ isOpen, onClose, campaignId, campaignName }
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Failed to fetch backups');
+      return response.json();
+    },
+    enabled: isOpen
+  });
+
+  // Fetch campaigns for backup selection
+  const { data: campaignsData } = useQuery({
+    queryKey: ['/api/campaigns'],
+    queryFn: async () => {
+      const response = await fetch('/api/campaigns', {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch campaigns');
       return response.json();
     },
     enabled: isOpen
@@ -201,6 +216,11 @@ export function BackupRestoreModal({ isOpen, onClose, campaignId, campaignName }
   };
 
   const backups = backupsData?.backups || [];
+  const campaigns = campaignsData || [];
+  
+  // Use provided campaignId or selected campaign for backup
+  const activeCampaignId = campaignId || selectedBackupCampaign;
+  const activeCampaignName = campaignName || campaigns.find((c: any) => c.id === selectedBackupCampaign)?.campaignName;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -230,27 +250,39 @@ export function BackupRestoreModal({ isOpen, onClose, campaignId, campaignName }
                   Manage and download your campaign backups
                 </p>
               </div>
-              {campaignId && (
-                <div className="flex items-center gap-2">
-                  <Input
-                    placeholder="Backup name (optional)"
-                    value={backupName}
-                    onChange={(e) => setBackupName(e.target.value)}
-                    className="w-48"
-                  />
-                  <Button
-                    onClick={() => createBackupMutation.mutate({ 
-                      campaignId, 
-                      name: backupName || `${campaignName} - ${new Date().toLocaleDateString()}` 
-                    })}
-                    disabled={createBackupMutation.isPending}
-                    className="flex items-center gap-2"
-                  >
-                    <Download className="h-4 w-4" />
-                    {createBackupMutation.isPending ? 'Creating...' : 'Create Backup'}
-                  </Button>
-                </div>
-              )}
+              <div className="flex items-center gap-2">
+                {!campaignId && (
+                  <Select value={selectedBackupCampaign} onValueChange={setSelectedBackupCampaign}>
+                    <SelectTrigger className="w-64">
+                      <SelectValue placeholder="Select campaign to backup" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {campaigns.map((campaign) => (
+                        <SelectItem key={campaign.id} value={campaign.id}>
+                          {campaign.campaignName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                <Input
+                  placeholder="Backup name (optional)"
+                  value={backupName}
+                  onChange={(e) => setBackupName(e.target.value)}
+                  className="w-48"
+                />
+                <Button
+                  onClick={() => createBackupMutation.mutate({ 
+                    campaignId: activeCampaignId, 
+                    name: backupName || `${activeCampaignName} - ${new Date().toLocaleDateString()}` 
+                  })}
+                  disabled={createBackupMutation.isPending || !activeCampaignId}
+                  className="flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  {createBackupMutation.isPending ? 'Creating...' : 'Create Backup'}
+                </Button>
+              </div>
             </div>
 
             {isLoading ? (
