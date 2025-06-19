@@ -136,9 +136,8 @@ router.post('/download/:format', requireAuth, async (req, res) => {
     }
 
     if (format === 'pdf') {
-      // For now, return HTML that can be printed to PDF by the browser
-      // This provides better compatibility across environments
-      const printableHtml = `
+      // Return the HTML with PDF intent for browser handling
+      const pdfReadyHtml = `
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -146,29 +145,45 @@ router.post('/download/:format', requireAuth, async (req, res) => {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>Proposal - ${clientName}</title>
           <style>
+            @page { 
+              margin: 0.5in; 
+              size: letter;
+            }
             @media print {
-              body { margin: 0; }
-              .no-print { display: none; }
+              body { 
+                margin: 0; 
+                font-size: 12px;
+                line-height: 1.4;
+              }
+              .no-print { display: none !important; }
               .page-break { page-break-before: always; }
+              .container { padding: 0; max-width: none; }
+            }
+            body {
+              font-family: Arial, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              background: white;
             }
           </style>
           ${html.match(/<style[^>]*>[\s\S]*?<\/style>/gi)?.join('') || ''}
         </head>
         <body>
-          <div class="no-print" style="position: fixed; top: 10px; right: 10px; background: #007bff; color: white; padding: 10px; border-radius: 5px; z-index: 1000;">
-            <button onclick="window.print()" style="background: none; border: none; color: white; cursor: pointer;">
-              📄 Print to PDF
-            </button>
-          </div>
+          <script>
+            window.addEventListener('load', function() {
+              setTimeout(function() {
+                window.print();
+              }, 500);
+            });
+          </script>
           ${html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '').replace(/<!DOCTYPE[^>]*>|<html[^>]*>|<\/html>|<head[^>]*>[\s\S]*?<\/head>|<body[^>]*>|<\/body>/gi, '')}
         </body>
         </html>
       `;
 
       res.setHeader('Content-Type', 'text/html');
-      res.setHeader('Content-Disposition', `inline; filename="${clientName.replace(/\s+/g, '-')}-proposal-printable.html"`);
-      res.setHeader('X-Content-Type-Options', 'nosniff');
-      return res.send(printableHtml);
+      res.setHeader('Content-Disposition', `inline; filename="${clientName.replace(/\s+/g, '-')}-proposal.html"`);
+      return res.send(pdfReadyHtml);
     }
 
     if (format === 'docx') {
@@ -313,7 +328,114 @@ router.post('/download/:format', requireAuth, async (req, res) => {
             new Paragraph({
               children: [
                 new TextRun({
-                  text: `Based on current news analysis, we've identified ${templateData.newsItems.length || 0} potential NewsJack opportunities for your campaign.`,
+                  text: `Below are examples of how we transform news events into strategic content for ${clientName}:`,
+                }),
+              ],
+            }),
+            // Add NewsJack examples if available
+            ...templateData.newsItems.flatMap((item: any) => {
+              const platformOutputs = item.platformOutputs as any || {};
+              const examples = [];
+              
+              examples.push(new Paragraph({
+                text: `News Event: ${item.headline}`,
+                heading: HeadingLevel.HEADING_4,
+              }));
+              
+              examples.push(new Paragraph({
+                children: [
+                  new TextRun({
+                    text: `Source: ${item.sourceUrl}`,
+                    break: 1,
+                  }),
+                ],
+              }));
+
+              Object.keys(platformOutputs).forEach(platform => {
+                const output = platformOutputs[platform];
+                if (output && output.content) {
+                  examples.push(new Paragraph({
+                    children: [
+                      new TextRun({
+                        text: `${platform.toUpperCase()}:`,
+                        bold: true,
+                        break: 1,
+                      }),
+                      new TextRun({
+                        text: output.content.substring(0, 200) + '...',
+                        break: 1,
+                      }),
+                      new TextRun({
+                        text: `CTA: ${output.cta || 'Learn more'}`,
+                        break: 1,
+                      }),
+                    ],
+                  }));
+                }
+              });
+              
+              return examples;
+            }),
+            new Paragraph({
+              text: `Content Performance`,
+              heading: HeadingLevel.HEADING_4,
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `Our NewsJack methodology typically achieves 40-60% higher engagement rates compared to traditional content, as it leverages the natural momentum of trending topics while maintaining authentic brand messaging.`,
+                }),
+              ],
+            }),
+            new Paragraph({
+              text: `Next Steps`,
+              heading: HeadingLevel.HEADING_3,
+            }),
+            new Paragraph({
+              text: `Immediate Actions`,
+              heading: HeadingLevel.HEADING_4,
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `1. Campaign Setup: Configure your NewsJack monitoring and content generation`,
+                  break: 1,
+                }),
+                new TextRun({
+                  text: `2. Content Calendar: Establish posting schedules across all platforms`,
+                  break: 1,
+                }),
+                new TextRun({
+                  text: `3. Team Training: Brief your team on the NewsJack methodology`,
+                  break: 1,
+                }),
+                new TextRun({
+                  text: `4. Launch: Begin real-time news monitoring and content creation`,
+                  break: 1,
+                }),
+              ],
+            }),
+            new Paragraph({
+              text: `Timeline`,
+              heading: HeadingLevel.HEADING_4,
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `• Week 1: Platform setup and team onboarding`,
+                  break: 1,
+                }),
+                new TextRun({
+                  text: `• Week 2: First NewsJack content deployment`,
+                  break: 1,
+                }),
+                new TextRun({
+                  text: `• Week 3-4: Optimization based on performance data`,
+                  break: 1,
+                }),
+                new TextRun({
+                  text: `• Ongoing: Continuous news monitoring and content generation`,
+                  break: 1,
                 }),
               ],
             }),

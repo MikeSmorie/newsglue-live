@@ -276,7 +276,7 @@ export default function Module7() {
                       </Button>
                       <Button onClick={() => handleDownload('pdf')} variant="outline">
                         <Download className="mr-2 h-4 w-4" />
-                        Open Printable Version
+                        Download PDF
                       </Button>
                       <Button onClick={handleCopyRichText} variant="outline">
                         <Copy className="mr-2 h-4 w-4" />
@@ -284,8 +284,8 @@ export default function Module7() {
                       </Button>
                     </div>
                     <div className="text-sm text-gray-600 dark:text-gray-400">
-                      <p><strong>Word Document:</strong> Full proposal with comprehensive content sections</p>
-                      <p><strong>Printable Version:</strong> Opens browser-optimized page for PDF printing</p>
+                      <p><strong>Word Document:</strong> Full proposal with comprehensive content sections, NewsJack examples, and detailed methodology</p>
+                      <p><strong>Download PDF:</strong> Opens printable HTML page that automatically triggers your browser's print-to-PDF function</p>
                       <p><strong>Copy Rich Text:</strong> Complete formatted proposal for pasting into emails or documents</p>
                     </div>
                   </div>
