@@ -242,8 +242,7 @@ export async function generateLandingPageContent(newsjackId: number): Promise<{ 
           html: htmlContent,
           headline: newsItem.headline,
           timestamp: new Date().toISOString()
-        }),
-        timeout: 10000 // 10 second timeout
+        })
       });
 
       if (response.ok) {

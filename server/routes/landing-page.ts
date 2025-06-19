@@ -61,48 +61,14 @@ router.post('/:newsjackId/toggle', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'No blog content available for this news item' });
     }
 
-    // Generate slug from headline
-    const slug = createSlug(newsItem.headline);
-    
-    // Set status to generating
-    await db.update(newsItems)
-      .set({
-        platformOutputs: {
-          ...platformOutputs,
-          blog: {
-            ...platformOutputs.blog,
-            landingPageStatus: 'generating',
-            landingPageSlug: slug
-          }
-        },
-        updatedAt: new Date()
-      })
-      .where(eq(newsItems.id, parseInt(newsjackId)));
-
-    // Generate and save landing page HTML
-    const landingPageUrl = await saveLandingPageHTML(newsItem, slug, blogContent);
-
-    // Update status to published
-    await db.update(newsItems)
-      .set({
-        platformOutputs: {
-          ...platformOutputs,
-          blog: {
-            ...platformOutputs.blog,
-            landingPageStatus: 'published',
-            landingPageSlug: slug,
-            landingPageUrl: landingPageUrl
-          }
-        },
-        updatedAt: new Date()
-      })
-      .where(eq(newsItems.id, parseInt(newsjackId)));
+    // Use the dual-path landing page service
+    const result = await generateLandingPageContent(parseInt(newsjackId));
 
     res.json({
       success: true,
-      status: 'published',
-      slug: slug,
-      url: landingPageUrl
+      status: result.status,
+      slug: result.slug,
+      url: result.url
     });
 
   } catch (error) {
