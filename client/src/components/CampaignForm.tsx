@@ -104,24 +104,34 @@ export default function CampaignForm({ onSuccess, onCancel, editingCampaign }: C
       return res.json();
     },
     onSuccess: async (campaign) => {
+      console.log('Campaign save successful:', campaign);
+      
       // Save channel selections
       if (selectedPlatforms.length > 0) {
-        await fetch('/api/campaign-channels', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({
-            campaignId: campaign.id,
-            platforms: selectedPlatforms,
-          }),
-        });
+        try {
+          await fetch('/api/campaign-channels', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              campaignId: campaign.id,
+              platforms: selectedPlatforms,
+            }),
+          });
+          console.log('Channels saved successfully');
+        } catch (error) {
+          console.error('Error saving channels:', error);
+        }
       }
 
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+      
       toast({
-        title: editingCampaign ? 'Campaign Updated' : 'Campaign Created',
-        description: `${campaign.campaignName} has been ${editingCampaign ? 'updated' : 'created'} successfully.`,
+        title: editingCampaign ? 'Campaign Updated Successfully' : 'Campaign Created Successfully',
+        description: `${campaign.campaignName} has been ${editingCampaign ? 'updated' : 'created'} and will now appear in your campaign list.`,
       });
+      
+      console.log('Calling onSuccess callback');
       onSuccess?.();
     },
     onError: (error: Error) => {
@@ -168,6 +178,7 @@ export default function CampaignForm({ onSuccess, onCancel, editingCampaign }: C
   };
 
   const onSubmit = (data: CampaignFormData) => {
+    console.log('Form submission started:', { data, selectedPlatforms, editingCampaign: !!editingCampaign });
     createMutation.mutate({
       ...data,
       platforms: selectedPlatforms,
@@ -495,13 +506,11 @@ The more detail you provide, the better the AI can create targeted NewsJack cont
                         {...field} 
                       />
                     </FormControl>
-                    <FormDescription className="text-sm">
-                      <div className="space-y-1">
-                        <p><strong>💡 Pro Tip:</strong> Paste entire documents, research reports, or briefing materials directly into this field.</p>
-                        <p><strong>📊 Data Sources:</strong> Copy from PDFs, Word docs, spreadsheets, research reports, or any text-based materials.</p>
-                        <p><strong>🎯 Usage:</strong> AI will analyze all this context to create highly personalized NewsJack content strategies.</p>
-                        <p className="text-xs text-gray-500">No character limit - paste as much relevant information as you have available.</p>
-                      </div>
+                    <FormDescription className="text-sm space-y-1">
+                        <div><strong>Pro Tip:</strong> Paste entire documents, research reports, or briefing materials directly into this field.</div>
+                        <div><strong>Data Sources:</strong> Copy from PDFs, Word docs, spreadsheets, research reports, or any text-based materials.</div>
+                        <div><strong>Usage:</strong> AI will analyze all this context to create highly personalized NewsJack content strategies.</div>
+                        <div className="text-xs text-gray-500">No character limit - paste as much relevant information as you have available.</div>
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -573,10 +582,10 @@ The more detail you provide, the better the AI can create targeted NewsJack cont
             <Button 
               type="submit" 
               disabled={createMutation.isPending || selectedPlatforms.length === 0}
-              className="min-w-[120px]"
+              className="min-w-[140px]"
             >
               {createMutation.isPending 
-                ? 'Saving...' 
+                ? (editingCampaign ? 'Updating...' : 'Creating...') 
                 : editingCampaign 
                 ? 'Update Campaign' 
                 : 'Create Campaign'
