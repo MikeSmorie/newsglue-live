@@ -4,7 +4,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -15,7 +14,6 @@ import { Trash2, Plus, Settings, Eye, EyeOff, Lock, HelpCircle } from 'lucide-re
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface Campaign {
   id: string;
@@ -80,7 +78,6 @@ export default function Module2() {
   const [thumbnailSettings, setThumbnailSettings] = useState<Record<string, 'default' | 'reverse'>>({});
   const [apiEnabled, setApiEnabled] = useState(false);
   const [apiCredentials, setApiCredentials] = useState<Record<string, ApiCredentials>>({});
-  const [editingChannel, setEditingChannel] = useState<string | null>(null);
   const [showApiKeys, setShowApiKeys] = useState<Record<string, boolean>>({});
   
   const { toast } = useToast();
@@ -232,7 +229,7 @@ export default function Module2() {
       <div className="p-6">
         <Card>
           <CardHeader>
-            <CardTitle>Social Channels</CardTitle>
+            <CardTitle>2 Social Channels</CardTitle>
             <CardDescription>No campaigns available. Create a campaign first.</CardDescription>
           </CardHeader>
         </Card>
@@ -241,482 +238,480 @@ export default function Module2() {
   }
 
   return (
-    <TooltipProvider>
-      <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Social Channels</h1>
-            <p className="text-muted-foreground">Configure social media posting for {selectedCampaign.campaignName}</p>
-          </div>
-          
-          {campaigns.length > 1 && (
-            <Select
-              value={selectedCampaign.id}
-              onValueChange={(campaignId) => {
-                const campaign = campaigns.find(c => c.id === campaignId);
-                if (campaign) {
-                  setSelectedCampaign(campaign);
-                  const socialSettings = campaign.socialSettings || {};
-                  setChannelConfigs(socialSettings.channelConfig || {});
-                  setThumbnailSettings(socialSettings.thumbnailOrder || {});
-                  setApiEnabled(socialSettings.apiEnabled || false);
-                  setApiCredentials(socialSettings.apiCredentials || {});
-                }
-              }}
-            >
-              <SelectTrigger className="w-64">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {campaigns.map(campaign => (
-                  <SelectItem key={campaign.id} value={campaign.id}>
-                    {campaign.campaignName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">2 Social Channels</h1>
+          <p className="text-muted-foreground">Configure social media posting for {selectedCampaign.campaignName}</p>
         </div>
+        
+        {campaigns.length > 1 && (
+          <Select
+            value={selectedCampaign.id}
+            onValueChange={(campaignId) => {
+              const campaign = campaigns.find(c => c.id === campaignId);
+              if (campaign) {
+                setSelectedCampaign(campaign);
+                const socialSettings = campaign.socialSettings || {};
+                setChannelConfigs(socialSettings.channelConfig || {});
+                setThumbnailSettings(socialSettings.thumbnailOrder || {});
+                setApiEnabled(socialSettings.apiEnabled || false);
+                setApiCredentials(socialSettings.apiCredentials || {});
+              }
+            }}
+          >
+            <SelectTrigger className="w-64">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {campaigns.map(campaign => (
+                <SelectItem key={campaign.id} value={campaign.id}>
+                  {campaign.campaignName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="channels">Newsjack Channels</TabsTrigger>
-            <TabsTrigger value="thumbnails">Thumbnail Settings</TabsTrigger>
-            <TabsTrigger value="api" disabled={!isAdmin}>
-              Social Media API
-              {!isAdmin && <Lock className="ml-2 h-3 w-3" />}
-            </TabsTrigger>
-          </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="channels">Newsjack Channels</TabsTrigger>
+          <TabsTrigger value="thumbnails">Thumbnail Settings</TabsTrigger>
+          <TabsTrigger value="api" disabled={!isAdmin}>
+            Social Media API
+            {!isAdmin && <Lock className="ml-2 h-3 w-3" />}
+          </TabsTrigger>
+        </TabsList>
 
-          {/* Tab 1: Newsjack Channels */}
-          <TabsContent value="channels" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="h-5 w-5" />
-                  Channel Configuration
-                </CardTitle>
-                <CardDescription>
-                  Configure tone, word count, and content ratio for each social platform
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex gap-2">
-                  <Button onClick={handleAddDefaultChannels} variant="outline">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Default Channels
-                  </Button>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="outline">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Channel
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Add New Channel</DialogTitle>
-                        <DialogDescription>Select a platform to add to your campaign</DialogDescription>
-                      </DialogHeader>
-                      <div className="grid gap-2">
-                        {DEFAULT_PLATFORMS.filter(p => !channelConfigs[p.id]).map(platform => (
-                          <Button
-                            key={platform.id}
-                            variant="outline"
-                            className="justify-start"
-                            onClick={() => {
-                              setChannelConfigs(prev => ({
-                                ...prev,
-                                [platform.id]: { ...DEFAULT_CHANNEL_CONFIG }
-                              }));
-                            }}
-                          >
-                            <span className="mr-2">{platform.icon}</span>
-                            {platform.name}
-                          </Button>
-                        ))}
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </div>
+        {/* Tab 1: Newsjack Channels */}
+        <TabsContent value="channels" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                Channel Configuration
+              </CardTitle>
+              <CardDescription>
+                Configure tone, word count, and content ratio for each social platform
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-2">
+                <Button onClick={handleAddDefaultChannels} variant="outline">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Default Channels
+                </Button>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Channel
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Add New Channel</DialogTitle>
+                      <DialogDescription>Select a platform to add to your campaign</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-2">
+                      {DEFAULT_PLATFORMS.filter(p => !channelConfigs[p.id]).map(platform => (
+                        <Button
+                          key={platform.id}
+                          variant="outline"
+                          className="justify-start"
+                          onClick={() => {
+                            setChannelConfigs(prev => ({
+                              ...prev,
+                              [platform.id]: { ...DEFAULT_CHANNEL_CONFIG }
+                            }));
+                          }}
+                        >
+                          <span className="mr-2">{platform.icon}</span>
+                          {platform.name}
+                        </Button>
+                      ))}
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
 
-                <Separator />
+              <Separator />
 
-                <div className="space-y-4">
-                  {getActivePlatforms().map(platformId => {
-                    const platform = getPlatformInfo(platformId);
-                    const config = channelConfigs[platformId];
-                    
-                    return (
-                      <Card key={platformId} className="border-l-4 border-l-blue-500">
-                        <CardHeader className="pb-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <span className="text-lg">{platform.icon}</span>
-                              <div>
-                                <CardTitle className="text-lg">{platform.name}</CardTitle>
-                                <Badge variant={config.enabled ? "default" : "secondary"}>
-                                  {config.enabled ? "Active" : "Disabled"}
-                                </Badge>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Switch
-                                checked={config.enabled}
-                                onCheckedChange={(checked) => 
-                                  handleChannelConfigChange(platformId, 'enabled', checked)
-                                }
-                              />
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleRemoveChannel(platformId)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+              <div className="space-y-4">
+                {getActivePlatforms().map(platformId => {
+                  const platform = getPlatformInfo(platformId);
+                  const config = channelConfigs[platformId];
+                  
+                  return (
+                    <Card key={platformId} className="border-l-4 border-l-blue-500">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">{platform.icon}</span>
+                            <div>
+                              <CardTitle className="text-lg">{platform.name}</CardTitle>
+                              <Badge variant={config.enabled ? "default" : "secondary"}>
+                                {config.enabled ? "Active" : "Disabled"}
+                              </Badge>
                             </div>
                           </div>
-                        </CardHeader>
-                        
-                        {config.enabled && (
-                          <CardContent className="pt-0 space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              <div className="space-y-2">
-                                <Label>Tone</Label>
-                                <Select
-                                  value={config.tone}
-                                  onValueChange={(value) => 
-                                    handleChannelConfigChange(platformId, 'tone', value)
-                                  }
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {TONE_OPTIONS.map(tone => (
-                                      <SelectItem key={tone} value={tone}>{tone}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              
-                              <div className="space-y-2">
-                                <Label>Word Count</Label>
-                                <Input
-                                  type="number"
-                                  value={config.wordCount}
-                                  onChange={(e) => 
-                                    handleChannelConfigChange(platformId, 'wordCount', parseInt(e.target.value) || 0)
-                                  }
-                                  min="1"
-                                  max="5000"
-                                />
-                              </div>
-                              
-                              <div className="space-y-2">
-                                <Label>Content Ratio</Label>
-                                <Select
-                                  value={config.contentRatio}
-                                  onValueChange={(value) => 
-                                    handleChannelConfigChange(platformId, 'contentRatio', value)
-                                  }
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {CONTENT_RATIO_OPTIONS.map(ratio => (
-                                      <SelectItem key={ratio} value={ratio}>{ratio}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={config.enabled}
+                              onCheckedChange={(checked) => 
+                                handleChannelConfigChange(platformId, 'enabled', checked)
+                              }
+                            />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveChannel(platformId)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      
+                      {config.enabled && (
+                        <CardContent className="pt-0 space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                              <Label>Tone</Label>
+                              <Select
+                                value={config.tone}
+                                onValueChange={(value) => 
+                                  handleChannelConfigChange(platformId, 'tone', value)
+                                }
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {TONE_OPTIONS.map(tone => (
+                                    <SelectItem key={tone} value={tone}>{tone}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             </div>
-                          </CardContent>
-                        )}
-                      </Card>
-                    );
-                  })}
-                </div>
+                            
+                            <div className="space-y-2">
+                              <Label>Word Count</Label>
+                              <Input
+                                type="number"
+                                value={config.wordCount}
+                                onChange={(e) => 
+                                  handleChannelConfigChange(platformId, 'wordCount', parseInt(e.target.value) || 0)
+                                }
+                                min="1"
+                                max="5000"
+                              />
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <Label>Content Ratio</Label>
+                              <Select
+                                value={config.contentRatio}
+                                onValueChange={(value) => 
+                                  handleChannelConfigChange(platformId, 'contentRatio', value)
+                                }
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {CONTENT_RATIO_OPTIONS.map(ratio => (
+                                    <SelectItem key={ratio} value={ratio}>{ratio}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </CardContent>
+                      )}
+                    </Card>
+                  );
+                })}
+              </div>
 
-                {getActivePlatforms().length === 0 && (
-                  <Alert>
-                    <AlertDescription>
-                      No channels configured. Use "Add Default Channels" to get started.
-                    </AlertDescription>
-                  </Alert>
-                )}
+              {getActivePlatforms().length === 0 && (
+                <Alert>
+                  <AlertDescription>
+                    No channels configured. Use "Add Default Channels" to get started.
+                  </AlertDescription>
+                </Alert>
+              )}
 
-                <div className="flex justify-end pt-4">
-                  <Button 
-                    onClick={handleSaveChannelSettings}
-                    disabled={saveMutation.isPending}
-                  >
-                    {saveMutation.isPending ? 'Saving...' : 'Save Channel Settings'}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              <div className="flex justify-end pt-4">
+                <Button 
+                  onClick={handleSaveChannelSettings}
+                  disabled={saveMutation.isPending}
+                >
+                  {saveMutation.isPending ? 'Saving...' : 'Save Channel Settings'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          {/* Tab 2: Thumbnail Settings */}
-          <TabsContent value="thumbnails" className="space-y-4">
+        {/* Tab 2: Thumbnail Settings */}
+        <TabsContent value="thumbnails" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Eye className="h-5 w-5" />
+                Thumbnail Settings
+              </CardTitle>
+              <CardDescription>
+                Configure thumbnail display order for each platform
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <Alert>
+                <HelpCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Default:</strong> Thumbnail appears before text content<br />
+                  <strong>Reverse:</strong> Thumbnail appears after text content
+                </AlertDescription>
+              </Alert>
+
+              <div className="space-y-4">
+                {getActivePlatforms().map(platformId => {
+                  const platform = getPlatformInfo(platformId);
+                  
+                  return (
+                    <Card key={platformId} className="border-l-4 border-l-green-500">
+                      <CardContent className="pt-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <span className="text-lg">{platform.icon}</span>
+                            <div>
+                              <h4 className="font-medium">{platform.name}</h4>
+                              <p className="text-sm text-muted-foreground">Thumbnail placement</p>
+                            </div>
+                          </div>
+                          
+                          <RadioGroup
+                            value={thumbnailSettings[platformId] || 'default'}
+                            onValueChange={(value: 'default' | 'reverse') => 
+                              setThumbnailSettings(prev => ({ ...prev, [platformId]: value }))
+                            }
+                            className="flex gap-6"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="default" id={`${platformId}-default`} />
+                              <Label htmlFor={`${platformId}-default`}>Default (Recommended)</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="reverse" id={`${platformId}-reverse`} />
+                              <Label htmlFor={`${platformId}-reverse`}>Reverse</Label>
+                            </div>
+                          </RadioGroup>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+
+              {getActivePlatforms().length === 0 && (
+                <Alert>
+                  <AlertDescription>
+                    No active channels found. Configure channels in the "Newsjack Channels" tab first.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <div className="flex justify-end pt-4">
+                <Button 
+                  onClick={handleSaveThumbnailSettings}
+                  disabled={saveMutation.isPending}
+                >
+                  {saveMutation.isPending ? 'Saving...' : 'Save Thumbnail Settings'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Tab 3: Social Media API */}
+        <TabsContent value="api" className="space-y-4">
+          {isAdmin ? (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Eye className="h-5 w-5" />
-                  Thumbnail Settings
+                  <Lock className="h-5 w-5" />
+                  Social Media API
                 </CardTitle>
                 <CardDescription>
-                  Configure thumbnail display order for each platform
+                  Configure API credentials for automated posting
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <Alert>
-                  <HelpCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    <strong>Default:</strong> Thumbnail appears before text content<br />
-                    <strong>Reverse:</strong> Thumbnail appears after text content
-                  </AlertDescription>
-                </Alert>
-
-                <div className="space-y-4">
-                  {getActivePlatforms().map(platformId => {
-                    const platform = getPlatformInfo(platformId);
-                    
-                    return (
-                      <Card key={platformId} className="border-l-4 border-l-green-500">
-                        <CardContent className="pt-6">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <span className="text-lg">{platform.icon}</span>
-                              <div>
-                                <h4 className="font-medium">{platform.name}</h4>
-                                <p className="text-sm text-muted-foreground">Thumbnail placement</p>
-                              </div>
-                            </div>
-                            
-                            <RadioGroup
-                              value={thumbnailSettings[platformId] || 'default'}
-                              onValueChange={(value: 'default' | 'reverse') => 
-                                setThumbnailSettings(prev => ({ ...prev, [platformId]: value }))
-                              }
-                              className="flex gap-6"
-                            >
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="default" id={`${platformId}-default`} />
-                                <Label htmlFor={`${platformId}-default`}>Default (Recommended)</Label>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="reverse" id={`${platformId}-reverse`} />
-                                <Label htmlFor={`${platformId}-reverse`}>Reverse</Label>
-                              </div>
-                            </RadioGroup>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    checked={apiEnabled}
+                    onCheckedChange={setApiEnabled}
+                  />
+                  <Label>Enable API Posting</Label>
                 </div>
 
-                {getActivePlatforms().length === 0 && (
-                  <Alert>
-                    <AlertDescription>
-                      No active channels found. Configure channels in the "Newsjack Channels" tab first.
-                    </AlertDescription>
-                  </Alert>
+                {apiEnabled && (
+                  <Tabs defaultValue="twitter" className="space-y-4">
+                    <TabsList className="grid w-full grid-cols-4">
+                      <TabsTrigger value="twitter">Twitter/X</TabsTrigger>
+                      <TabsTrigger value="facebook">Facebook</TabsTrigger>
+                      <TabsTrigger value="linkedin">LinkedIn</TabsTrigger>
+                      <TabsTrigger value="instagram">Instagram</TabsTrigger>
+                    </TabsList>
+
+                    {['twitter', 'facebook', 'linkedin', 'instagram'].map(platform => (
+                      <TabsContent key={platform} value={platform} className="space-y-4">
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="capitalize">{platform} API Credentials</CardTitle>
+                            <CardDescription>
+                              {platform === 'twitter' && 'Get credentials from Twitter Developer Portal'}
+                              {platform === 'facebook' && 'Get credentials from Facebook Developers'}
+                              {platform === 'linkedin' && 'Get credentials from LinkedIn Developer Portal'}
+                              {platform === 'instagram' && 'Get credentials from Instagram Basic Display API'}
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label>API Key</Label>
+                                <div className="flex gap-2">
+                                  <Input
+                                    type={showApiKeys[`${platform}-key`] ? 'text' : 'password'}
+                                    value={apiCredentials[platform]?.apiKey || ''}
+                                    onChange={(e) => setApiCredentials(prev => ({
+                                      ...prev,
+                                      [platform]: { ...prev[platform], apiKey: e.target.value }
+                                    }))}
+                                    placeholder="Enter API key"
+                                  />
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setShowApiKeys(prev => ({
+                                      ...prev,
+                                      [`${platform}-key`]: !prev[`${platform}-key`]
+                                    }))}
+                                  >
+                                    {showApiKeys[`${platform}-key`] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                  </Button>
+                                </div>
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label>API Secret</Label>
+                                <div className="flex gap-2">
+                                  <Input
+                                    type={showApiKeys[`${platform}-secret`] ? 'text' : 'password'}
+                                    value={apiCredentials[platform]?.apiSecret || ''}
+                                    onChange={(e) => setApiCredentials(prev => ({
+                                      ...prev,
+                                      [platform]: { ...prev[platform], apiSecret: e.target.value }
+                                    }))}
+                                    placeholder="Enter API secret"
+                                  />
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setShowApiKeys(prev => ({
+                                      ...prev,
+                                      [`${platform}-secret`]: !prev[`${platform}-secret`]
+                                    }))}
+                                  >
+                                    {showApiKeys[`${platform}-secret`] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                  </Button>
+                                </div>
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label>Access Token</Label>
+                                <div className="flex gap-2">
+                                  <Input
+                                    type={showApiKeys[`${platform}-token`] ? 'text' : 'password'}
+                                    value={apiCredentials[platform]?.accessToken || ''}
+                                    onChange={(e) => setApiCredentials(prev => ({
+                                      ...prev,
+                                      [platform]: { ...prev[platform], accessToken: e.target.value }
+                                    }))}
+                                    placeholder="Enter access token"
+                                  />
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setShowApiKeys(prev => ({
+                                      ...prev,
+                                      [`${platform}-token`]: !prev[`${platform}-token`]
+                                    }))}
+                                  >
+                                    {showApiKeys[`${platform}-token`] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                  </Button>
+                                </div>
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label>Token Secret</Label>
+                                <div className="flex gap-2">
+                                  <Input
+                                    type={showApiKeys[`${platform}-tokensecret`] ? 'text' : 'password'}
+                                    value={apiCredentials[platform]?.tokenSecret || ''}
+                                    onChange={(e) => setApiCredentials(prev => ({
+                                      ...prev,
+                                      [platform]: { ...prev[platform], tokenSecret: e.target.value }
+                                    }))}
+                                    placeholder="Enter token secret"
+                                  />
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setShowApiKeys(prev => ({
+                                      ...prev,
+                                      [`${platform}-tokensecret`]: !prev[`${platform}-tokensecret`]
+                                    }))}
+                                  >
+                                    {showApiKeys[`${platform}-tokensecret`] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </TabsContent>
+                    ))}
+                  </Tabs>
                 )}
 
                 <div className="flex justify-end pt-4">
                   <Button 
-                    onClick={handleSaveThumbnailSettings}
+                    onClick={handleSaveApiSettings}
                     disabled={saveMutation.isPending}
                   >
-                    {saveMutation.isPending ? 'Saving...' : 'Save Thumbnail Settings'}
+                    {saveMutation.isPending ? 'Saving...' : 'Save All Settings'}
                   </Button>
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
-
-          {/* Tab 3: Social Media API */}
-          <TabsContent value="api" className="space-y-4">
-            {isAdmin ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Lock className="h-5 w-5" />
-                    Social Media API
-                  </CardTitle>
-                  <CardDescription>
-                    Configure API credentials for automated posting
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      checked={apiEnabled}
-                      onCheckedChange={setApiEnabled}
-                    />
-                    <Label>Enable API Posting</Label>
-                  </div>
-
-                  {apiEnabled && (
-                    <Tabs defaultValue="twitter" className="space-y-4">
-                      <TabsList className="grid w-full grid-cols-4">
-                        <TabsTrigger value="twitter">Twitter/X</TabsTrigger>
-                        <TabsTrigger value="facebook">Facebook</TabsTrigger>
-                        <TabsTrigger value="linkedin">LinkedIn</TabsTrigger>
-                        <TabsTrigger value="instagram">Instagram</TabsTrigger>
-                      </TabsList>
-
-                      {['twitter', 'facebook', 'linkedin', 'instagram'].map(platform => (
-                        <TabsContent key={platform} value={platform} className="space-y-4">
-                          <Card>
-                            <CardHeader>
-                              <CardTitle className="capitalize">{platform} API Credentials</CardTitle>
-                              <CardDescription>
-                                {platform === 'twitter' && 'Get credentials from Twitter Developer Portal'}
-                                {platform === 'facebook' && 'Get credentials from Facebook Developers'}
-                                {platform === 'linkedin' && 'Get credentials from LinkedIn Developer Portal'}
-                                {platform === 'instagram' && 'Get credentials from Instagram Basic Display API'}
-                              </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                  <Label>API Key</Label>
-                                  <div className="flex gap-2">
-                                    <Input
-                                      type={showApiKeys[`${platform}-key`] ? 'text' : 'password'}
-                                      value={apiCredentials[platform]?.apiKey || ''}
-                                      onChange={(e) => setApiCredentials(prev => ({
-                                        ...prev,
-                                        [platform]: { ...prev[platform], apiKey: e.target.value }
-                                      }))}
-                                      placeholder="Enter API key"
-                                    />
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => setShowApiKeys(prev => ({
-                                        ...prev,
-                                        [`${platform}-key`]: !prev[`${platform}-key`]
-                                      }))}
-                                    >
-                                      {showApiKeys[`${platform}-key`] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                    </Button>
-                                  </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                  <Label>API Secret</Label>
-                                  <div className="flex gap-2">
-                                    <Input
-                                      type={showApiKeys[`${platform}-secret`] ? 'text' : 'password'}
-                                      value={apiCredentials[platform]?.apiSecret || ''}
-                                      onChange={(e) => setApiCredentials(prev => ({
-                                        ...prev,
-                                        [platform]: { ...prev[platform], apiSecret: e.target.value }
-                                      }))}
-                                      placeholder="Enter API secret"
-                                    />
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => setShowApiKeys(prev => ({
-                                        ...prev,
-                                        [`${platform}-secret`]: !prev[`${platform}-secret`]
-                                      }))}
-                                    >
-                                      {showApiKeys[`${platform}-secret`] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                    </Button>
-                                  </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                  <Label>Access Token</Label>
-                                  <div className="flex gap-2">
-                                    <Input
-                                      type={showApiKeys[`${platform}-token`] ? 'text' : 'password'}
-                                      value={apiCredentials[platform]?.accessToken || ''}
-                                      onChange={(e) => setApiCredentials(prev => ({
-                                        ...prev,
-                                        [platform]: { ...prev[platform], accessToken: e.target.value }
-                                      }))}
-                                      placeholder="Enter access token"
-                                    />
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => setShowApiKeys(prev => ({
-                                        ...prev,
-                                        [`${platform}-token`]: !prev[`${platform}-token`]
-                                      }))}
-                                    >
-                                      {showApiKeys[`${platform}-token`] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                    </Button>
-                                  </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                  <Label>Token Secret</Label>
-                                  <div className="flex gap-2">
-                                    <Input
-                                      type={showApiKeys[`${platform}-tokensecret`] ? 'text' : 'password'}
-                                      value={apiCredentials[platform]?.tokenSecret || ''}
-                                      onChange={(e) => setApiCredentials(prev => ({
-                                        ...prev,
-                                        [platform]: { ...prev[platform], tokenSecret: e.target.value }
-                                      }))}
-                                      placeholder="Enter token secret"
-                                    />
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => setShowApiKeys(prev => ({
-                                        ...prev,
-                                        [`${platform}-tokensecret`]: !prev[`${platform}-tokensecret`]
-                                      }))}
-                                    >
-                                      {showApiKeys[`${platform}-tokensecret`] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                    </Button>
-                                  </div>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </TabsContent>
-                      ))}
-                    </Tabs>
-                  )}
-
-                  <div className="flex justify-end pt-4">
-                    <Button 
-                      onClick={handleSaveApiSettings}
-                      disabled={saveMutation.isPending}
-                    >
-                      {saveMutation.isPending ? 'Saving...' : 'Save All Settings'}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="text-center space-y-2">
-                    <Lock className="h-12 w-12 mx-auto text-muted-foreground" />
-                    <h3 className="text-lg font-medium">Admin Access Required</h3>
-                    <p className="text-muted-foreground">
-                      API configuration is only available to administrators.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-        </Tabs>
-      </div>
-    </TooltipProvider>
+          ) : (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center space-y-2">
+                  <Lock className="h-12 w-12 mx-auto text-muted-foreground" />
+                  <h3 className="text-lg font-medium">Admin Access Required</h3>
+                  <p className="text-muted-foreground">
+                    API configuration is only available to administrators.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }
