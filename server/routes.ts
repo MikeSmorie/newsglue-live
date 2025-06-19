@@ -192,6 +192,14 @@ export function registerRoutes(app: Express) {
   app.use("/api/newsitems", requireAuth, newsitemsRouter);
 
   /**
+   * WEBSITE SCRAPER API
+   * Auth: Required
+   * Role: User/Admin/Supergod
+   * POST /api/website-scraper/scrape - Scrape website content for campaign analysis
+   */
+  app.use("/api/website-scraper", websiteScraperRouter);
+
+  /**
    * MODULE REFACTORING TESTS
    * Auth: None (public testing endpoints)
    * Role: Public access for testing refactored modules

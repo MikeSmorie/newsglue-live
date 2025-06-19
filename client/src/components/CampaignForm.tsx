@@ -58,6 +58,8 @@ interface CampaignFormProps {
 
 export default function CampaignForm({ onSuccess, onCancel, editingCampaign }: CampaignFormProps) {
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+  const [scrapedData, setScrapedData] = useState<any>(null);
+  const [isScrapingWebsite, setIsScrapingWebsite] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -130,6 +132,40 @@ export default function CampaignForm({ onSuccess, onCancel, editingCampaign }: C
       });
     },
   });
+
+  const handleWebsiteScrape = async (url: string) => {
+    if (!url || url === '') return;
+    
+    setIsScrapingWebsite(true);
+    try {
+      const response = await fetch('/api/website-scraper/scrape', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ url }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to scrape website');
+      }
+
+      const data = await response.json();
+      setScrapedData(data);
+      
+      toast({
+        title: 'Website Analyzed',
+        description: `Successfully extracted content from ${new URL(url).hostname}`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Scraping Failed',
+        description: 'Could not analyze the website. Please check the URL and try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsScrapingWebsite(false);
+    }
+  };
 
   const onSubmit = (data: CampaignFormData) => {
     createMutation.mutate({
@@ -207,12 +243,23 @@ export default function CampaignForm({ onSuccess, onCancel, editingCampaign }: C
                       <FormLabel className="flex items-center gap-2">
                         <Globe className="h-4 w-4" />
                         Website URL
-                        <TooltipWrapper content="Your main website or landing page. This helps our AI understand your brand context for better content generation.">
+                        <TooltipWrapper content="Your main website or landing page. AI will analyze this to understand your brand context for better content generation.">
                           <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
                         </TooltipWrapper>
                       </FormLabel>
                       <FormControl>
-                        <Input placeholder="https://yourwebsite.com" {...field} />
+                        <div className="flex gap-2">
+                          <Input placeholder="https://yourwebsite.com" {...field} />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => field.value && handleWebsiteScrape(field.value)}
+                            disabled={!field.value || isScrapingWebsite}
+                            className="whitespace-nowrap"
+                          >
+                            {isScrapingWebsite ? 'Analyzing...' : 'Analyze Site'}
+                          </Button>
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -241,6 +288,57 @@ export default function CampaignForm({ onSuccess, onCancel, editingCampaign }: C
               </div>
             </CardContent>
           </Card>
+
+          {/* Website Analysis Results */}
+          {scrapedData && (
+            <Card className="border-green-200 dark:border-green-800">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-300">
+                  <Globe className="h-5 w-5" />
+                  Website Analysis Results
+                </CardTitle>
+                <CardDescription>
+                  AI has extracted key information from your website to enhance content generation
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <Label className="font-semibold">Page Title</Label>
+                    <p className="text-gray-600 dark:text-gray-300">{scrapedData.title}</p>
+                  </div>
+                  <div>
+                    <Label className="font-semibold">Meta Description</Label>
+                    <p className="text-gray-600 dark:text-gray-300">{scrapedData.description}</p>
+                  </div>
+                </div>
+                
+                {scrapedData.keywords?.length > 0 && (
+                  <div>
+                    <Label className="font-semibold">Keywords Found</Label>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {scrapedData.keywords.slice(0, 10).map((keyword: string, idx: number) => (
+                        <Badge key={idx} variant="outline" className="text-xs">
+                          {keyword}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <Label className="font-semibold">Content Preview</Label>
+                  <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded text-xs max-h-32 overflow-y-auto">
+                    {scrapedData.contentPreview}
+                  </div>
+                </div>
+
+                <div className="text-xs text-gray-500">
+                  Analyzed on {new Date(scrapedData.scrapedAt).toLocaleString()}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* NewsJack Strategy */}
           <Card>
