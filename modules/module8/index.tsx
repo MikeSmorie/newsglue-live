@@ -110,34 +110,67 @@ export default function Module8() {
     updateRateMutation.mutate({ campaignId: activeCampaignId, hourlyRate });
   };
 
-  const handleExportReport = async () => {
+  const handleExportPDF = async () => {
     if (!activeCampaignId || !campaignMetrics) return;
     
     try {
-      const response = await fetch('/api/metrics/export', {
+      const response = await fetch('/api/metrics/export/pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ campaignId: activeCampaignId })
       });
 
-      if (!response.ok) throw new Error('Failed to export report');
+      if (!response.ok) throw new Error('Failed to export PDF report');
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.style.display = 'none';
       a.href = url;
-      a.download = `metrics-report-${activeCampaignId}.pdf`;
+      a.download = `metrics-report-${activeCampaignId}-${Date.now()}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       
-      toast({ title: "Report exported successfully" });
+      toast({ title: "PDF report exported successfully" });
     } catch (error) {
       toast({ 
         title: "Export failed", 
-        description: "Failed to export metrics report",
+        description: "Failed to export PDF report",
+        variant: "destructive" 
+      });
+    }
+  };
+
+  const handleExportCSV = async () => {
+    if (!activeCampaignId || !outputMetrics.length) return;
+    
+    try {
+      const response = await fetch('/api/metrics/export/csv', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ campaignId: activeCampaignId })
+      });
+
+      if (!response.ok) throw new Error('Failed to export CSV data');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `metrics-data-${activeCampaignId}-${Date.now()}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      
+      toast({ title: "CSV data exported successfully" });
+    } catch (error) {
+      toast({ 
+        title: "Export failed", 
+        description: "Failed to export CSV data",
         variant: "destructive" 
       });
     }
@@ -215,6 +248,27 @@ Efficiency Score: ${campaignMetrics.efficiencyScore}%`;
             </p>
           )}
         </div>
+        
+        {activeCampaignId && campaignMetrics && (
+          <div className="flex gap-3">
+            <Button 
+              onClick={handleExportPDF}
+              variant="outline"
+              className="min-w-[120px]"
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              Export PDF
+            </Button>
+            <Button 
+              onClick={handleExportCSV}
+              variant="outline"
+              className="min-w-[120px]"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Export CSV
+            </Button>
+          </div>
+        )}
       </div>
 
       {metricsLoading || outputLoading ? (
@@ -347,10 +401,6 @@ Efficiency Score: ${campaignMetrics.efficiencyScore}%`;
                 <CardDescription>Download or share metrics data</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button onClick={handleExportReport} className="w-full">
-                  <Download className="mr-2 h-4 w-4" />
-                  Export PDF Report
-                </Button>
                 <Button onClick={handleCopyMetrics} variant="outline" className="w-full">
                   <Copy className="mr-2 h-4 w-4" />
                   Copy Summary
