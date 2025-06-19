@@ -8,7 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Copy, Trash2, ExternalLink, Sparkles, Edit, RefreshCw, Filter, Clock, Zap, Download, FileText } from 'lucide-react';
+import { Copy, Trash2, ExternalLink, Sparkles, Edit, RefreshCw, Filter, Clock, Zap, Download, FileText, File, BookOpen } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -58,6 +58,75 @@ export default function Module6() {
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // PDF Export handlers
+  const handleNewsJackPDFExport = async (newsItemId: number, headline: string) => {
+    try {
+      const response = await fetch(`/api/pdf/newsjack/${newsItemId}`, {
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate NewsJack PDF');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `newsjack-${headline.replace(/[^a-zA-Z0-9]/g, '-')}-${Date.now()}.html`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: "NewsJack PDF Exported",
+        description: "Your NewsJack content has been exported successfully"
+      });
+    } catch (error) {
+      toast({
+        title: "Export Failed",
+        description: "Failed to export NewsJack PDF",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleCampaignDossierPDFExport = async () => {
+    if (!selectedCampaign) return;
+    
+    try {
+      const response = await fetch(`/api/pdf/dossier/${selectedCampaign.id}`, {
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate Campaign Dossier PDF');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `campaign-dossier-${selectedCampaign.campaignName.replace(/[^a-zA-Z0-9]/g, '-')}-${Date.now()}.html`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: "Campaign Dossier Exported",
+        description: "Your campaign dossier has been exported successfully"
+      });
+    } catch (error) {
+      toast({
+        title: "Export Failed",
+        description: "Failed to export Campaign Dossier PDF",
+        variant: "destructive"
+      });
+    }
+  };
 
   // Fetch campaigns
   const { data: campaigns = [] } = useQuery<Campaign[]>({
@@ -344,6 +413,21 @@ export default function Module6() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Campaign Dossier PDF Export */}
+            {selectedCampaign && (
+              <div className="mb-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCampaignDossierPDFExport}
+                  className="w-full flex items-center gap-2"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  Export Campaign Dossier PDF
+                </Button>
+              </div>
+            )}
 
             {/* Status Filter Buttons */}
             <div className="flex flex-wrap gap-1">

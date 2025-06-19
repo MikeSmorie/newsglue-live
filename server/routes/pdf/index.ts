@@ -515,4 +515,42 @@ router.get('/campaign-dossier/:campaignId', requireAuth, async (req, res) => {
   }
 });
 
+// GET /api/pdf/newsjack/:newsItemId - Generate NewsJack PDF
+router.get('/newsjack/:newsItemId', requireAuth, async (req, res) => {
+  try {
+    const newsItemId = parseInt(req.params.newsItemId);
+    const userId = req.user!.id;
+
+    // Fetch news item with campaign info
+    const newsItem = await db.query.newsItems.findFirst({
+      where: eq(newsItems.id, newsItemId),
+      with: {
+        campaign: true
+      }
+    });
+
+    if (!newsItem) {
+      return res.status(404).json({ error: 'News item not found' });
+    }
+
+    // Verify user has access to this campaign
+    if (newsItem.campaign.userId !== userId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Generate HTML content for NewsJack
+    const htmlContent = generateNewsJackHTML(newsItem, newsItem.campaign);
+
+    // Set response headers for HTML download that can be printed as PDF
+    const filename = `newsjack-${newsItem.headline.replace(/[^a-zA-Z0-9]/g, '-')}-${Date.now()}.html`;
+    res.setHeader('Content-Type', 'text/html');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(htmlContent);
+
+  } catch (error) {
+    console.error('NewsJack PDF generation error:', error);
+    res.status(500).json({ error: 'Failed to generate NewsJack PDF' });
+  }
+});
+
 export default router;
