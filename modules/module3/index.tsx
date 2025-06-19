@@ -484,25 +484,35 @@ export default function Module3() {
                 <div className="flex gap-3 pt-4">
                   <Button 
                     type="submit" 
-                    disabled={submitMutation.isPending}
+                    disabled={submitMutation.isPending || updateNewsMutation.isPending}
                     className="flex-1"
                   >
-                    {submitMutation.isPending ? (
+                    {(submitMutation.isPending || updateNewsMutation.isPending) ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
                       <Send className="mr-2 h-4 w-4" />
                     )}
-                    Send to Module 6
+                    {editingItem ? 'Update News Item' : 'Send to Module 6'}
                   </Button>
                   
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={handleGoToModule6}
-                  >
-                    <ChevronRight className="mr-2 h-4 w-4" />
-                    Go to Module 6
-                  </Button>
+                  {editingItem ? (
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={handleCancelEdit}
+                    >
+                      Cancel
+                    </Button>
+                  ) : (
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={handleGoToModule6}
+                    >
+                      <ChevronRight className="mr-2 h-4 w-4" />
+                      Go to Module 6
+                    </Button>
+                  )}
                 </div>
               </form>
             </CardContent>
@@ -526,27 +536,108 @@ export default function Module3() {
               <p className="text-sm">Use the form above to add your first news item</p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {newsItems.map((item) => (
-                <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex-1">
-                    <h4 className="font-medium text-sm">{item.headline}</h4>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {new Date(item.createdAt).toLocaleDateString()} • {item.contentType}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={
-                      item.status === 'draft' ? 'secondary' :
-                      item.status === 'processing' ? 'default' :
-                      item.status === 'completed' ? 'default' : 'destructive'
-                    }>
-                      {item.status}
-                    </Badge>
+            <TooltipProvider>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h4 className="font-medium text-gray-900">📰 News Items Queue ({newsItems.length})</h4>
+                  <div className="flex gap-2">
+                    {selectedItems.length > 0 && (
+                      <Button
+                        onClick={handleBulkDelete}
+                        size="sm"
+                        variant="destructive"
+                        disabled={bulkDeleteMutation.isPending}
+                      >
+                        <Trash2 className="mr-1 h-3 w-3" />
+                        Delete Selected ({selectedItems.length})
+                      </Button>
+                    )}
                   </div>
                 </div>
-              ))}
-            </div>
+
+                {/* Select All Checkbox */}
+                <div className="flex items-center space-x-2 pb-2 border-b">
+                  <Checkbox
+                    id="select-all"
+                    checked={selectedItems.length === newsItems.length && newsItems.length > 0}
+                    onCheckedChange={handleSelectAll}
+                  />
+                  <Label htmlFor="select-all" className="text-sm text-gray-600">
+                    Select all items
+                  </Label>
+                </div>
+
+                {/* News Items List */}
+                <div className="space-y-3">
+                  {newsItems.map((item) => (
+                    <div key={item.id} className="p-4 border rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                      <div className="flex items-start gap-3">
+                        <Checkbox
+                          checked={selectedItems.includes(item.id)}
+                          onCheckedChange={(checked) => handleSelectItem(item.id, checked as boolean)}
+                          className="mt-1"
+                        />
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-start mb-2">
+                            <h5 className="font-medium text-sm text-gray-900 truncate pr-2">{item.headline}</h5>
+                            <div className="flex items-center gap-2">
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  {getStatusBadge(item.status)}
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>{getStatusTooltip(item.status)}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </div>
+                          </div>
+                          
+                          <p className="text-xs text-gray-600 mb-3 line-clamp-2">{item.content}</p>
+                          
+                          <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-4 text-xs text-gray-500">
+                              <span className="capitalize">{item.contentType} content</span>
+                              <span>{new Date(item.createdAt).toLocaleString()}</span>
+                            </div>
+                            
+                            <div className="flex gap-1">
+                              <Button
+                                onClick={() => handleEdit(item)}
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 px-2"
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                onClick={() => deleteNewsMutation.mutate(item.id)}
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 px-2 text-red-600 hover:text-red-700"
+                                disabled={deleteNewsMutation.isPending}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <Button 
+                  onClick={handleGoToModule6}
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                >
+                  <ChevronRight className="mr-2 h-4 w-4" />
+                  Review in Module 6
+                </Button>
+              </div>
+            </TooltipProvider>
           )}
         </CardContent>
       </Card>
