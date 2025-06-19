@@ -529,7 +529,7 @@ export default function Module6() {
                         className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors capitalize ${
                           activeChannel === channel
                             ? 'bg-blue-600 text-white'
-                            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                            : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600'
                         }`}
                         onClick={() => setActiveChannel(channel)}
                       >
@@ -546,8 +546,8 @@ export default function Module6() {
                   <div className="flex-1 flex items-center justify-center">
                     <div className="text-center max-w-lg">
                       <Sparkles className="mx-auto h-16 w-16 text-blue-500 mb-6" />
-                      <h3 className="text-xl font-medium text-gray-900 mb-3">Generate NewsJack Content</h3>
-                      <p className="text-gray-600 mb-6 leading-relaxed">
+                      <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-3">Generate NewsJack Content</h3>
+                      <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
                         Create AI-powered content for all social platforms using the NewsJack methodology: 
                         Start with news, frame tension, introduce campaign, drive urgency.
                       </p>
@@ -571,7 +571,7 @@ export default function Module6() {
                       </Button>
                       
                       {generateContentMutation.isPending && (
-                        <div className="mt-6 text-sm text-gray-500">
+                        <div className="mt-6 text-sm text-gray-500 dark:text-gray-400">
                           <div className="flex items-center justify-center gap-2 mb-3">
                             <Clock className="h-4 w-4" />
                             Estimated time: 15-30 seconds
@@ -748,7 +748,7 @@ export default function Module6() {
                               </div>
                               <div className="flex justify-between text-sm">
                                 <span className="text-gray-600 dark:text-gray-300">AI Model:</span>
-                                <span className="font-medium">GPT-4o</span>
+                                <span className="font-medium text-gray-900 dark:text-white">GPT-4o</span>
                               </div>
                             </div>
                           </div>
