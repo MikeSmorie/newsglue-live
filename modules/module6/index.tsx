@@ -53,6 +53,7 @@ export default function Module6() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [editingContent, setEditingContent] = useState<{platform: string; content: any} | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
