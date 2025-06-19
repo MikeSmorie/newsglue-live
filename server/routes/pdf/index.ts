@@ -117,39 +117,125 @@ const generateNewsJackHTML = (newsItem: any, campaign: any) => {
 
 // Generate Campaign Dossier HTML content
 const generateCampaignDossierHTML = (campaign: any, newsItemsData: any[], channels: any[]) => {
-  // Generate channels table
+  // Generate Module 1 - Campaign Builder section
+  const campaignBuilderContent = `
+    <div class="section">
+      <h2>📋 Campaign Configuration</h2>
+      <table class="info-table">
+        <tr><th>Campaign Name</th><td>${campaign.campaignName || 'Not specified'}</td></tr>
+        <tr><th>Website URL</th><td>${campaign.websiteUrl || 'Not specified'}</td></tr>
+        <tr><th>Call-to-Action URL</th><td>${campaign.ctaUrl || 'Not specified'}</td></tr>
+        <tr><th>Target Audience</th><td>${campaign.targetAudience || 'Not specified'}</td></tr>
+        <tr><th>Brand Description</th><td>${campaign.brandDescription || 'Not specified'}</td></tr>
+        <tr><th>Key Messages</th><td>${campaign.keyMessages || 'Not specified'}</td></tr>
+        <tr><th>Brand Voice</th><td>${campaign.brandVoice || 'Not specified'}</td></tr>
+        <tr><th>Content Guidelines</th><td>${campaign.contentGuidelines || 'Not specified'}</td></tr>
+        <tr><th>Emotional Objective</th><td>${campaign.emotionalObjective || 'Not specified'}</td></tr>
+        <tr><th>Audience Pain Points</th><td>${campaign.audiencePainPoints || 'Not specified'}</td></tr>
+        <tr><th>Created</th><td>${formatDate(campaign.createdAt)}</td></tr>
+        <tr><th>Status</th><td>${campaign.status || 'Active'}</td></tr>
+      </table>
+    </div>
+  `;
+
+  // Generate Module 2 - Social Channel Settings section
   let channelsContent = '';
   if (channels && channels.length > 0) {
-    const channelsRows = channels.map(channel => 
-      `<tr><td>${channel.platform}</td><td>${channel.enabled ? 'Enabled' : 'Disabled'}</td></tr>`
-    ).join('');
+    const channelsRows = channels.map(channel => {
+      const tone = channel.tone || 'Not specified';
+      const wordLimit = channel.wordLimit || channel.characterLimit || 'Not specified';
+      const contentRatio = channel.newsContentRatio || 'Not specified';
+      
+      return `
+        <tr>
+          <td>${channel.platform}</td>
+          <td>${channel.enabled ? 'Enabled' : 'Disabled'}</td>
+          <td>${tone}</td>
+          <td>${wordLimit}</td>
+          <td>${contentRatio}</td>
+        </tr>
+      `;
+    }).join('');
+    
     channelsContent = `
-      <table class="info-table">
-        <tr><th>Platform</th><th>Status</th></tr>
-        ${channelsRows}
-      </table>
+      <div class="section">
+        <h2>📱 Social Channel Configuration</h2>
+        <table class="info-table">
+          <tr>
+            <th>Platform</th>
+            <th>Status</th>
+            <th>Tone</th>
+            <th>Word/Char Limit</th>
+            <th>News/Campaign Ratio</th>
+          </tr>
+          ${channelsRows}
+        </table>
+      </div>
     `;
   } else {
     channelsContent = '<p>No social platforms configured</p>';
   }
 
-  // Generate news items content
+  // Generate Module 6 - NewsJack Analytics and Performance section
   let newsItemsContent = '';
+  let performanceMetrics = {
+    totalNewsItems: newsItemsData?.length || 0,
+    totalPlatformOutputs: 0,
+    avgGenerationTime: 0,
+    totalWordCount: 0,
+    humanTimeEstimate: 0
+  };
+
   if (newsItemsData && newsItemsData.length > 0) {
+    let totalGenerationTime = 0;
+    let totalItems = 0;
+    
     newsItemsContent = newsItemsData.map((item, index) => {
       let platformOutputsHTML = '';
+      let itemMetricsHTML = '';
       const platformOutputs = item.platformOutputs || {};
+      const metrics = item.generationMetrics || {};
       
+      // Calculate metrics for this item
+      const platformCount = Object.keys(platformOutputs).length;
+      performanceMetrics.totalPlatformOutputs += platformCount;
+      
+      // Extract generation metrics
+      const generationTime = metrics.generationDuration || metrics.duration || 0;
+      const aiModel = metrics.model || metrics.aiModel || 'GPT-4o';
+      const wordCount = metrics.totalWordCount || 0;
+      
+      if (generationTime) {
+        totalGenerationTime += generationTime;
+        totalItems++;
+      }
+      
+      performanceMetrics.totalWordCount += wordCount;
+      performanceMetrics.humanTimeEstimate += (platformCount * 15); // 15 min per platform estimate
+      
+      // Generate platform content with metrics
       if (Object.keys(platformOutputs).length > 0) {
         platformOutputsHTML = `
           <div class="subsection">
-            <h4>Generated Content:</h4>
-            ${Object.entries(platformOutputs).map(([platform, content]) => {
-              if (content) {
+            <h4>📊 NewsJack Platform Outputs:</h4>
+            ${Object.entries(platformOutputs).map(([platform, contentData]: [string, any]) => {
+              if (contentData && typeof contentData === 'object') {
+                const content = contentData.content || contentData;
+                const wordCount = content.split(' ').length;
+                const cta = contentData.cta || 'Not specified';
+                const ctaUrl = contentData.ctaUrl || 'Not specified';
+                
                 return `
                   <div class="platform-output">
-                    <strong>${platform.charAt(0).toUpperCase() + platform.slice(1)}:</strong>
+                    <div class="platform-header">
+                      <strong>${platform.charAt(0).toUpperCase() + platform.slice(1)} Content</strong>
+                      <span class="word-count">${wordCount} words</span>
+                    </div>
                     <div class="content-text">${content}</div>
+                    <div class="cta-info">
+                      <strong>CTA:</strong> ${cta}<br>
+                      <strong>CTA URL:</strong> ${ctaUrl}
+                    </div>
                   </div>
                 `;
               }
@@ -158,23 +244,90 @@ const generateCampaignDossierHTML = (campaign: any, newsItemsData: any[], channe
           </div>
         `;
       }
+      
+      // Generate item-level metrics
+      itemMetricsHTML = `
+        <div class="subsection">
+          <h4>⚡ Generation Metrics:</h4>
+          <table class="metrics-table">
+            <tr><th>AI Model Used</th><td>${aiModel}</td></tr>
+            <tr><th>Generation Time</th><td>${generationTime ? `${generationTime}s` : 'Not recorded'}</td></tr>
+            <tr><th>Total Word Count</th><td>${wordCount || 'Not calculated'}</td></tr>
+            <tr><th>Platform Outputs</th><td>${platformCount}</td></tr>
+            <tr><th>Est. Human Time Saved</th><td>${platformCount * 15} minutes</td></tr>
+          </table>
+        </div>
+      `;
 
       return `
         <div class="news-item">
           <h3>${index + 1}. ${item.headline}</h3>
           <table class="info-table">
-            <tr><th>Source URL</th><td>${item.sourceUrl}</td></tr>
-            <tr><th>Status</th><td>${item.status}</td></tr>
+            <tr><th>Source URL</th><td><a href="${item.sourceUrl}" target="_blank">${item.sourceUrl}</a></td></tr>
+            <tr><th>Status</th><td><span class="status-${item.status}">${item.status}</span></td></tr>
             <tr><th>Content Type</th><td>${item.contentType}</td></tr>
             <tr><th>Created</th><td>${formatDate(item.createdAt)}</td></tr>
+            <tr><th>Last Updated</th><td>${formatDate(item.updatedAt)}</td></tr>
           </table>
+          
+          <div class="original-content">
+            <h4>📰 Original News Content:</h4>
+            <div class="content-text">${item.content || 'No content available'}</div>
+          </div>
+          
           ${platformOutputsHTML}
+          ${itemMetricsHTML}
         </div>
       `;
     }).join('');
+    
+    // Calculate overall averages
+    if (totalItems > 0) {
+      performanceMetrics.avgGenerationTime = totalGenerationTime / totalItems;
+    }
   } else {
-    newsItemsContent = '<p>No news items found for this campaign</p>';
+    newsItemsContent = `
+      <div class="empty-state">
+        <h4>No NewsJack Content Generated</h4>
+        <p>This campaign doesn't have any news items or generated content yet.</p>
+      </div>
+    `;
   }
+  
+  // Generate Performance Benchmark Panel
+  const performanceBenchmarkHTML = `
+    <div class="section">
+      <h2>📈 Performance Benchmark Report</h2>
+      <div class="benchmark-grid">
+        <div class="benchmark-card">
+          <h4>Content Generation</h4>
+          <div class="metric-large">${performanceMetrics.totalNewsItems}</div>
+          <div class="metric-label">News Items Processed</div>
+        </div>
+        <div class="benchmark-card">
+          <h4>Platform Outputs</h4>
+          <div class="metric-large">${performanceMetrics.totalPlatformOutputs}</div>
+          <div class="metric-label">Total Platform Contents</div>
+        </div>
+        <div class="benchmark-card">
+          <h4>AI Efficiency</h4>
+          <div class="metric-large">${performanceMetrics.avgGenerationTime.toFixed(1)}s</div>
+          <div class="metric-label">Avg Generation Time</div>
+        </div>
+        <div class="benchmark-card">
+          <h4>Time Savings</h4>
+          <div class="metric-large">${Math.round(performanceMetrics.humanTimeEstimate / 60)}h</div>
+          <div class="metric-label">Est. Human Time Saved</div>
+        </div>
+      </div>
+      <div class="efficiency-summary">
+        <h4>🎯 Efficiency Summary</h4>
+        <p><strong>Total Word Count Generated:</strong> ${performanceMetrics.totalWordCount.toLocaleString()} words</p>
+        <p><strong>AI vs Human Time:</strong> AI completed in ${performanceMetrics.avgGenerationTime.toFixed(1)}s what would take humans ~${performanceMetrics.humanTimeEstimate} minutes</p>
+        <p><strong>Efficiency Multiplier:</strong> ${performanceMetrics.humanTimeEstimate > 0 ? `${Math.round((performanceMetrics.humanTimeEstimate * 60) / performanceMetrics.avgGenerationTime)}x faster` : 'Calculating...'}</p>
+      </div>
+    </div>
+  `;
 
   return `
     <!DOCTYPE html>
@@ -196,7 +349,35 @@ const generateCampaignDossierHTML = (campaign: any, newsItemsData: any[], channe
             .info-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
             .info-table th, .info-table td { border: 1px solid #d1d5db; padding: 10px; text-align: left; }
             .info-table th { background-color: #f9fafb; font-weight: bold; width: 30%; }
-            .news-item { margin-bottom: 30px; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px; }
+            .metrics-table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+            .metrics-table th, .metrics-table td { border: 1px solid #e5e7eb; padding: 8px; text-align: left; }
+            .metrics-table th { background-color: #f3f4f6; font-weight: bold; }
+            .news-item { margin-bottom: 30px; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px; page-break-inside: avoid; }
+            .news-item h3 { font-size: 14pt; font-weight: bold; color: #2563eb; margin-bottom: 15px; }
+            .platform-output { margin: 15px 0; padding: 15px; background-color: #f9fafb; border-left: 4px solid #2563eb; }
+            .platform-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+            .word-count { font-size: 10pt; color: #666; background-color: #e5e7eb; padding: 2px 8px; border-radius: 12px; }
+            .content-text { margin: 10px 0; padding: 10px; background-color: #fff; border: 1px solid #e5e7eb; border-radius: 4px; white-space: pre-wrap; }
+            .cta-info { margin-top: 10px; font-size: 10pt; color: #666; }
+            .original-content { margin: 15px 0; }
+            .benchmark-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; }
+            .benchmark-card { text-align: center; padding: 15px; border: 1px solid #e5e7eb; border-radius: 8px; background-color: #f9fafb; }
+            .benchmark-card h4 { font-size: 10pt; margin-bottom: 8px; color: #374151; }
+            .metric-large { font-size: 24pt; font-weight: bold; color: #2563eb; margin-bottom: 5px; }
+            .metric-label { font-size: 9pt; color: #6b7280; }
+            .efficiency-summary { margin: 20px 0; padding: 15px; background-color: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; }
+            .empty-state { text-align: center; padding: 40px; color: #6b7280; }
+            .status-active { color: #059669; font-weight: bold; }
+            .status-draft { color: #d97706; font-weight: bold; }
+            .status-archived { color: #6b7280; font-weight: bold; }
+            .page-break { page-break-before: always; }
+            .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 10pt; color: #6b7280; }
+            .cover-page { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; page-break-after: always; }
+            .cover-title { font-size: 36pt; font-weight: bold; color: #2563eb; margin-bottom: 20px; }
+            .cover-subtitle { font-size: 24pt; color: #1f2937; margin-bottom: 40px; }
+            .cover-date { font-size: 14pt; color: #6b7280; }
+            a { color: #2563eb; text-decoration: none; }
+            a:hover { text-decoration: underline; }
             .news-item h3 { font-size: 12pt; font-weight: bold; color: #2563eb; margin-bottom: 15px; }
             .platform-output { background: #f8fafc; padding: 12px; margin: 8px 0; border-left: 4px solid #10b981; }
             .platform-output strong { color: #059669; }
@@ -228,50 +409,25 @@ const generateCampaignDossierHTML = (campaign: any, newsItemsData: any[], channe
             </ul>
         </div>
 
-        <div class="page-break">
-            <div class="section" id="section1">
-                <h2>Section 1: Campaign Setup</h2>
-                <table class="info-table">
-                    <tr><th>Campaign Name</th><td>${campaign.campaignName || 'N/A'}</td></tr>
-                    <tr><th>Status</th><td>${campaign.status || 'N/A'}</td></tr>
-                    <tr><th>Website URL</th><td>${campaign.websiteUrl || 'N/A'}</td></tr>
-                    <tr><th>CTA URL</th><td>${campaign.ctaUrl || 'N/A'}</td></tr>
-                    <tr><th>Emotional Objective</th><td>${campaign.emotionalObjective || 'N/A'}</td></tr>
-                    <tr><th>Audience Pain Points</th><td>${campaign.audiencePain || 'N/A'}</td></tr>
-                    <tr><th>Additional Data</th><td>${campaign.additionalData || 'N/A'}</td></tr>
-                    <tr><th>Created</th><td>${formatDate(campaign.createdAt)}</td></tr>
-                    <tr><th>Last Updated</th><td>${formatDate(campaign.updatedAt)}</td></tr>
-                </table>
-            </div>
-        </div>
+        ${campaignBuilderContent}
 
         <div class="page-break">
-            <div class="section" id="section2">
-                <h2>Section 2: Social Platform Strategy</h2>
-                ${channelsContent}
-            </div>
+            ${channelsContent}
         </div>
 
         <div class="page-break">
             <div class="section" id="section3">
-                <h2>Section 3: News Items & NewsJacks</h2>
+                <h2>📰 NewsJack Content & Analytics</h2>
                 ${newsItemsContent}
             </div>
         </div>
 
         <div class="page-break">
-            <div class="section" id="section4">
-                <h2>Section 4: Performance Metrics</h2>
-                <p>Performance metrics will be available when Module 8 analytics are implemented.</p>
-                <div style="background: #fef3c7; padding: 15px; border-left: 4px solid #f59e0b; margin: 20px 0;">
-                    <strong>Coming Soon:</strong> This section will include engagement metrics, conversion rates, 
-                    click-through rates, and other performance indicators once Module 8 analytics are integrated.
-                </div>
-            </div>
+            ${performanceBenchmarkHTML}
         </div>
 
         <div class="footer">
-            Generated by NewsGlue • ${new Date().toLocaleString()}
+            Generated by NewsGlue Campaign Dossier System • ${new Date().toLocaleString()}
         </div>
     </body>
     </html>
