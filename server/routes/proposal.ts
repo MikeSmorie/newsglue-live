@@ -136,143 +136,149 @@ router.post('/download/:format', requireAuth, async (req, res) => {
     }
 
     if (format === 'pdf') {
-      try {
-        console.log('Attempting PDF generation with Puppeteer...');
-        const puppeteer = await import('puppeteer');
-        
-        // Launch browser with more specific args for Replit environment
-        const browser = await puppeteer.default.launch({
-          headless: true,
-          args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-accelerated-2d-canvas',
-            '--no-first-run',
-            '--no-zygote',
-            '--single-process',
-            '--disable-gpu'
-          ]
-        });
-        
-        console.log('Browser launched successfully');
-        const page = await browser.newPage();
-        
-        // Clean HTML content for PDF generation
-        const cleanHtml = html
-          .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-          .replace(/<!DOCTYPE[^>]*>|<html[^>]*>|<\/html>|<head[^>]*>[\s\S]*?<\/head>|<body[^>]*>|<\/body>/gi, '');
-        
-        // Set content with simplified styling for PDF
-        const pdfHtml = `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="UTF-8">
-            <style>
+      // Create a browser-optimized page for PDF printing with print-specific CSS
+      const pdfOptimizedHtml = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Strategic NewsJack Proposal - ${clientName}</title>
+          <style>
+            @page { 
+              margin: 0.75in; 
+              size: A4;
+            }
+            
+            @media print {
               body { 
-                font-family: Arial, sans-serif; 
-                font-size: 11px; 
-                line-height: 1.4; 
-                color: #333; 
                 margin: 0; 
-                padding: 15px;
-                background: white;
+                font-size: 11px; 
+                line-height: 1.3;
+                color: #000 !important;
+                background: white !important;
               }
-              h1 { font-size: 24px; color: #2563eb; margin: 20px 0 15px 0; }
-              h2 { font-size: 20px; color: #333; margin: 18px 0 12px 0; }
-              h3 { font-size: 16px; color: #2563eb; margin: 15px 0 10px 0; }
-              h4 { font-size: 14px; color: #333; margin: 12px 0 8px 0; }
-              p { margin: 8px 0; }
-              .logo { max-width: 150px; margin-bottom: 15px; }
-              .header { text-align: center; margin-bottom: 25px; }
-              .section { margin-bottom: 20px; }
-              .platform-content { 
-                background: #f8f9fa; 
-                padding: 8px; 
-                margin: 8px 0; 
-                border-left: 2px solid #2563eb; 
+              .no-print { display: none !important; }
+              .page-break { page-break-before: always; }
+              .container { padding: 0; max-width: none; }
+              h1 { font-size: 18px; margin: 12px 0 8px 0; }
+              h2 { font-size: 16px; margin: 10px 0 6px 0; }
+              h3 { font-size: 14px; margin: 8px 0 5px 0; }
+              h4 { font-size: 12px; margin: 6px 0 4px 0; }
+              p { margin: 4px 0; }
+              .logo { max-width: 120px; }
+              .platform-content {
+                background: #f5f5f5 !important;
+                border-left: 2px solid #333 !important;
+                padding: 6px !important;
+                margin: 4px 0 !important;
               }
               .highlight-box {
-                background: #f0f8ff;
-                padding: 10px;
-                margin: 10px 0;
-                border: 1px solid #ddd;
+                background: #f9f9f9 !important;
+                border: 1px solid #ccc !important;
+                padding: 6px !important;
+                margin: 4px 0 !important;
               }
-            </style>
-          </head>
-          <body>
-            ${cleanHtml}
-          </body>
-          </html>
-        `;
-        
-        console.log('Setting page content...');
-        await page.setContent(pdfHtml, { waitUntil: 'domcontentloaded', timeout: 10000 });
-        
-        console.log('Generating PDF...');
-        // Generate PDF
-        const pdfBuffer = await page.pdf({
-          format: 'A4',
-          margin: {
-            top: '0.4in',
-            right: '0.4in',
-            bottom: '0.4in',
-            left: '0.4in'
-          },
-          printBackground: true,
-          timeout: 30000
-        });
-        
-        await browser.close();
-        console.log('PDF generated successfully');
-        
-        // Send actual PDF file
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="${clientName.replace(/\s+/g, '-')}-proposal-${Date.now()}.pdf"`);
-        return res.send(pdfBuffer);
-        
-      } catch (error) {
-        console.error('PDF generation failed:', error.message);
-        
-        // Fallback to printable HTML
-        const printableHtml = `
-          <!DOCTYPE html>
-          <html lang="en">
-          <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Proposal - ${clientName}</title>
-            <style>
-              @page { margin: 0.5in; size: letter; }
-              @media print {
-                body { margin: 0; font-size: 12px; line-height: 1.4; }
-                .no-print { display: none !important; }
-                .page-break { page-break-before: always; }
+            }
+            
+            @media screen {
+              body { 
+                font-family: Arial, sans-serif; 
+                line-height: 1.5; 
+                color: #333; 
+                background: white; 
+                margin: 20px;
               }
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; background: white; }
-            </style>
-          </head>
-          <body>
-            <div class="no-print" style="position: fixed; top: 10px; right: 10px; background: #007bff; color: white; padding: 10px; border-radius: 5px; z-index: 1000;">
-              <button onclick="window.print()" style="background: none; border: none; color: white; cursor: pointer;">
-                📄 Print to PDF
-              </button>
-            </div>
-            ${html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '').replace(/<!DOCTYPE[^>]*>|<html[^>]*>|<\/html>|<head[^>]*>[\s\S]*?<\/head>|<body[^>]*>|<\/body>/gi, '')}
-            <script>
-              window.addEventListener('load', function() {
-                setTimeout(function() { window.print(); }, 1000);
-              });
-            </script>
-          </body>
-          </html>
-        `;
+              .no-print {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #007bff;
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                z-index: 1000;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+              }
+              .print-button {
+                background: none;
+                border: none;
+                color: white;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: bold;
+              }
+              .print-button:hover {
+                text-decoration: underline;
+              }
+            }
+            
+            h1, h2, h3, h4 { 
+              color: #2563eb; 
+              font-weight: bold;
+            }
+            .logo { 
+              max-width: 200px; 
+              height: auto;
+              margin-bottom: 15px; 
+            }
+            .header { 
+              text-align: center; 
+              margin-bottom: 30px; 
+              border-bottom: 2px solid #2563eb;
+              padding-bottom: 20px;
+            }
+            .section { 
+              margin-bottom: 25px; 
+            }
+            .platform-content { 
+              background: #f8f9fa; 
+              padding: 12px; 
+              margin: 10px 0; 
+              border-left: 4px solid #2563eb; 
+              border-radius: 4px;
+            }
+            .highlight-box {
+              background: #f0f8ff;
+              padding: 15px;
+              margin: 15px 0;
+              border: 1px solid #ddd;
+              border-radius: 6px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="no-print">
+            <button class="print-button" onclick="window.print()">
+              📄 Save as PDF (Ctrl+P)
+            </button>
+          </div>
+          
+          ${html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '').replace(/<!DOCTYPE[^>]*>|<html[^>]*>|<\/html>|<head[^>]*>[\s\S]*?<\/head>|<body[^>]*>|<\/body>/gi, '')}
+          
+          <script>
+            // Auto-trigger print dialog after page loads
+            window.addEventListener('load', function() {
+              setTimeout(function() {
+                window.print();
+              }, 1500);
+            });
+            
+            // Handle keyboard shortcut
+            document.addEventListener('keydown', function(e) {
+              if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+                e.preventDefault();
+                window.print();
+              }
+            });
+          </script>
+        </body>
+        </html>
+      `;
 
-        res.setHeader('Content-Type', 'text/html');
-        res.setHeader('Content-Disposition', `inline; filename="${clientName.replace(/\s+/g, '-')}-proposal-printable.html"`);
-        return res.send(printableHtml);
-      }
+      res.setHeader('Content-Type', 'text/html');
+      res.setHeader('Content-Disposition', `inline; filename="${clientName.replace(/\s+/g, '-')}-proposal-${Date.now()}.html"`);
+      return res.send(pdfOptimizedHtml);
     }
 
     if (format === 'docx') {
