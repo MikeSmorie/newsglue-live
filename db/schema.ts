@@ -347,6 +347,44 @@ export const announcementResponsesRelations = relations(announcementResponses, (
   })
 }));
 
+// Module 8: Metrics tracking tables
+export const campaignMetrics = pgTable("campaign_metrics", {
+  id: serial("id").primaryKey(),
+  campaignId: uuid("campaign_id").notNull().references(() => campaigns.id),
+  hourlyRate: decimal("hourly_rate", { precision: 10, scale: 2 }).notNull().default("40.00"),
+  humanEstimateMinutes: integer("human_estimate_minutes").notNull().default(45), // Default for blog posts
+  humanAiEstimateMinutes: integer("human_ai_estimate_minutes").notNull().default(15), // Human + AI hybrid
+  totalOutputs: integer("total_outputs").notNull().default(0),
+  totalTimeSavedSeconds: integer("total_time_saved_seconds").notNull().default(0),
+  totalCostSaved: decimal("total_cost_saved", { precision: 10, scale: 2 }).notNull().default("0.00"),
+  complianceScore: decimal("compliance_score", { precision: 5, scale: 2 }).default("0.00"), // Percentage
+  ctaPresenceRate: decimal("cta_presence_rate", { precision: 5, scale: 2 }).default("0.00"), // Percentage
+  efficiencyScore: decimal("efficiency_score", { precision: 5, scale: 2 }).default("0.00"), // Overall score
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const outputMetrics = pgTable("output_metrics", {
+  id: serial("id").primaryKey(),
+  campaignId: uuid("campaign_id").notNull().references(() => campaigns.id),
+  newsItemId: integer("news_item_id").references(() => newsItems.id),
+  platform: text("platform").notNull(), // 'blog', 'twitter', 'linkedin', etc.
+  generationStartTime: timestamp("generation_start_time").notNull(),
+  generationEndTime: timestamp("generation_end_time").notNull(),
+  generationDurationSeconds: integer("generation_duration_seconds").notNull(),
+  wordCount: integer("word_count").default(0),
+  characterCount: integer("character_count").default(0),
+  toneMatchRating: decimal("tone_match_rating", { precision: 3, scale: 2 }), // 1.00 to 5.00
+  qualityRating: decimal("quality_rating", { precision: 3, scale: 2 }), // Manual scoring 1.00 to 5.00
+  complianceCheck: boolean("compliance_check").default(true), // Meets word/char limits
+  ctaPresent: boolean("cta_present").default(false),
+  urlPresent: boolean("url_present").default(false),
+  estimatedHumanTimeMinutes: integer("estimated_human_time_minutes").notNull(),
+  timeSavedSeconds: integer("time_saved_seconds").notNull(),
+  costSaved: decimal("cost_saved", { precision: 10, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
 // Campaign backups table
 export const backups = pgTable("backups", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -401,6 +439,41 @@ export type InsertAnnouncementRecipient = typeof announcementRecipients.$inferIn
 export type SelectAnnouncementRecipient = typeof announcementRecipients.$inferSelect;
 export type InsertAnnouncementResponse = typeof announcementResponses.$inferInsert;
 export type SelectAnnouncementResponse = typeof announcementResponses.$inferSelect;
+
+// Metrics relations
+export const campaignMetricsRelations = relations(campaignMetrics, ({ one, many }) => ({
+  campaign: one(campaigns, {
+    fields: [campaignMetrics.campaignId],
+    references: [campaigns.id]
+  }),
+  outputs: many(outputMetrics)
+}));
+
+export const outputMetricsRelations = relations(outputMetrics, ({ one }) => ({
+  campaign: one(campaigns, {
+    fields: [outputMetrics.campaignId],
+    references: [campaigns.id]
+  }),
+  newsItem: one(newsItems, {
+    fields: [outputMetrics.newsItemId],
+    references: [newsItems.id]
+  }),
+  campaignMetrics: one(campaignMetrics, {
+    fields: [outputMetrics.campaignId],
+    references: [campaignMetrics.campaignId]
+  })
+}));
+
+// Metrics schema and types
+export const insertCampaignMetricsSchema = createInsertSchema(campaignMetrics);
+export const selectCampaignMetricsSchema = createSelectSchema(campaignMetrics);
+export type InsertCampaignMetrics = typeof campaignMetrics.$inferInsert;
+export type SelectCampaignMetrics = typeof campaignMetrics.$inferSelect;
+
+export const insertOutputMetricsSchema = createInsertSchema(outputMetrics);
+export const selectOutputMetricsSchema = createSelectSchema(outputMetrics);
+export type InsertOutputMetrics = typeof outputMetrics.$inferInsert;
+export type SelectOutputMetrics = typeof outputMetrics.$inferSelect;
 
 // Schemas for validation
 export const insertUserSchema = createInsertSchema(users, {

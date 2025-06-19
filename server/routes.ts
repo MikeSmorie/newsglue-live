@@ -24,6 +24,7 @@ import { registerSupergodRoutes } from "./routes/supergod";
 import auditRoutes from "./routes/admin/audit";
 import { modulesRouter } from "./routes/modules";
 import { checkTrialStatus, resetUserTrial } from "./routes/trial";
+import metricsRoutes from "./routes/metrics";
 import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
 import { logError } from "./utils/logger";
 import { requireRole, requireSupergod } from "./middleware/rbac";

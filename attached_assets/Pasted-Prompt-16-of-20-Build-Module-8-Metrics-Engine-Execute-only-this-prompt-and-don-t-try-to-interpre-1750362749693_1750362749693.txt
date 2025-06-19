@@ -1,0 +1,62 @@
+Prompt 16 of 20 — Build Module 8: Metrics Engine
+
+Execute only this prompt and don’t try to interpret or anticipate what comes next.
+
+⸻
+
+Purpose:
+Create Module 8 to track, calculate, and visualize campaign-specific performance metrics — showing how efficient, fast, and cost-effective NewsGlue is.
+
+⸻
+
+Scope:
+🧩 Metrics to track per campaign (aggregate + per item):
+	•	✅ Avg. AI Content Generation Time per channel (seconds)
+	•	✅ Avg. Human Estimate (user editable, default: 45 min/blog, 15 min/social post)
+	•	✅ Avg. Human+AI Estimate (default: 15 min/blog, 7 min/social)
+	•	✅ Total time saved per output (seconds + %)
+	•	✅ Estimated hourly cost saved (user editable rate × time saved)
+	•	✅ Volume of outputs per platform (Blog, Twitter, LinkedIn, etc.)
+	•	✅ Compliance with tone, word/char limits (as %)
+	•	✅ CTA & URL presence rate (%)
+	•	✅ AI-Tone match rating (if available)
+	•	✅ “Output quality” rating (if manually scored)
+	•	✅ Overall Campaign Efficiency Score
+
+⸻
+
+Module UI Features:
+	1.	Top Filter Bar:
+	•	Select Campaign
+	•	Date Range (optional future feature)
+	•	Editable $/hour value (default = $40)
+	2.	Visual Metrics Display:
+	•	⏱ Bar Chart: Generation Time (NewsGlue vs Human vs Hybrid)
+	•	💵 Table: Cost/time savings by output
+	•	📈 Pie or Line Chart: Output platform breakdown
+	•	✅ Table of compliance scores + output stats
+	•	🧠 AI Efficiency Score: Highlighting % gains
+	3.	Export Options:
+	•	PDF
+	•	CSV
+	•	Copy summary block (for Module 7)
+
+⸻
+
+Backend Tasks:
+	•	Log AI content generation timestamps (start → complete)
+	•	Store stats per output in DB (time, char count, word count, match %)
+	•	Enable editable “manual estimate” + hourly rate per campaign
+	•	Calculate derived stats dynamically
+	•	Expose API for Module 7 to fetch these stats
+
+⸻
+
+Frontend Location:
+📍 Module 8 dashboard tile → Opens full stats view
+Ensure only the God/Supergod user role sees system-wide aggregate stats (optional future toggle).
+
+⸻
+
+Begin implementation of Module 8: Metrics Engine now.
+This sets the foundation for Prompt 17 (Proposal performance block).
