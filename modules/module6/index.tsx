@@ -212,6 +212,67 @@ export default function Module6() {
     return Object.keys(item.platformOutputs);
   };
 
+  // PDF download functions
+  const handleDownloadNewsJackPDF = async (newsItemId: number) => {
+    try {
+      const res = await fetch(`/api/pdf/newsjack/${newsItemId}`, {
+        credentials: 'include'
+      });
+      if (!res.ok) throw new Error('Failed to generate PDF');
+      
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `newsjack-${newsItemId}-${Date.now()}.html`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: "PDF Downloaded",
+        description: "NewsJack content report has been downloaded."
+      });
+    } catch (error: any) {
+      toast({
+        title: "Download Failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDownloadCampaignDossier = async (campaignId: string) => {
+    try {
+      const res = await fetch(`/api/pdf/campaign-dossier/${campaignId}`, {
+        credentials: 'include'
+      });
+      if (!res.ok) throw new Error('Failed to generate campaign dossier');
+      
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `campaign-dossier-${campaignId}-${Date.now()}.html`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: "Dossier Downloaded",
+        description: "Campaign dossier has been downloaded."
+      });
+    } catch (error: any) {
+      toast({
+        title: "Download Failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
   // Edit Content Modal Component
   const EditContentModal = ({ isOpen, onClose, platform, content, onSave }: any) => (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -501,23 +562,66 @@ export default function Module6() {
             <>
               {/* Header Area */}
               <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                  {selectedNewsItem.headline}
-                </h1>
-                <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300 mb-3">
-                  <span>Campaign: {selectedCampaign?.campaignName}</span>
-                  <span>•</span>
-                  <a
-                    href={selectedNewsItem.sourceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
-                  >
-                    <ExternalLink className="h-3 w-3" />
-                    Source URL
-                  </a>
-                  <span>•</span>
-                  <span>{new Date(selectedNewsItem.createdAt).toLocaleDateString()}</span>
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                      {selectedNewsItem.headline}
+                    </h1>
+                    <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300 mb-3">
+                      <span>Campaign: {selectedCampaign?.campaignName}</span>
+                      <span>•</span>
+                      <a
+                        href={selectedNewsItem.sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        Source URL
+                      </a>
+                      <span>•</span>
+                      <span>{new Date(selectedNewsItem.createdAt).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                  
+                  {/* PDF Download Buttons */}
+                  <div className="flex gap-2 ml-4">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDownloadNewsJackPDF(selectedNewsItem.id)}
+                          className="flex items-center gap-2"
+                        >
+                          <Download className="h-4 w-4" />
+                          NewsJack PDF
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Download PDF report for this news item's generated content
+                      </TooltipContent>
+                    </Tooltip>
+                    
+                    {selectedCampaign && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDownloadCampaignDossier(selectedCampaign.id)}
+                            className="flex items-center gap-2"
+                          >
+                            <FileText className="h-4 w-4" />
+                            Campaign Dossier
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          Download complete campaign strategy and content dossier
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                  </div>
                 </div>
 
                 {/* Channel Filter Tabs */}
