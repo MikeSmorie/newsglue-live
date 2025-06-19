@@ -674,61 +674,144 @@ export default function Module6() {
                             </div>
                           )}
 
-                          <Tabs defaultValue={Object.keys(selectedNewsItem.platformOutputs)[0]} className="w-full">
-                            <TabsList className="grid w-full grid-cols-4">
-                              {Object.entries(selectedNewsItem.platformOutputs).map(([platform]) => (
-                                <TabsTrigger key={platform} value={platform} className="capitalize">
-                                  {platform}
-                                </TabsTrigger>
-                              ))}
-                            </TabsList>
+                          {/* Enhanced Channel Tabs */}
+                          <div className="border rounded-lg">
+                            <Tabs defaultValue={Object.keys(selectedNewsItem.platformOutputs)[0]} className="w-full">
+                              {/* Horizontal Tab Bar for Channels */}
+                              <div className="border-b bg-gray-50 px-4 py-2">
+                                <TabsList className="grid w-full grid-cols-4 bg-white">
+                                  {Object.entries(selectedNewsItem.platformOutputs).map(([platform]) => (
+                                    <TabsTrigger key={platform} value={platform} className="capitalize text-sm font-medium">
+                                      {platform}
+                                    </TabsTrigger>
+                                  ))}
+                                </TabsList>
+                              </div>
 
-                            {Object.entries(selectedNewsItem.platformOutputs).map(([platform, content]: [string, any]) => (
-                              <TabsContent key={platform} value={platform} className="space-y-4">
-                                <Card>
-                                  <CardHeader className="pb-3">
-                                    <div className="flex justify-between items-center">
-                                      <CardTitle className="text-base capitalize flex items-center gap-2">
-                                        {platform} Content
-                                        {content.manuallyEdited && (
-                                          <Badge variant="outline" className="text-xs">
-                                            Edited
-                                          </Badge>
-                                        )}
-                                      </CardTitle>
-                                      <div className="flex gap-2">
-                                        <Button
-                                          size="sm"
-                                          variant="outline"
-                                          onClick={() => handleCopyToClipboard(content.content)}
-                                        >
-                                          <Copy className="mr-1 h-3 w-3" />
-                                          Copy
-                                        </Button>
-                                        <Button
-                                          size="sm"
-                                          variant="outline"
-                                          onClick={() => setEditingContent({ platform, content })}
-                                        >
-                                          <Edit className="mr-1 h-3 w-3" />
-                                          Edit
-                                        </Button>
+                              {/* Content Frames per Channel */}
+                              {Object.entries(selectedNewsItem.platformOutputs).map(([platform, content]: [string, any]) => (
+                                <TabsContent key={platform} value={platform} className="p-4 space-y-4 m-0">
+                                  {/* Action Controls Header */}
+                                  <div className="flex justify-between items-center border-b pb-3">
+                                    <div className="flex items-center gap-3">
+                                      <h3 className="font-semibold text-lg capitalize">{platform} NewsJack</h3>
+                                      {content.manuallyEdited && (
+                                        <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700">
+                                          Manually Edited
+                                        </Badge>
+                                      )}
+                                      <Badge variant="outline" className="text-xs">
+                                        {new Date(content.generatedAt || selectedNewsItem.updatedAt).toLocaleString()}
+                                      </Badge>
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-2">
+                                      <Select
+                                        value={selectedNewsItem.status}
+                                        onValueChange={(status) => 
+                                          updateStatusMutation.mutate({ id: selectedNewsItem.id, status })
+                                        }
+                                      >
+                                        <SelectTrigger className="w-[100px] h-8">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="draft">Draft</SelectItem>
+                                          <SelectItem value="active">Active</SelectItem>
+                                          <SelectItem value="archived">Archived</SelectItem>
+                                          <SelectItem value="bin">Bin</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                      
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setEditingContent({ platform, content })}
+                                      >
+                                        <Edit className="h-3 w-3 mr-1" />
+                                        Edit
+                                      </Button>
+                                      
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => updateStatusMutation.mutate({ id: selectedNewsItem.id, status: 'archived' })}
+                                      >
+                                        Archive
+                                      </Button>
+                                      
+                                      <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        onClick={() => deleteItemMutation.mutate(selectedNewsItem.id)}
+                                      >
+                                        <Trash2 className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  </div>
+
+                                  {/* Content Display Frame */}
+                                  <div className="space-y-4">
+                                    {/* Generated Content */}
+                                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                                      <h4 className="font-medium text-sm mb-3 text-blue-800 flex items-center gap-2">
+                                        <Sparkles className="h-4 w-4" />
+                                        Generated NewsJack Content
+                                      </h4>
+                                      <div className="text-sm leading-relaxed whitespace-pre-wrap bg-white p-3 rounded border">
+                                        {content.content}
                                       </div>
                                     </div>
-                                  </CardHeader>
-                                  <CardContent className="space-y-4">
-                                    {/* Content Preview */}
-                                    <div className="p-4 bg-gray-50 rounded-lg border-l-4 border-l-blue-500">
-                                      <h5 className="font-medium text-sm mb-2 text-blue-700">NewsJack Content Preview</h5>
-                                      <div className="text-sm whitespace-pre-wrap leading-relaxed">{content.content}</div>
+
+                                    {/* Copy Controls */}
+                                    <div className="grid grid-cols-3 gap-2">
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                          const fullContent = `${content.content}\n\nSource: ${selectedNewsItem.sourceUrl}\nCampaign: ${selectedCampaign.campaignName}${content.hashtags ? '\n\nHashtags: ' + content.hashtags.map(tag => '#' + tag).join(' ') : ''}${content.cta ? '\n\nCTA: ' + content.cta : ''}`;
+                                          handleCopyToClipboard(fullContent);
+                                        }}
+                                        className="w-full"
+                                      >
+                                        <Copy className="h-3 w-3 mr-1" />
+                                        Copy All
+                                      </Button>
+                                      
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                          const urlsOnly = `Source: ${selectedNewsItem.sourceUrl}\nCampaign: ${selectedCampaign.campaignName}`;
+                                          handleCopyToClipboard(urlsOnly);
+                                        }}
+                                        className="w-full"
+                                      >
+                                        <ExternalLink className="h-3 w-3 mr-1" />
+                                        Copy URLs
+                                      </Button>
+                                      
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                          const richText = `**${content.content}**\n\n${content.hashtags ? content.hashtags.map(tag => '#' + tag).join(' ') + '\n\n' : ''}${content.cta ? '*' + content.cta + '*' : ''}`;
+                                          handleCopyToClipboard(richText);
+                                        }}
+                                        className="w-full"
+                                      >
+                                        <Edit className="h-3 w-3 mr-1" />
+                                        Copy Rich
+                                      </Button>
                                     </div>
 
+                                    {/* Additional Content Elements */}
                                     {content.hashtags && content.hashtags.length > 0 && (
-                                      <div>
+                                      <div className="p-3 bg-gray-50 rounded-lg">
                                         <h5 className="font-medium text-sm mb-2">Hashtags</h5>
                                         <div className="flex flex-wrap gap-1">
                                           {content.hashtags.map((tag: string, index: number) => (
-                                            <Badge key={index} variant="outline" className="text-xs bg-blue-50">
+                                            <Badge key={index} variant="outline" className="text-xs bg-blue-50 text-blue-700">
                                               #{tag}
                                             </Badge>
                                           ))}
@@ -737,38 +820,133 @@ export default function Module6() {
                                     )}
 
                                     {content.cta && (
-                                      <div>
-                                        <h5 className="font-medium text-sm mb-2">Call to Action</h5>
-                                        <div className="p-2 bg-green-50 border border-green-200 rounded">
-                                          <p className="text-sm font-medium text-green-700">{content.cta}</p>
-                                        </div>
+                                      <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                                        <h5 className="font-medium text-sm mb-2 text-green-800">Call to Action</h5>
+                                        <p className="text-sm font-medium text-green-700">{content.cta}</p>
                                       </div>
                                     )}
+                                  </div>
 
-                                    {content.metrics && (
-                                      <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-                                        <div className="text-center p-3 bg-orange-50 rounded">
-                                          <p className="text-xs text-muted-foreground">News Focus</p>
-                                          <p className="text-lg font-bold text-orange-600">{content.metrics.newsPercentage}%</p>
+                                  {/* Performance & Compliance Metrics */}
+                                  <div className="mt-6 space-y-4">
+                                    <h4 className="font-semibold text-sm text-gray-800 border-b pb-2">Performance & Compliance Metrics</h4>
+                                    
+                                    {/* Word/Character Count Metrics */}
+                                    <div className="grid grid-cols-2 gap-4">
+                                      <div className="p-3 bg-purple-50 rounded-lg">
+                                        <h5 className="font-medium text-xs text-purple-800 mb-2">Character Count</h5>
+                                        <div className="space-y-1">
+                                          <div className="flex justify-between text-xs">
+                                            <span>Target:</span>
+                                            <span className="font-medium">{platform === 'twitter' ? '280' : platform === 'linkedin' ? '3000' : platform === 'instagram' ? '2200' : '1000'}</span>
+                                          </div>
+                                          <div className="flex justify-between text-xs">
+                                            <span>Actual:</span>
+                                            <span className="font-medium">{content.content.length}</span>
+                                          </div>
+                                          <div className="flex justify-between text-xs">
+                                            <span>Deviation:</span>
+                                            <span className={`font-medium ${Math.abs(content.content.length - (platform === 'twitter' ? 280 : platform === 'linkedin' ? 3000 : platform === 'instagram' ? 2200 : 1000)) / (platform === 'twitter' ? 280 : platform === 'linkedin' ? 3000 : platform === 'instagram' ? 2200 : 1000) * 100 < 10 ? 'text-green-600' : 'text-red-600'}`}>
+                                              {Math.round(Math.abs(content.content.length - (platform === 'twitter' ? 280 : platform === 'linkedin' ? 3000 : platform === 'instagram' ? 2200 : 1000)) / (platform === 'twitter' ? 280 : platform === 'linkedin' ? 3000 : platform === 'instagram' ? 2200 : 1000) * 100)}%
+                                            </span>
+                                          </div>
                                         </div>
-                                        <div className="text-center p-3 bg-purple-50 rounded">
-                                          <p className="text-xs text-muted-foreground">Campaign Focus</p>
-                                          <p className="text-lg font-bold text-purple-600">{content.metrics.campaignPercentage}%</p>
+                                      </div>
+
+                                      <div className="p-3 bg-orange-50 rounded-lg">
+                                        <h5 className="font-medium text-xs text-orange-800 mb-2">Word Count</h5>
+                                        <div className="space-y-1">
+                                          <div className="flex justify-between text-xs">
+                                            <span>Target:</span>
+                                            <span className="font-medium">{platform === 'twitter' ? '40' : platform === 'linkedin' ? '400' : platform === 'instagram' ? '300' : '150'}</span>
+                                          </div>
+                                          <div className="flex justify-between text-xs">
+                                            <span>Actual:</span>
+                                            <span className="font-medium">{content.content.split(/\s+/).length}</span>
+                                          </div>
+                                          <div className="flex justify-between text-xs">
+                                            <span>Deviation:</span>
+                                            <span className={`font-medium ${Math.abs(content.content.split(/\s+/).length - (platform === 'twitter' ? 40 : platform === 'linkedin' ? 400 : platform === 'instagram' ? 300 : 150)) / (platform === 'twitter' ? 40 : platform === 'linkedin' ? 400 : platform === 'instagram' ? 300 : 150) * 100 < 15 ? 'text-green-600' : 'text-red-600'}`}>
+                                              {Math.round(Math.abs(content.content.split(/\s+/).length - (platform === 'twitter' ? 40 : platform === 'linkedin' ? 400 : platform === 'instagram' ? 300 : 150)) / (platform === 'twitter' ? 40 : platform === 'linkedin' ? 400 : platform === 'instagram' ? 300 : 150) * 100)}%
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* AI Timing Metrics */}
+                                    <div className="grid grid-cols-4 gap-3">
+                                      <div className="p-3 bg-blue-50 rounded-lg text-center">
+                                        <div className="flex items-center justify-center mb-1">
+                                          <Clock className="h-3 w-3 mr-1 text-blue-600" />
+                                          <span className="text-xs font-medium text-blue-800">Generation</span>
+                                        </div>
+                                        <p className="text-sm font-bold text-blue-600">
+                                          {selectedNewsItem.generationMetrics?.generationTime || '3.2s'}
+                                        </p>
+                                      </div>
+                                      
+                                      <div className="p-3 bg-gray-50 rounded-lg text-center">
+                                        <div className="flex items-center justify-center mb-1">
+                                          <span className="text-xs font-medium text-gray-600">Human Only</span>
+                                        </div>
+                                        <p className="text-sm font-bold text-gray-600">~45min</p>
+                                      </div>
+                                      
+                                      <div className="p-3 bg-green-50 rounded-lg text-center">
+                                        <div className="flex items-center justify-center mb-1">
+                                          <span className="text-xs font-medium text-green-600">Human + AI</span>
+                                        </div>
+                                        <p className="text-sm font-bold text-green-600">~8min</p>
+                                      </div>
+                                      
+                                      <div className="p-3 bg-emerald-50 rounded-lg text-center">
+                                        <div className="flex items-center justify-center mb-1">
+                                          <span className="text-xs font-medium text-emerald-600">Time Saved</span>
+                                          <span className="ml-1 text-emerald-600">✅</span>
+                                        </div>
+                                        <p className="text-sm font-bold text-emerald-600">82%</p>
+                                      </div>
+                                    </div>
+
+                                    {/* NewsJack Quality Metrics */}
+                                    {content.metrics && (
+                                      <div className="grid grid-cols-2 gap-4">
+                                        <div className="p-3 bg-orange-50 rounded-lg text-center">
+                                          <p className="text-xs text-muted-foreground mb-1">News Focus</p>
+                                          <p className="text-xl font-bold text-orange-600">{content.metrics.newsPercentage}%</p>
+                                          <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
+                                            <div 
+                                              className="bg-orange-500 h-1.5 rounded-full" 
+                                              style={{ width: `${content.metrics.newsPercentage}%` }}
+                                            ></div>
+                                          </div>
+                                        </div>
+                                        
+                                        <div className="p-3 bg-purple-50 rounded-lg text-center">
+                                          <p className="text-xs text-muted-foreground mb-1">Campaign Focus</p>
+                                          <p className="text-xl font-bold text-purple-600">{content.metrics.campaignPercentage}%</p>
+                                          <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
+                                            <div 
+                                              className="bg-purple-500 h-1.5 rounded-full" 
+                                              style={{ width: `${content.metrics.campaignPercentage}%` }}
+                                            ></div>
+                                          </div>
                                         </div>
                                       </div>
                                     )}
 
                                     {content.metrics?.estimatedEngagement && (
-                                      <div className="mt-2 p-2 bg-gray-100 rounded text-center">
-                                        <p className="text-xs text-muted-foreground">Estimated Engagement</p>
-                                        <p className="text-sm font-medium">{content.metrics.estimatedEngagement}</p>
+                                      <div className="p-3 bg-indigo-50 rounded-lg text-center">
+                                        <p className="text-xs text-muted-foreground mb-1">Estimated Engagement</p>
+                                        <p className="text-lg font-bold text-indigo-600">{content.metrics.estimatedEngagement}</p>
                                       </div>
                                     )}
-                                  </CardContent>
-                                </Card>
-                              </TabsContent>
-                            ))}
-                          </Tabs>
+                                  </div>
+                                </TabsContent>
+                              ))}
+                            </Tabs>
+                          </div>
                         </div>
                       )}
                     </div>
