@@ -300,7 +300,9 @@ export const newsItems = pgTable("news_items", {
   sourceUrl: text("source_url").notNull(),
   content: text("content").notNull(),
   contentType: text("content_type").notNull().default("external"), // 'external' | 'internal'
-  status: text("status").notNull().default("draft"), // 'draft' | 'sent' | 'complete' | 'error'
+  status: text("status").notNull().default("draft"), // 'draft' | 'active' | 'archived' | 'bin'
+  platformOutputs: jsonb("platform_outputs"), // Store generated content per platform
+  generationMetrics: jsonb("generation_metrics"), // Store performance metrics
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
 });
