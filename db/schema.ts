@@ -592,3 +592,34 @@ export const selectPasswordResetTokenSchema = createSelectSchema(passwordResetTo
 
 export type InsertPasswordResetToken = typeof passwordResetTokens.$inferInsert;
 export type SelectPasswordResetToken = typeof passwordResetTokens.$inferSelect;
+
+// Campaigns table
+export const campaigns = pgTable("campaigns", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  campaignName: text("campaign_name").notNull(),
+  campaignUrl: text("campaign_url"),
+  tone: text("tone"), // archetype
+  strategy_q1: text("strategy_q1"), // What is your primary business goal?
+  strategy_q2: text("strategy_q2"), // Who is your target audience?
+  strategy_q3: text("strategy_q3"), // What makes your product/service unique?
+  strategy_q4: text("strategy_q4"), // What is your desired outcome?
+  strategy_q5: text("strategy_q5"), // What is your timeline?
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Campaigns relations
+export const campaignsRelations = relations(campaigns, ({ one }) => ({
+  user: one(users, {
+    fields: [campaigns.userId],
+    references: [users.id],
+  }),
+}));
+
+// Campaigns schemas
+export const insertCampaignSchema = createInsertSchema(campaigns);
+export const selectCampaignSchema = createSelectSchema(campaigns);
+
+export type InsertCampaign = typeof campaigns.$inferInsert;
+export type SelectCampaign = typeof campaigns.$inferSelect;
