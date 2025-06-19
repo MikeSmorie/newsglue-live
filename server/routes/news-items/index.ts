@@ -1,7 +1,7 @@
 import express from 'express';
 import { db } from '../../../db/index.js';
 import { newsItems, campaigns } from '../../../db/schema.js';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { z } from 'zod';
 
 const router = express.Router();
@@ -29,14 +29,17 @@ router.post('/manual-submit', async (req, res) => {
 
     const { campaignId, headline, sourceUrl, content, type } = validation.data;
 
-    // Verify campaign exists
+    // Verify campaign exists AND user owns it (critical security check)
     const campaign = await db.query.campaigns.findFirst({
-      where: eq(campaigns.id, campaignId)
+      where: and(
+        eq(campaigns.id, campaignId),
+        eq(campaigns.userId, req.user!.id)
+      )
     });
 
     if (!campaign) {
       return res.status(404).json({
-        error: 'Campaign not found'
+        error: 'Campaign not found or access denied'
       });
     }
 
@@ -82,6 +85,20 @@ router.get('/:campaignId', async (req, res) => {
     if (!campaignId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(campaignId)) {
       return res.status(400).json({
         error: 'Invalid campaign ID format'
+      });
+    }
+
+    // Verify user owns the campaign first (critical security check)
+    const campaign = await db.query.campaigns.findFirst({
+      where: and(
+        eq(campaigns.id, campaignId),
+        eq(campaigns.userId, req.user!.id)
+      )
+    });
+
+    if (!campaign) {
+      return res.status(404).json({
+        error: 'Campaign not found or access denied'
       });
     }
 
