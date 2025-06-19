@@ -593,18 +593,16 @@ export const selectPasswordResetTokenSchema = createSelectSchema(passwordResetTo
 export type InsertPasswordResetToken = typeof passwordResetTokens.$inferInsert;
 export type SelectPasswordResetToken = typeof passwordResetTokens.$inferSelect;
 
-// Campaigns table
+// Campaigns table - NewsJack methodology focused
 export const campaigns = pgTable("campaigns", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  campaignName: text("campaign_name").notNull(),
-  campaignUrl: text("campaign_url"),
-  tone: text("tone"), // archetype
-  strategy_q1: text("strategy_q1"), // What is your primary business goal?
-  strategy_q2: text("strategy_q2"), // Who is your target audience?
-  strategy_q3: text("strategy_q3"), // What makes your product/service unique?
-  strategy_q4: text("strategy_q4"), // What is your desired outcome?
-  strategy_q5: text("strategy_q5"), // What is your timeline?
+  name: text("name").notNull(), // Campaign name
+  websiteUrl: text("website_url"), // Source URL for scraping
+  ctaUrl: text("cta_url"), // Call-to-action URL
+  emotionalObjective: text("emotional_objective"), // Target emotional response
+  audiencePain: text("audience_pain"), // Pain-focused audience description
+  additionalData: text("additional_data"), // Extra context and notes
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

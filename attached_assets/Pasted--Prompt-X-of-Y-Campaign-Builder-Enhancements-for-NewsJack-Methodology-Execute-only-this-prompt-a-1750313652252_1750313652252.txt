@@ -1,3 +1,9 @@
+// Prompt X of Y – Campaign Builder Enhancements for NewsJack Methodology
+Execute only this prompt and don’t try to interpret or anticipate what comes next.
+This updates Module 1 (1 Campaign Builder) with NewsJack-driven labels, tooltips, emotional fields, and dynamic guidance.
+
+🔁 Replace: client/src/components/CampaignForm.tsx
+```tsx
 // [CAMPAIGN FORM COMPONENT] - FULL FILE REPLACEMENT
 import React from 'react';
 import { useForm } from 'react-hook-form';
@@ -8,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { HelpCircle } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '../lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
 export default function CampaignForm() {
@@ -17,13 +24,7 @@ export default function CampaignForm() {
 
   const mutation = useMutation({
     mutationFn: async (data) => {
-      const res = await fetch('/api/campaigns', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error('Failed to create campaign');
+      const res = await apiRequest('POST', '/api/campaigns', data);
       return res.json();
     },
     onSuccess: () => {
@@ -61,7 +62,7 @@ export default function CampaignForm() {
               <HelpCircle className="inline h-4 w-4 ml-1 text-muted-foreground" />
             </TooltipTrigger>
             <TooltipContent>
-              Paste the company's homepage or About page. We'll scrape it for key context.
+              Paste the company’s homepage or About page. We'll scrape it for key context.
             </TooltipContent>
           </Tooltip>
         </Label>
@@ -134,3 +135,4 @@ export default function CampaignForm() {
     </form>
   );
 }
+```

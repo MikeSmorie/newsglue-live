@@ -11,18 +11,14 @@ const requireAuth = (req: any, res: any, next: any) => {
 
 const router = express.Router();
 
-// Validation schema for campaign creation/update
+// Validation schema for campaign creation/update - NewsJack focused
 const campaignCreateSchema = z.object({
-  campaignName: z.string().min(1, "Campaign name is required"),
-  campaignUrl: z.string().url().optional().or(z.literal("")),
-  websiteUrl: z.string().url().optional().or(z.literal("")),
-  additionalData: z.string().optional(),
-  tone: z.string().optional(),
-  strategy_q1: z.string().optional(),
-  strategy_q2: z.string().optional(),
-  strategy_q3: z.string().optional(),
-  strategy_q4: z.string().optional(),
-  strategy_q5: z.string().optional(),
+  name: z.string().min(1, "Campaign name is required"),
+  website_url: z.string().url().optional().or(z.literal("")),
+  cta_url: z.string().url().optional().or(z.literal("")),
+  emotional_objective: z.string().optional(),
+  audience_pain: z.string().optional(),
+  additional_data: z.string().optional(),
 });
 
 // GET /api/campaigns - List all campaigns for authenticated user
@@ -67,9 +63,13 @@ router.post('/', requireAuth, async (req, res) => {
     const validatedData = campaignCreateSchema.parse(req.body);
     
     const newCampaign = await db.insert(campaigns).values({
-      ...validatedData,
+      name: validatedData.name,
+      websiteUrl: validatedData.website_url || null,
+      ctaUrl: validatedData.cta_url || null,
+      emotionalObjective: validatedData.emotional_objective || null,
+      audiencePain: validatedData.audience_pain || null,
+      additionalData: validatedData.additional_data || null,
       userId: req.user!.id,
-      campaignUrl: validatedData.campaignUrl || null,
     }).returning();
 
     res.status(201).json(newCampaign[0]);
