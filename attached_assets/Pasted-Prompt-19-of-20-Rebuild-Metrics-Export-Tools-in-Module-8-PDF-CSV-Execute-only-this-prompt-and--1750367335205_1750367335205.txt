@@ -1,0 +1,79 @@
+Prompt 19 of 20 — Rebuild Metrics Export Tools in Module 8 (PDF + CSV)
+Execute only this prompt and don’t try to interpret or anticipate what comes next.
+
+
+
+Context:
+The previous attempt at Prompt 19 broke Module 8. This is a corrected version designed to extend existing functionality without disrupting core metrics operations.
+
+⸻
+
+Purpose:
+Enable safe and non-destructive exporting of campaign metrics from Module 8 in both professionally styled PDF and raw CSV formats.
+
+⸻
+
+✅ PDF Export Requirements
+	•	Generate branded, readable PDF based on existing real-time metrics from the campaign already in session (no dropdowns).
+	•	Content structure:
+	1.	Cover Header:
+	•	NewsGlue logo (use /assets/logo.png or equivalent)
+	•	Campaign name (auto-filled)
+	•	Date/time of export
+	•	Contact: Team@NewsGlue.io
+	•	URL: NewsGlue.io
+	2.	Executive Summary (auto-generated, 100–150 words)
+	3.	Metrics Overview Table:
+	•	Total outputs
+	•	Total time saved
+	•	Estimated cost saved (editable $/hour variable, default $40/hr)
+	•	Compliance score
+	•	CTA rate
+	•	Tone match
+	4.	Charts (use existing chart engine):
+	•	Bar chart: AI Time vs Human Time
+	•	Pie chart: Output by Platform
+	5.	Appendix:
+	•	Methodology assumptions
+	•	Disclaimer on estimation basis
+	•	Filename:
+metrics-report-[campaignSlug]-[timestamp].pdf
+
+⸻
+
+✅ CSV Export Requirements
+	•	One row per output entry with the following columns:
+	•	Output ID
+	•	Platform
+	•	Generated Time (s)
+	•	Estimated Human Time (min)
+	•	Time Saved
+	•	Cost Saved
+	•	CTA Present (Y/N)
+	•	Compliance (%)
+	•	Tone Match (%)
+	•	Filename:
+metrics-report-[campaignSlug]-[timestamp].csv
+
+⸻
+
+✅ Frontend Integration
+	•	Add two buttons in Module 8 top-right corner:
+	•	📄 Export PDF
+	•	📊 Export CSV
+	•	Ensure buttons only appear once campaign is selected via session (no dropdowns).
+	•	Use the same UI style as other modules for consistency.
+
+⸻
+
+✅ Permissions
+	•	Regular Users: Can only export metrics for the current active campaign.
+	•	God Mode Users: Can export metrics for any campaign.
+
+⸻
+
+Final Notes:
+	•	Ensure zero changes to existing metrics logic, calculations, or UI rendering.
+	•	Do not alter or overwrite the current metrics display logic.
+
+Confirm when stable and verified. Proceed to Prompt 20 only after exports are tested working.

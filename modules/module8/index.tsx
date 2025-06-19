@@ -143,6 +143,37 @@ export default function Module8() {
     }
   };
 
+  const handleExportCSV = async () => {
+    if (!activeCampaignId) return;
+    
+    try {
+      const response = await fetch(`/api/metrics/export/${activeCampaignId}/csv`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+
+      if (!response.ok) throw new Error('Failed to export CSV');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `metrics-report-${activeCampaignId}-${Date.now()}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      
+      toast({ title: "CSV exported successfully" });
+    } catch (error) {
+      toast({ 
+        title: "Export failed", 
+        description: "Failed to export CSV data",
+        variant: "destructive" 
+      });
+    }
+  };
+
   const handleCopyMetrics = () => {
     if (!campaignMetrics) return;
     
@@ -348,8 +379,12 @@ Efficiency Score: ${campaignMetrics.efficiencyScore}%`;
               </CardHeader>
               <CardContent className="space-y-3">
                 <Button onClick={handleExportReport} className="w-full">
-                  <Download className="mr-2 h-4 w-4" />
+                  <FileText className="mr-2 h-4 w-4" />
                   Export PDF Report
+                </Button>
+                <Button onClick={handleExportCSV} variant="outline" className="w-full">
+                  <Download className="mr-2 h-4 w-4" />
+                  Export CSV Data
                 </Button>
                 <Button onClick={handleCopyMetrics} variant="outline" className="w-full">
                   <Copy className="mr-2 h-4 w-4" />
