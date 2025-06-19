@@ -3,56 +3,213 @@ import { db } from "../../db/index.js";
 import { campaigns, newsItems } from "../../db/schema.js";
 import { eq } from "drizzle-orm";
 import { generateProposalHTML } from "../templates/proposal-template.js";
-// import puppeteer from "puppeteer"; // Disabled due to Replit compatibility issues
+import puppeteer from "puppeteer";
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
 import { createWriteStream, unlinkSync, existsSync } from "fs";
 import path from "path";
 
 const router = express.Router();
 
-// Generate PDF content using the same approach as working PDF functions
-const generateProposalPDFContent = (clientName: string, htmlContent: string, templateData: any) => {
-  // Extract content from HTML, removing existing styles
-  const cleanContent = htmlContent
-    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-    .replace(/<!DOCTYPE[^>]*>|<html[^>]*>|<\/html>|<head[^>]*>[\s\S]*?<\/head>|<body[^>]*>|<\/body>/gi, '');
+// Generate binary PDF using Puppeteer
+const generateProposalPDF = async (clientName: string, htmlContent: string, templateData: any): Promise<Buffer> => {
+  let browser;
+  
+  try {
+    // Launch browser with optimized settings for Replit environment
+    browser = await puppeteer.launch({
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process',
+        '--disable-gpu',
+        '--disable-web-security',
+        '--disable-features=TranslateUI',
+        '--disable-extensions'
+      ],
+      timeout: 30000
+    });
 
-  return `
+    const page = await browser.newPage();
+    
+    // Set viewport for consistent rendering
+    await page.setViewport({ width: 1200, height: 1600 });
+    
+    // Generate clean HTML with PDF-optimized styling
+    const pdfHtml = `
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <title>Strategic NewsJack Proposal - ${clientName}</title>
     <style>
-        @page { size: A4; margin: 1cm; }
-        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; color: #333; }
-        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #2563eb; padding-bottom: 20px; }
-        .section { margin-bottom: 30px; }
-        .platform-output { background: #f8fafc; padding: 15px; margin: 10px 0; border-left: 4px solid #2563eb; }
-        .footer { text-align: center; margin-top: 50px; font-size: 12px; color: #666; }
-        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .highlight-box { background: #f0f8ff; padding: 15px; margin: 15px 0; border: 1px solid #ddd; border-radius: 6px; }
-        .logo { max-width: 200px; height: auto; margin-bottom: 15px; }
-        h1 { font-size: 24px; color: #2563eb; margin: 20px 0 15px 0; }
-        h2 { font-size: 20px; color: #333; margin: 18px 0 12px 0; }
-        h3 { font-size: 16px; color: #2563eb; margin: 15px 0 10px 0; }
-        h4 { font-size: 14px; color: #333; margin: 12px 0 8px 0; }
-        p { margin: 8px 0; }
+        @page { 
+            size: A4; 
+            margin: 0.75in; 
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body { 
+            font-family: 'Arial', sans-serif; 
+            font-size: 11pt; 
+            line-height: 1.4; 
+            color: #333; 
+            background: white;
+        }
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        .header { 
+            text-align: center; 
+            margin-bottom: 30px; 
+            border-bottom: 2px solid #2563eb; 
+            padding-bottom: 20px; 
+        }
+        .header h1 {
+            font-size: 24pt;
+            color: #2563eb;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .header .subtitle {
+            font-size: 14pt;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .section { 
+            margin-bottom: 25px; 
+            page-break-inside: avoid;
+        }
+        h1 { 
+            font-size: 20pt; 
+            color: #2563eb; 
+            margin: 20px 0 12px 0; 
+            font-weight: bold;
+        }
+        h2 { 
+            font-size: 16pt; 
+            color: #333; 
+            margin: 16px 0 10px 0; 
+            font-weight: bold;
+        }
+        h3 { 
+            font-size: 14pt; 
+            color: #2563eb; 
+            margin: 14px 0 8px 0; 
+            font-weight: bold;
+        }
+        h4 { 
+            font-size: 12pt; 
+            color: #333; 
+            margin: 12px 0 6px 0; 
+            font-weight: bold;
+        }
+        p { 
+            margin: 6px 0; 
+            line-height: 1.5;
+        }
+        .platform-output, .platform-content { 
+            background: #f8fafc; 
+            padding: 12px; 
+            margin: 8px 0; 
+            border-left: 4px solid #2563eb; 
+            border-radius: 3px;
+            page-break-inside: avoid;
+        }
+        .highlight-box, .insight-box, .methodology-box { 
+            background: #f0f8ff; 
+            padding: 12px; 
+            margin: 10px 0; 
+            border: 1px solid #ddd; 
+            border-radius: 4px;
+            page-break-inside: avoid;
+        }
+        .logo { 
+            max-width: 180px; 
+            height: auto; 
+            margin-bottom: 15px; 
+        }
+        .footer { 
+            text-align: center; 
+            margin-top: 30px; 
+            font-size: 10pt; 
+            color: #666; 
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+        .cta-highlight {
+            background: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 2px;
+        }
+        .metrics {
+            font-size: 9pt;
+            color: #666;
+            margin-top: 5px;
+        }
+        .metrics span {
+            margin-right: 15px;
+        }
+        ul, ol {
+            margin: 8px 0 8px 20px;
+        }
+        li {
+            margin: 3px 0;
+        }
+        strong {
+            font-weight: bold;
+            color: #2563eb;
+        }
+        .page-break {
+            page-break-before: always;
+        }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Strategic NewsJack Proposal</h1>
-        <p>Generated by NewsGlue - ${new Date().toLocaleDateString()}</p>
-    </div>
-    ${cleanContent}
-    <div class="footer">
-        <p>Generated by NewsGlue</p>
+    <div class="container">
+        ${htmlContent.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '').replace(/<!DOCTYPE[^>]*>|<html[^>]*>|<\/html>|<head[^>]*>[\s\S]*?<\/head>|<body[^>]*>|<\/body>/gi, '')}
     </div>
 </body>
 </html>`;
+
+    // Set content and wait for it to load
+    await page.setContent(pdfHtml, { 
+      waitUntil: 'networkidle0',
+      timeout: 30000 
+    });
+
+    // Generate PDF with optimized settings
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      margin: {
+        top: '0.75in',
+        right: '0.75in',
+        bottom: '0.75in',
+        left: '0.75in'
+      },
+      printBackground: true,
+      preferCSSPageSize: true,
+      timeout: 30000
+    });
+
+    return Buffer.from(pdfBuffer);
+
+  } catch (error: any) {
+    console.error('PDF generation error:', error);
+    throw new Error(`PDF generation failed: ${error.message}`);
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+  }
 };
 
 const requireAuth = (req: any, res: any, next: any) => {
@@ -181,12 +338,27 @@ router.post('/download/:format', requireAuth, async (req, res) => {
     }
 
     if (format === 'pdf') {
-      // Use the same PDF generation approach as the working PDF functions in the app
-      const pdfContent = generateProposalPDFContent(clientName, html, templateData);
-      
-      res.setHeader('Content-Type', 'text/html');
-      res.setHeader('Content-Disposition', `attachment; filename="${clientName.replace(/\s+/g, '-')}-proposal-${Date.now()}.html"`);
-      return res.send(pdfContent);
+      try {
+        console.log(`Generating PDF for client: ${clientName}`);
+        
+        // Generate binary PDF using Puppeteer
+        const pdfBuffer = await generateProposalPDF(clientName, html, templateData);
+        
+        // Set proper headers for binary PDF download
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${clientName.replace(/\s+/g, '-')}-proposal-${Date.now()}.pdf"`);
+        res.setHeader('Content-Length', pdfBuffer.length);
+        
+        console.log(`PDF generated successfully, size: ${pdfBuffer.length} bytes`);
+        return res.send(pdfBuffer);
+        
+      } catch (error: any) {
+        console.error('PDF generation failed:', error);
+        return res.status(500).json({ 
+          error: 'PDF generation failed', 
+          details: error.message 
+        });
+      }
     }
 
     if (format === 'docx') {
