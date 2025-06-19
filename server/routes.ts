@@ -172,6 +172,16 @@ export function registerRoutes(app: Express) {
   app.use("/api/campaigns", requireAuth, campaignsRouter);
 
   /**
+   * CAMPAIGN CHANNELS API
+   * Auth: Required
+   * Role: User/Admin/Supergod
+   * GET /api/campaign-channels/platforms - Get available social platforms
+   * GET /api/campaign-channels/:campaignId - Get channels for campaign
+   * PUT /api/campaign-channels/:campaignId - Update channels for campaign
+   */
+  app.use("/api/campaign-channels", requireAuth, campaignChannelRoutes);
+
+  /**
    * NEWS ITEMS API
    * Auth: Required
    * Role: User/Admin/Supergod

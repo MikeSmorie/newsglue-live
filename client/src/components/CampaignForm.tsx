@@ -1,5 +1,5 @@
 // [CAMPAIGN FORM COMPONENT] - NewsJack methodology focused
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,11 +9,13 @@ import { HelpCircle } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import SocialChannelsSelector from './SocialChannelsSelector';
 
 export default function CampaignForm() {
   const { register, handleSubmit, reset } = useForm();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
 
   const mutation = useMutation({
     mutationFn: async (data) => {
