@@ -149,6 +149,12 @@ router.post('/generate-newsjacks/:id', requireAuth, async (req, res) => {
       platforms = ['blog', 'twitter', 'linkedin', 'instagram', 'facebook'];
       console.log('No platforms configured, using defaults:', platforms);
     }
+    
+    // Always ensure blog is included if not already present
+    if (!platforms.includes('blog')) {
+      platforms.unshift('blog');
+      console.log('Added blog platform to generation:', platforms);
+    }
 
     const platformOutputs: any = {};
     let totalTokens = 0;

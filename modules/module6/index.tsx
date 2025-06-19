@@ -215,10 +215,10 @@ export default function Module6() {
   // Edit Content Modal Component
   const EditContentModal = ({ isOpen, onClose, platform, content, onSave }: any) => (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
         <DialogHeader>
-          <DialogTitle>Edit {platform} Content</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-gray-900 dark:text-white">Edit {platform} Content</DialogTitle>
+          <DialogDescription className="text-gray-600 dark:text-gray-300">
             Make changes to the generated content for {platform}
           </DialogDescription>
         </DialogHeader>
@@ -226,7 +226,7 @@ export default function Module6() {
           <Textarea
             defaultValue={content?.content || ''}
             rows={8}
-            className="w-full"
+            className="w-full bg-white dark:bg-gray-900 text-gray-900 dark:text-white border-gray-200 dark:border-gray-600"
           />
         </div>
         <DialogFooter>
@@ -238,7 +238,7 @@ export default function Module6() {
   );
 
   return (
-    <div className="h-screen flex bg-gray-50">
+    <div className="h-screen flex bg-gray-50 dark:bg-gray-900">
       <TooltipProvider>
         {/* Panel 2: Left Column - News Item List */}
         <div className="w-96 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
