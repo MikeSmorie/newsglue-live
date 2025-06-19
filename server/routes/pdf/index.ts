@@ -443,18 +443,15 @@ const generateHTMLContent = (title: string, content: string) => {
     <meta charset="UTF-8">
     <title>${title}</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
-        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
+        @page { size: A4; margin: 1cm; }
+        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; color: #333; }
+        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #2563eb; padding-bottom: 20px; }
         .section { margin-bottom: 30px; }
-        .subsection { margin-left: 20px; margin-bottom: 20px; }
-        .platform-output { background: #f5f5f5; padding: 15px; margin: 10px 0; border-left: 4px solid #2563eb; }
-        .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .metric-box { background: #f9f9f9; padding: 15px; border: 1px solid #ddd; }
+        .platform-output { background: #f8fafc; padding: 15px; margin: 10px 0; border-left: 4px solid #2563eb; }
         .footer { text-align: center; margin-top: 50px; font-size: 12px; color: #666; }
         table { width: 100%; border-collapse: collapse; margin: 15px 0; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         th { background-color: #f2f2f2; }
-        .monospace { font-family: monospace; background: #f8f8f8; padding: 5px; }
     </style>
 </head>
 <body>
