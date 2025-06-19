@@ -69,7 +69,7 @@ router.post('/', requireAuth, async (req, res) => {
     const validatedData = campaignCreateSchema.parse(req.body);
     
     const newCampaign = await db.insert(campaigns).values({
-      name: validatedData.name,
+      campaignName: validatedData.name,
       websiteUrl: validatedData.website_url || null,
       ctaUrl: validatedData.cta_url || null,
       emotionalObjective: validatedData.emotional_objective || null,

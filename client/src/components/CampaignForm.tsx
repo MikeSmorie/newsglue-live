@@ -9,7 +9,7 @@ import { HelpCircle } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
-import SocialChannelsSelector from './SocialChannelsSelector';
+import SocialChannelsSelectorSimple from './SocialChannelsSelectorSimple';
 
 export default function CampaignForm() {
   const { register, handleSubmit, reset } = useForm();
