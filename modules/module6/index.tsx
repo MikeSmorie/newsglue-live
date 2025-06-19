@@ -8,7 +8,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Copy, Trash2, ExternalLink, Sparkles, Edit, RefreshCw, Filter, Clock, Zap, Download, FileText, File, BookOpen } from 'lucide-react';
+import { Copy, Trash2, ExternalLink, Sparkles, Edit, RefreshCw, Filter, Clock, Zap, Download, FileText, File, BookOpen, Globe } from 'lucide-react';
+import { SeoLandingPageButton } from '@/components/seo-landing-page-button';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -825,8 +826,8 @@ export default function Module6() {
                           </div>
                         </div>
 
-                        {/* Copy Buttons */}
-                        <div className="flex gap-3">
+                        {/* Copy Buttons and SEO Landing Page */}
+                        <div className="flex gap-3 flex-wrap">
                           <Button
                             variant="default"
                             onClick={() => {
@@ -838,6 +839,15 @@ export default function Module6() {
                             <Copy className="mr-2 h-4 w-4" />
                             Copy All
                           </Button>
+
+                          {/* SEO Landing Page Button for Blog Content */}
+                          {activeChannel === 'blog' && (
+                            <SeoLandingPageButton 
+                              newsjackId={selectedNewsItem.id.toString()}
+                              initialStatus={selectedNewsItem.platformOutputs.blog?.landingPageStatus || 'unpublished'}
+                              initialUrl={selectedNewsItem.platformOutputs.blog?.landingPageUrl}
+                            />
+                          )}
                           
                           <Button
                             variant="outline"

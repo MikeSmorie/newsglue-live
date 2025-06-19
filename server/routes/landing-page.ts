@@ -143,14 +143,14 @@ router.get('/:newsjackId/status', requireAuth, async (req, res) => {
     const userId = req.user!.id;
 
     const newsItem = await db.query.newsItems.findFirst({
-      where: and(
-        eq(newsItems.id, parseInt(newsjackId)),
-        eq(newsItems.userId, userId)
-      )
+      where: eq(newsItems.id, parseInt(newsjackId)),
+      with: {
+        campaign: true
+      }
     });
 
-    if (!newsItem) {
-      return res.status(404).json({ error: 'News item not found' });
+    if (!newsItem || newsItem.campaign.userId !== userId) {
+      return res.status(404).json({ error: 'News item not found or access denied' });
     }
 
     const platformOutputs = newsItem.platformOutputs as any;
