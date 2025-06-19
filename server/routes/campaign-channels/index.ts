@@ -11,55 +11,55 @@ const requireAuth = (req: any, res: any, next: any) => {
 
 const router = express.Router();
 
-// Available social platforms with metadata
+// Available social platforms with NewsJack methodology focus
 const AVAILABLE_PLATFORMS = [
   {
     id: 'twitter',
     name: 'Twitter/X',
-    description: 'Short, punchy content with hashtags. Best for real-time reactions and viral potential.',
+    description: 'Perfect for breaking news reactions and real-time newsjacking with immediate viral potential.',
     icon: 'Twitter',
     maxLength: 280,
-    style: 'Concise, urgent, hashtag-heavy'
+    style: 'Urgent breaking news tone with emotional hooks and trending hashtags'
   },
   {
     id: 'linkedin',
     name: 'LinkedIn',
-    description: 'Professional tone with thoughtful commentary and industry insights.',
+    description: 'Professional newsjacking with industry analysis and business implications of current events.',
     icon: 'Linkedin',
     maxLength: 3000,
-    style: 'Professional, analytical, thought leadership'
+    style: 'Thought leadership angle on news events with professional insights'
   },
   {
     id: 'instagram',
     name: 'Instagram',
-    description: 'Visual-first content with engaging captions and story potential.',
+    description: 'Visual news storytelling that connects current events to personal experiences and emotions.',
     icon: 'Instagram',
     maxLength: 2200,
-    style: 'Visual storytelling, behind-the-scenes, authentic'
+    style: 'Visual storytelling that connects news to lifestyle and personal impact'
   },
   {
     id: 'facebook',
     name: 'Facebook',
-    description: 'Community-focused content that encourages discussion and sharing.',
+    description: 'Community-focused news discussion with detailed context and engagement around current events.',
     icon: 'Facebook',
     maxLength: 63206,
-    style: 'Community-driven, conversational, shareable'
+    style: 'Community conversation starter with detailed news analysis and discussion'
   },
   {
     id: 'youtube',
     name: 'YouTube',
-    description: 'Long-form video content with detailed descriptions and SEO optimization.',
+    description: 'In-depth news analysis and educational content that positions your solution as the answer.',
     icon: 'Youtube',
     maxLength: 5000,
-    style: 'Educational, entertaining, in-depth analysis'
+    style: 'Educational deep-dive into news implications with clear value proposition'
   },
   {
     id: 'tiktok',
     name: 'TikTok',
-    description: 'Creative, trend-based short videos with viral potential.',
+    description: 'Viral news reactions with trending audio that creates immediate emotional connection.',
     icon: 'Video',
     maxLength: 150,
-    style: 'Trendy, creative, fast-paced, entertainment-focused'
+    style: 'Fast-paced news reaction with emotional storytelling and viral elements'
   }
 ];
 

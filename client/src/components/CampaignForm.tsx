@@ -19,6 +19,7 @@ export default function CampaignForm() {
 
   const mutation = useMutation({
     mutationFn: async (data) => {
+      // First create the campaign
       const res = await fetch('/api/campaigns', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -26,12 +27,28 @@ export default function CampaignForm() {
         body: JSON.stringify(data),
       });
       if (!res.ok) throw new Error('Failed to create campaign');
-      return res.json();
+      const campaign = await res.json();
+
+      // Then update the campaign channels if platforms are selected
+      if (selectedPlatforms.length > 0) {
+        const channelRes = await fetch(`/api/campaign-channels/${campaign.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ platforms: selectedPlatforms }),
+        });
+        if (!channelRes.ok) {
+          console.warn('Failed to save campaign channels');
+        }
+      }
+
+      return campaign;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
-      toast({ title: 'Campaign Created', description: 'Your NewsJack campaign has been saved.' });
+      toast({ title: 'Campaign Created', description: 'Your NewsJack campaign and social platforms have been saved.' });
       reset();
+      setSelectedPlatforms([]);
     },
     onError: () => {
       toast({ title: 'Error', description: 'Failed to save campaign.', variant: 'destructive' });
@@ -136,8 +153,16 @@ export default function CampaignForm() {
           <Textarea id="additionalData" {...register('additional_data')} />
         </div>
 
+        <div className="border-t pt-4">
+          <SocialChannelsSelector
+            selectedPlatforms={selectedPlatforms}
+            onSelectionChange={setSelectedPlatforms}
+            disabled={mutation.isPending}
+          />
+        </div>
+
         <Button type="submit" className="w-full" disabled={mutation.isPending}>
-          {mutation.isPending ? 'Saving...' : 'Save Campaign'}
+          {mutation.isPending ? 'Saving Campaign & Platforms...' : 'Save Campaign'}
         </Button>
       </form>
     </TooltipProvider>
