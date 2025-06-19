@@ -272,7 +272,7 @@ Campaign Metrics Summary:
 
             <div className="space-y-2">
               <Label>Export Options</Label>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <Button 
                   variant="outline" 
                   size="sm"
@@ -299,6 +299,15 @@ Campaign Metrics Summary:
                 >
                   <Copy className="h-4 w-4 mr-2" />
                   Copy
+                </Button>
+                <Button 
+                  variant="secondary" 
+                  size="sm"
+                  onClick={handleGenerateSample}
+                  disabled={!selectedCampaign || generateSampleMutation.isPending}
+                >
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  Generate Sample
                 </Button>
               </div>
             </div>
