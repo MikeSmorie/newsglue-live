@@ -1,23 +1,18 @@
-interface ProposalTemplateData {
-  clientName: string;
-  proposalDate: string;
-  validUntil: string;
-  campaignData: any;
-  newsItems: any[];
-  platformOutputs: any[];
-}
 
-export function generateProposalHTML(data: ProposalTemplateData): string {
-  const { clientName, proposalDate, validUntil, campaignData, newsItems, platformOutputs } = data;
-  
-  return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Strategic NewsJack Proposal - ${clientName}</title>
-    <style>
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Proposal - John</title>
+          <style>
+            @media print {
+              body { margin: 0; }
+              .no-print { display: none; }
+              .page-break { page-break-before: always; }
+            }
+          </style>
+          <style>
         @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap');
         
         * {
@@ -51,9 +46,6 @@ export function generateProposalHTML(data: ProposalTemplateData): string {
         .logo {
             max-width: 300px;
             height: auto;
-            background: white;
-            padding: 10px;
-            border-radius: 8px;
         }
         
         .header-info {
@@ -221,27 +213,37 @@ export function generateProposalHTML(data: ProposalTemplateData): string {
             }
         }
     </style>
-</head>
-<body>
+        </head>
+        <body>
+          <div class="no-print" style="position: fixed; top: 10px; right: 10px; background: #007bff; color: white; padding: 10px; border-radius: 5px; z-index: 1000;">
+            <button onclick="window.print()" style="background: none; border: none; color: white; cursor: pointer;">
+              📄 Print to PDF
+            </button>
+          </div>
+          
+
+
+
+
     <div class="container">
         <!-- Header -->
         <div class="header">
             <img src="/assets/01 Logo-C-slogan.png" alt="NewsGlue Logo" class="logo" />
             <div class="header-info">
-                <h3>Prepared For: ${clientName}</h3>
+                <h3>Prepared For: John</h3>
                 <p><strong>Prepared By:</strong> NewsGlue</p>
                 <p><strong>Tagline:</strong> Cementing your brand to the news cycle</p>
                 <p><strong>Website:</strong> NewsGlue.io</p>
                 <p><strong>Email:</strong> Team@NewsGlue.io</p>
-                <p><strong>Date:</strong> ${proposalDate}</p>
-                <p><strong>Valid Until:</strong> ${validUntil}</p>
+                <p><strong>Date:</strong> 6/19/2025</p>
+                <p><strong>Valid Until:</strong> 7/19/2025</p>
             </div>
         </div>
         
         <!-- Title -->
         <div class="proposal-title">
             <h1>Strategic NewsJack Proposal</h1>
-            <h2>Amplifying ${clientName}'s Brand Through News-Driven Content</h2>
+            <h2>Amplifying John's Brand Through News-Driven Content</h2>
         </div>
         
         <!-- Executive Summary -->
@@ -250,32 +252,26 @@ export function generateProposalHTML(data: ProposalTemplateData): string {
             <p>NewsGlue specializes in cementing brands to the news cycle through our proprietary NewsJack methodology. By strategically linking your brand messaging to trending news events, we create authentic, timely content that drives engagement and builds authority.</p>
             
             <div class="highlight-box">
-                <p><strong>Our Approach:</strong> Transform breaking news into brand opportunities. Every news event becomes a strategic touchpoint for ${clientName} to demonstrate thought leadership and connect with your audience.</p>
+                <p><strong>Our Approach:</strong> Transform breaking news into brand opportunities. Every news event becomes a strategic touchpoint for John to demonstrate thought leadership and connect with your audience.</p>
             </div>
             
-            <p>This proposal outlines how we'll leverage our proven NewsJack framework to amplify ${clientName}'s brand presence across multiple platforms, using real-time news intelligence and AI-powered content generation.</p>
+            <p>This proposal outlines how we'll leverage our proven NewsJack framework to amplify John's brand presence across multiple platforms, using real-time news intelligence and AI-powered content generation.</p>
         </div>
         
         <!-- Client Understanding -->
         <div class="section">
             <h3>Client Understanding</h3>
             
-            <h4>Campaign Overview: ${campaignData.campaignName}</h4>
-            ${campaignData.websiteUrl ? `<p><strong>Website:</strong> <a href="${campaignData.websiteUrl}" target="_blank">${campaignData.websiteUrl}</a></p>` : ''}
-            ${campaignData.ctaUrl ? `<p><strong>Primary CTA:</strong> <span class="cta-highlight">${campaignData.ctaUrl}</span></p>` : ''}
+            <h4>Campaign Overview: In Code We Trust</h4>
             
-            ${campaignData.emotionalObjective ? `
-            <h4>Emotional Positioning</h4>
-            <p>${campaignData.emotionalObjective}</p>
-            ` : ''}
             
-            ${campaignData.audiencePain ? `
-            <h4>Audience Pain Points</h4>
-            <p>${campaignData.audiencePain}</p>
-            ` : ''}
+            
+            
+            
+            
             
             <div class="highlight-box">
-                <p><strong>Strategic Insight:</strong> We understand that ${clientName} needs content that not only informs but strategically positions your brand as a thought leader. Our NewsJack methodology ensures every piece of content serves dual purposes: relevance and brand advancement.</p>
+                <p><strong>Strategic Insight:</strong> We understand that John needs content that not only informs but strategically positions your brand as a thought leader. Our NewsJack methodology ensures every piece of content serves dual purposes: relevance and brand advancement.</p>
             </div>
         </div>
         
@@ -305,28 +301,103 @@ export function generateProposalHTML(data: ProposalTemplateData): string {
         <!-- Sample NewsJack Outputs -->
         <div class="section page-break">
             <h3>Sample NewsJack Outputs</h3>
-            <p>Below are examples of how we transform news events into strategic content for ${clientName}:</p>
+            <p>Below are examples of how we transform news events into strategic content for John:</p>
             
-            ${newsItems.slice(0, 2).map(newsItem => `
+            
             <div class="news-sample">
-                <h5>News Event: ${newsItem.headline}</h5>
-                <p><strong>Source:</strong> <a href="${newsItem.sourceUrl}" target="_blank">${newsItem.sourceUrl}</a></p>
+                <h5>News Event: WARNING: Markets Could Dump In 14 Days</h5>
+                <p><strong>Source:</strong> <a href="https://www.youtube.com/watch?v=VWHO6HcVa78" target="_blank">https://www.youtube.com/watch?v=VWHO6HcVa78</a></p>
                 
-                ${Object.entries(newsItem.platformOutputs || {}).slice(0, 3).map(([platform, output]: [string, any]) => `
+                
                 <div class="platform-output">
-                    <div class="platform-name">${platform}</div>
-                    <div>${output.content ? output.content.substring(0, 300) + (output.content.length > 300 ? '...' : '') : ''}</div>
-                    ${output.cta ? `<p style="margin-top: 10px;"><strong>CTA:</strong> <span class="cta-highlight">${output.cta}</span></p>` : ''}
+                    <div class="platform-name">blog</div>
+                    <div># WARNING: Markets Could Dump In 14 Days - Are You Prepared?
+
+The headlines are ablaze with the news: "WARNING: Markets Could Dump In 14 Days!" This stark alert from Crypto Banter has sent ripples of anxiety through investors and market watchers alike. With over a million subscribers tuning in for i...</div>
+                    <p style="margin-top: 10px;"><strong>CTA:</strong> <span class="cta-highlight">Call-to-action with URL: Learn more</span></p>
                     
                     <div class="metrics">
-                        <span>News Focus: ${output.metrics?.newsPercentage || 50}%</span>
-                        <span>Brand Focus: ${output.metrics?.campaignPercentage || 50}%</span>
-                        <span>Est. Engagement: ${output.metrics?.estimatedEngagement || 'High'}</span>
+                        <span>News Focus: 50%</span>
+                        <span>Brand Focus: 50%</span>
+                        <span>Est. Engagement: high</span>
                     </div>
                 </div>
-                `).join('')}
+                
+                <div class="platform-output">
+                    <div class="platform-name">twitter</div>
+                    <div>🚨 WARNING: Market volatility looming in just 14 days! With potential dumps in crypto & stocks due to geopolitical tensions, investors must stay alert. 🏦💥
+
+In uncertain times, trust in code. #InCodeWeTrust - the solution you need for security & foresight.
+
+Act NOW before it's too late. Learn more.</div>
+                    <p style="margin-top: 10px;"><strong>CTA:</strong> <span class="cta-highlight">Call-to-action with URL: Learn more</span></p>
+                    
+                    <div class="metrics">
+                        <span>News Focus: 50%</span>
+                        <span>Brand Focus: 50%</span>
+                        <span>Est. Engagement: high</span>
+                    </div>
+                </div>
+                
+                <div class="platform-output">
+                    <div class="platform-name">facebook</div>
+                    <div>🚨 WARNING: Markets Could Dump In Just 14 Days! 🚨 With current tensions surrounding the Genius Act, major moves in the crypto and stock markets are anticipated. 🌍 The Fed's uncertainty is shaking the financial world, and with the possibility of stagflation looming, the stakes have never been highe...</div>
+                    <p style="margin-top: 10px;"><strong>CTA:</strong> <span class="cta-highlight">Call-to-action with URL: Learn more</span></p>
+                    
+                    <div class="metrics">
+                        <span>News Focus: 50%</span>
+                        <span>Brand Focus: 50%</span>
+                        <span>Est. Engagement: high</span>
+                    </div>
+                </div>
+                
             </div>
-            `).join('')}
+            
+            <div class="news-sample">
+                <h5>News Event: What Saylor Knows About Outlasting a Dollar Collapse</h5>
+                <p><strong>Source:</strong> <a href="https://example.com/saylor-dollar-collapse" target="_blank">https://example.com/saylor-dollar-collapse</a></p>
+                
+                
+                <div class="platform-output">
+                    <div class="platform-name">blog</div>
+                    <div>## Navigating Economic Uncertainty: Insights from Michael Saylor's Perspective
+
+In a world teetering on economic instability, the insights of Michael Saylor, a prominent advocate for cryptocurrency adoption, have become a beacon for investors and institutions alike. His latest commentary on preparin...</div>
+                    <p style="margin-top: 10px;"><strong>CTA:</strong> <span class="cta-highlight">Learn more about securing your financial future amidst economic uncertainty.</span></p>
+                    
+                    <div class="metrics">
+                        <span>News Focus: 50%</span>
+                        <span>Brand Focus: 50%</span>
+                        <span>Est. Engagement: high</span>
+                    </div>
+                </div>
+                
+                <div class="platform-output">
+                    <div class="platform-name">twitter</div>
+                    <div>As currencies wobble, Michael Saylor reveals how cryptocurrency can help institutions stay resilient. Are your investments prepared for a dollar collapse? In Code We Trust offers the roadmap to navigate this economic uncertainty. Don't wait. Learn more</div>
+                    <p style="margin-top: 10px;"><strong>CTA:</strong> <span class="cta-highlight">Call-to-action with URL: Learn more</span></p>
+                    
+                    <div class="metrics">
+                        <span>News Focus: 50%</span>
+                        <span>Brand Focus: 50%</span>
+                        <span>Est. Engagement: high</span>
+                    </div>
+                </div>
+                
+                <div class="platform-output">
+                    <div class="platform-name">facebook</div>
+                    <div>🚨 What Saylor Knows About Outlasting a Dollar Collapse 🚨 Michael Saylor is reshaping how we think about economic resilience, with insights that are setting new benchmarks for institutional investors. During times of currency instability, could cryptocurrency be the lifeline we need? 💡 As traditio...</div>
+                    <p style="margin-top: 10px;"><strong>CTA:</strong> <span class="cta-highlight">Call-to-action with URL: Learn more</span></p>
+                    
+                    <div class="metrics">
+                        <span>News Focus: 50%</span>
+                        <span>Brand Focus: 50%</span>
+                        <span>Est. Engagement: high</span>
+                    </div>
+                </div>
+                
+            </div>
+            
             
             <div class="highlight-box">
                 <p><strong>Content Performance:</strong> Our NewsJack methodology typically achieves 40-60% higher engagement rates compared to traditional content, as it leverages the natural momentum of trending topics while maintaining authentic brand messaging.</p>
@@ -350,17 +421,19 @@ export function generateProposalHTML(data: ProposalTemplateData): string {
             <p>• <strong>Ongoing:</strong> Continuous news monitoring and content generation</p>
             
             <div class="highlight-box">
-                <p><strong>Ready to Start:</strong> Contact us at Team@NewsGlue.io to begin cementing ${clientName} to the news cycle. This proposal is valid until ${validUntil}.</p>
+                <p><strong>Ready to Start:</strong> Contact us at Team@NewsGlue.io to begin cementing John to the news cycle. This proposal is valid until 7/19/2025.</p>
             </div>
         </div>
         
         <!-- Footer -->
         <div class="footer">
             <p><span class="logo-text">NewsGlue.io</span> | Team@NewsGlue.io | Cementing your brand to the news cycle</p>
-            <p>© ${new Date().getFullYear()} NewsGlue. All rights reserved.</p>
+            <p>© 2025 NewsGlue. All rights reserved.</p>
         </div>
     </div>
-</body>
-</html>
-  `;
-}
+
+
+  
+        </body>
+        </html>
+      
