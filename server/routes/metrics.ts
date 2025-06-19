@@ -19,7 +19,11 @@ router.get('/:campaignId', async (req, res) => {
 
     // Create sample metrics if none exist
     if (!metrics) {
-      metrics = await createSampleMetrics(campaignId);
+      await createSampleMetrics(campaignId);
+      // Fetch the newly created metrics
+      metrics = await db.query.campaignMetrics.findFirst({
+        where: eq(campaignMetrics.campaignId, campaignId)
+      });
     }
 
     res.json(metrics);

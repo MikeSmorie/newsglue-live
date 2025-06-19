@@ -1,11 +1,12 @@
 import { db } from "../../db/index.js";
 import { campaignMetrics, outputMetrics, campaigns } from "../../db/schema.js";
+import { eq } from "drizzle-orm";
 
 export async function createSampleMetrics(campaignId: string) {
   try {
     // Create campaign metrics if not exists
     const existingMetrics = await db.query.campaignMetrics.findFirst({
-      where: (metrics, { eq }) => eq(metrics.campaignId, campaignId)
+      where: eq(campaignMetrics.campaignId, campaignId)
     });
 
     if (!existingMetrics) {
@@ -60,12 +61,38 @@ export async function createSampleMetrics(campaignId: string) {
 
     // Check if sample data already exists
     const existingOutputs = await db.query.outputMetrics.findMany({
-      where: (metrics, { eq }) => eq(metrics.campaignId, campaignId)
+      where: eq(outputMetrics.campaignId, campaignId)
     });
 
     if (existingOutputs.length === 0) {
       await db.insert(outputMetrics).values(sampleOutputs);
       console.log(`Created ${sampleOutputs.length} sample metrics for campaign ${campaignId}`);
+      
+      // Calculate and update campaign metrics with real aggregated values
+      const totalOutputs = sampleOutputs.length;
+      const totalTimeSaved = sampleOutputs.reduce((sum, output) => sum + output.timeSavedSeconds, 0);
+      const totalCostSaved = sampleOutputs.reduce((sum, output) => sum + parseFloat(output.costSaved), 0);
+      const complianceCount = sampleOutputs.filter(output => output.complianceCheck).length;
+      const ctaCount = sampleOutputs.filter(output => output.ctaPresent).length;
+      
+      const complianceScore = (complianceCount / totalOutputs * 100).toFixed(2);
+      const ctaPresenceRate = (ctaCount / totalOutputs * 100).toFixed(2);
+      const efficiencyScore = Math.min(100, (totalTimeSaved / (totalOutputs * 1800) * 100)).toFixed(2);
+      
+      // Update the campaign metrics with calculated values
+      await db.update(campaignMetrics)
+        .set({
+          totalOutputs,
+          totalTimeSavedSeconds: totalTimeSaved,
+          totalCostSaved: totalCostSaved.toFixed(2),
+          complianceScore,
+          ctaPresenceRate,
+          efficiencyScore,
+          updatedAt: new Date()
+        })
+        .where(eq(campaignMetrics.campaignId, campaignId));
+        
+      console.log(`Updated campaign metrics: ${totalOutputs} outputs, ${Math.round(totalTimeSaved/60)}m saved, $${totalCostSaved.toFixed(2)} cost saved`);
     }
 
     return true;
