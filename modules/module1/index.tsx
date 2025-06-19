@@ -46,7 +46,7 @@ export default function CampaignBuilder() {
             Back to Campaigns
           </Button>
         </div>
-        <CampaignForm onSuccess={handleCampaignCreated} />
+        <CampaignForm />
       </div>
     );
   }
@@ -89,10 +89,10 @@ export default function CampaignBuilder() {
             <Card key={campaign.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  <span className="truncate">{campaign.campaignName}</span>
-                  {campaign.tone && (
+                  <span className="truncate">{campaign.name}</span>
+                  {campaign.emotionalObjective && (
                     <Badge variant="secondary" className="ml-2">
-                      {campaign.tone}
+                      {campaign.emotionalObjective.slice(0, 12)}...
                     </Badge>
                   )}
                 </CardTitle>
@@ -102,10 +102,10 @@ export default function CampaignBuilder() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                {campaign.campaignUrl && (
+                {campaign.ctaUrl && (
                   <div className="flex items-center gap-2 text-sm text-gray-400">
                     <Globe className="h-3 w-3" />
-                    <span className="truncate">{campaign.campaignUrl}</span>
+                    <span className="truncate">{campaign.ctaUrl}</span>
                   </div>
                 )}
                 
@@ -119,27 +119,20 @@ export default function CampaignBuilder() {
                   </div>
                 )}
                 
-                {campaign.strategy_q2 && (
+                {campaign.audiencePain && (
                   <div className="flex items-start gap-2 text-sm">
                     <Target className="h-3 w-3 mt-1 text-blue-400" />
                     <div>
                       <div className="text-xs text-gray-500 uppercase">Pain-Focused Audience</div>
-                      <div className="text-gray-300 line-clamp-2">{campaign.strategy_q2}</div>
+                      <div className="text-gray-300 line-clamp-2">{campaign.audiencePain}</div>
                     </div>
                   </div>
                 )}
 
-                {campaign.strategy_q1 && (
+                {campaign.emotionalObjective && (
                   <div className="text-sm">
                     <div className="text-xs text-gray-500 uppercase mb-1">Emotional Objective</div>
-                    <div className="text-gray-300 line-clamp-2">{campaign.strategy_q1}</div>
-                  </div>
-                )}
-
-                {campaign.strategy_q4 && (
-                  <div className="text-sm">
-                    <div className="text-xs text-gray-500 uppercase mb-1">Target Emotion</div>
-                    <div className="text-gray-300 line-clamp-2">{campaign.strategy_q4}</div>
+                    <div className="text-gray-300 line-clamp-2">{campaign.emotionalObjective}</div>
                   </div>
                 )}
               </CardContent>
