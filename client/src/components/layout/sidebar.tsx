@@ -21,17 +21,22 @@ import {
   Brain
 } from "lucide-react";
 
-const moduleItems = Array.from({ length: 9 }, (_, i) => ({
-  id: i + 1,
-  name: `Module ${i + 1}`,
-  href: `/module/${i + 1}`,
-  icon: Grid3X3
-}));
+const moduleItems = [
+  { id: 1, name: "1 Campaign Builder", href: "/module/1", icon: Grid3X3 },
+  { id: 2, name: "2 Social Channels", href: "/module/2", icon: Grid3X3 },
+  { id: 3, name: "3 User Inputted News", href: "/module/3", icon: Grid3X3 },
+  { id: 4, name: "4 News Search", href: "/module/4", icon: Grid3X3 },
+  { id: 5, name: "5 Google Keyword", href: "/module/5", icon: Grid3X3 },
+  { id: 6, name: "6 Execution Module", href: "/module/6", icon: Grid3X3 },
+  { id: 7, name: "7 Proposal Builder", href: "/module/7", icon: Grid3X3 },
+  { id: 8, name: "8 Metrics Tracker", href: "/module/8", icon: Grid3X3 },
+  { id: 9, name: "9 AI Discoverability", href: "/module/9", icon: Grid3X3 }
+];
 
 // Special Omega-10 Audit Module
 const auditModule = {
   id: 10,
-  name: "Omega-10 Audit",
+  name: "10 AI Intelligence",
   href: "/module/omega-10",
   icon: FileText,
   restricted: true

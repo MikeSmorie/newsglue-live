@@ -53,7 +53,7 @@ export default function ModuleView({ moduleId }: ModuleViewProps) {
             <div className="flex items-center space-x-2">
               <Grid3X3 className="h-6 w-6 text-gray-600 dark:text-gray-400" />
               <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-                Module #{id}
+                {moduleNames[id as keyof typeof moduleNames] || `Module ${id}`}
               </h1>
             </div>
           </div>
@@ -77,9 +77,23 @@ export default function ModuleView({ moduleId }: ModuleViewProps) {
     );
   }
 
-  // Fallback for non-existent modules
-  const moduleName = `Module ${id}`;
-  const displayName = moduleName || "Unnamed Module";
+  // Get the proper module name
+  const moduleNames = {
+    "1": "1 Campaign Builder",
+    "2": "2 Social Channels", 
+    "3": "3 User Inputted News",
+    "4": "4 News Search",
+    "5": "5 Google Keyword",
+    "6": "6 Execution Module",
+    "7": "7 Proposal Builder",
+    "8": "8 Metrics Tracker",
+    "9": "9 AI Discoverability",
+    "10": "10 AI Intelligence",
+    "omega-10": "10 AI Intelligence"
+  };
+  
+  const moduleName = moduleNames[id as keyof typeof moduleNames] || `Module ${id}`;
+  const displayName = moduleName;
 
   return (
     <div className="space-y-6">
@@ -94,7 +108,7 @@ export default function ModuleView({ moduleId }: ModuleViewProps) {
           <div className="flex items-center space-x-2">
             <Grid3X3 className="h-6 w-6 text-gray-600 dark:text-gray-400" />
             <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-              Module #{id}
+              {moduleNames[id as keyof typeof moduleNames] || `Module ${id}`}
             </h1>
           </div>
         </div>
