@@ -4,6 +4,7 @@ import { newsItems, campaigns } from '../../../db/schema.js';
 import { eq, and, desc } from 'drizzle-orm';
 import { z } from 'zod';
 import OpenAI from 'openai';
+import { protectNewsItems } from '../../middleware/dataProtection';
 
 const requireAuth = (req: any, res: any, next: any) => {
   if (req.isAuthenticated()) return next();
@@ -48,7 +49,7 @@ router.get('/fetch/:campaignId', requireAuth, async (req, res) => {
 });
 
 // PUT /api/queue/update-status/:id - Update news item status
-router.put('/update-status/:id', requireAuth, async (req, res) => {
+router.put('/update-status/:id', requireAuth, protectNewsItems, async (req, res) => {
   try {
     const itemId = parseInt(req.params.id);
     const { status } = req.body;
@@ -89,7 +90,7 @@ router.put('/update-status/:id', requireAuth, async (req, res) => {
 });
 
 // DELETE /api/queue/delete/:id - Delete news item from queue
-router.delete('/delete/:id', requireAuth, async (req, res) => {
+router.delete('/delete/:id', requireAuth, protectNewsItems, async (req, res) => {
   try {
     const itemId = parseInt(req.params.id);
 
