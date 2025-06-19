@@ -605,10 +605,17 @@ router.get('/newsjack/:newsItemId', requireAuth, async (req, res) => {
 router.get('/campaign-dossier/:campaignId', requireAuth, async (req, res) => {
   try {
     const { campaignId } = req.params;
+    const userId = req.user!.id;
     
-    // Fetch campaign details
+    // Fetch campaign details with ownership verification
     const campaign = await db.query.campaigns.findFirst({
-      where: eq(campaigns.id, campaignId)
+      where: and(
+        eq(campaigns.id, campaignId),
+        eq(campaigns.userId, userId)
+      ),
+      with: {
+        channels: true
+      }
     });
 
     if (!campaign) {
@@ -617,7 +624,13 @@ router.get('/campaign-dossier/:campaignId', requireAuth, async (req, res) => {
 
     // Fetch all news items for this campaign
     const campaignNewsItems = await db.query.newsItems.findMany({
-      where: eq(newsItems.campaignId, campaignId)
+      where: eq(newsItems.campaignId, campaignId),
+      orderBy: (newsItems, { desc }) => [desc(newsItems.createdAt)]
+    });
+
+    // Fetch campaign channels for Module 2 data
+    const campaignChannels = await db.query.campaignChannels.findMany({
+      where: eq(campaignChannels.campaignId, campaignId)
     });
 
     // Calculate metrics
@@ -721,10 +734,16 @@ router.get('/campaign-dossier/:campaignId', requireAuth, async (req, res) => {
       </div>
     `;
 
-    const htmlContent = generateHTMLContent('Campaign Dossier', contentHTML);
+    // Use the enhanced generator function for comprehensive content
+    const htmlContent = generateCampaignDossierHTML(campaign, campaignNewsItems, campaignChannels || []);
+    
+    // Format filename as specified: campaign-dossier-[campaign-name]-[date].pdf
+    const campaignSlug = campaign.campaignName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+    const dateSlug = new Date().toISOString().split('T')[0];
+    const filename = `campaign-dossier-${campaignSlug}-${dateSlug}.html`;
     
     res.setHeader('Content-Type', 'text/html');
-    res.setHeader('Content-Disposition', `attachment; filename="campaign-dossier-${campaignId}-${Date.now()}.html"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.send(htmlContent);
 
   } catch (error) {

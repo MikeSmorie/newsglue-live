@@ -415,6 +415,21 @@ export default function Module6() {
               </Select>
             </div>
 
+            {/* Campaign Dossier PDF Button */}
+            {selectedCampaign && (
+              <div className="mb-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleCampaignDossierPDFExport()}
+                  className="w-full flex items-center gap-2 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300"
+                >
+                  <FileText className="h-4 w-4" />
+                  Campaign Dossier PDF
+                </Button>
+              </div>
+            )}
+
 
 
             {/* Status Filter Buttons */}
@@ -702,22 +717,7 @@ export default function Module6() {
                       </TooltipContent>
                     </Tooltip>
                     
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleCampaignDossierPDFExport()}
-                          className="flex items-center gap-2"
-                        >
-                          <FileText className="h-4 w-4" />
-                          Campaign Dossier
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        Download comprehensive campaign dossier PDF
-                      </TooltipContent>
-                    </Tooltip>
+
 
                   </div>
                 </div>
