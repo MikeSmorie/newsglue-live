@@ -63,11 +63,21 @@ export default function CampaignForm({ onSuccess, onCancel, editingCampaign }: C
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Load existing platform selections when editing
+  // Load existing platform selections and website analysis when editing
   React.useEffect(() => {
     if (editingCampaign?.channels) {
       const platforms = editingCampaign.channels.map((ch: any) => ch.platform);
       setSelectedPlatforms(platforms);
+    }
+    
+    // Load saved website analysis data
+    if (editingCampaign?.websiteAnalysis) {
+      try {
+        const parsedData = JSON.parse(editingCampaign.websiteAnalysis);
+        setScrapedData(parsedData);
+      } catch (error) {
+        console.log('Could not parse website analysis data:', error);
+      }
     }
   }, [editingCampaign]);
 
