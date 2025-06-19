@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 
 const moduleItems = [
-  { id: 1, name: "1 Campaign Builder", href: "/module/1", icon: Grid3X3, featured: true, description: "NewsJack Content Creation" },
+  { id: 1, name: "1 Campaign Builder", href: "/module/1", icon: Grid3X3, featured: true, description: "Campaign Setup" },
   { id: 2, name: "2 Social Channels", href: "/module/2", icon: Grid3X3, description: "Three-Tab Social Configuration" },
   { id: 3, name: "3 User Inputted News", href: "/module/3", icon: Grid3X3 },
   { id: 4, name: "4 News Search", href: "/module/4", icon: Grid3X3 },

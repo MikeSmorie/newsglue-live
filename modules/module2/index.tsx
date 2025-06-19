@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Trash2, Plus, Settings, Eye, EyeOff, Lock, HelpCircle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -121,7 +122,12 @@ export default function Module2() {
         const newConfigs = { ...socialSettings.channelConfig || {} };
         campaign.channels.forEach(ch => {
           if (!newConfigs[ch.platform]) {
-            newConfigs[ch.platform] = { ...DEFAULT_CHANNEL_CONFIG };
+            const defaultConfig = { ...DEFAULT_CHANNEL_CONFIG };
+            // Set appropriate default for Twitter character count
+            if (ch.platform === 'twitter') {
+              defaultConfig.wordCount = 280;
+            }
+            newConfigs[ch.platform] = defaultConfig;
           }
         });
         setChannelConfigs(newConfigs);
@@ -192,7 +198,12 @@ export default function Module2() {
     const newConfigs = { ...channelConfigs };
     DEFAULT_PLATFORMS.forEach(platform => {
       if (!newConfigs[platform.id]) {
-        newConfigs[platform.id] = { ...DEFAULT_CHANNEL_CONFIG };
+        const defaultConfig = { ...DEFAULT_CHANNEL_CONFIG };
+        // Set appropriate default for Twitter character count
+        if (platform.id === 'twitter') {
+          defaultConfig.wordCount = 280;
+        }
+        newConfigs[platform.id] = defaultConfig;
       }
     });
     setChannelConfigs(newConfigs);
@@ -397,7 +408,23 @@ export default function Module2() {
                             </div>
                             
                             <div className="space-y-2">
-                              <Label>Word Count</Label>
+                              <div className="flex items-center gap-2">
+                                <Label>
+                                  {platformId === 'twitter' ? 'Character Count' : 'Word Count'}
+                                </Label>
+                                {platformId === 'twitter' && (
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger>
+                                        <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Twitter standard max is 280 characters. Editable for premium-tier accounts.</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                )}
+                              </div>
                               <Input
                                 type="number"
                                 value={config.wordCount}
@@ -405,7 +432,8 @@ export default function Module2() {
                                   handleChannelConfigChange(platformId, 'wordCount', parseInt(e.target.value) || 0)
                                 }
                                 min="1"
-                                max="5000"
+                                max={platformId === 'twitter' ? "25000" : "5000"}
+                                placeholder={platformId === 'twitter' ? "280" : undefined}
                               />
                             </div>
                             
