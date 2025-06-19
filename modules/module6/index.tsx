@@ -241,11 +241,11 @@ export default function Module6() {
     <div className="h-screen flex bg-gray-50">
       <TooltipProvider>
         {/* Panel 2: Left Column - News Item List */}
-        <div className="w-96 bg-white border-r border-gray-200 flex flex-col">
+        <div className="w-96 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
           {/* Header */}
-          <div className="p-4 border-b border-gray-200 bg-gray-50">
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">News Items</h2>
-            <p className="text-sm text-gray-600 mb-3">
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">News Items</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
               Select a news item to generate or view newsjack content
             </p>
             
@@ -313,7 +313,7 @@ export default function Module6() {
                   <Label className="text-xs text-gray-600">Bulk Selection Mode</Label>
                   <Checkbox
                     checked={bulkSelectMode}
-                    onCheckedChange={setBulkSelectMode}
+                    onCheckedChange={(checked) => setBulkSelectMode(checked === true)}
                   />
                 </div>
                 {bulkSelectMode && selectedItems.length > 0 && (
@@ -456,13 +456,13 @@ export default function Module6() {
                       <span>{new Date(item.createdAt).toLocaleDateString()}</span>
                       <div className="flex items-center gap-1">
                         {getGeneratedPlatforms(item).length > 0 ? (
-                          <div className="flex items-center gap-1 text-green-600">
+                          <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
                             <Zap className="h-3 w-3" />
                             <span className="font-medium">{getGeneratedPlatforms(item).length}</span>
                           </div>
                         ) : (
                           <button
-                            className="p-1 text-blue-600 hover:bg-blue-100 rounded"
+                            className="p-1 text-blue-600 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-900 rounded"
                             onClick={(e) => {
                               e.stopPropagation();
                               generateContentMutation.mutate(item.id);
@@ -486,7 +486,7 @@ export default function Module6() {
         </div>
 
         {/* Panel 3: Right Column - Content Display */}
-        <div className="flex-1 flex flex-col bg-white">
+        <div className="flex-1 flex flex-col bg-white dark:bg-gray-900">
           {!selectedNewsItem ? (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center max-w-md">
@@ -500,18 +500,18 @@ export default function Module6() {
           ) : (
             <>
               {/* Header Area */}
-              <div className="p-6 border-b border-gray-200 bg-gray-50">
-                <h1 className="text-xl font-bold text-gray-900 mb-2">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
                   {selectedNewsItem.headline}
                 </h1>
-                <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300 mb-3">
                   <span>Campaign: {selectedCampaign?.campaignName}</span>
                   <span>•</span>
                   <a
                     href={selectedNewsItem.sourceUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline flex items-center gap-1"
+                    className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
                   >
                     <ExternalLink className="h-3 w-3" />
                     Source URL
@@ -711,9 +711,20 @@ export default function Module6() {
                         )}
 
                         {selectedNewsItem.platformOutputs[activeChannel].cta && (
-                          <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
-                            <h4 className="text-sm font-medium text-green-900 mb-2">Call to Action</h4>
-                            <p className="text-sm text-green-800">{selectedNewsItem.platformOutputs[activeChannel].cta}</p>
+                          <div className="bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 p-4 rounded-lg">
+                            <h4 className="text-sm font-medium text-green-900 dark:text-green-100 mb-2">Call to Action</h4>
+                            <p className="text-sm text-green-800 dark:text-green-200">{selectedNewsItem.platformOutputs[activeChannel].cta}</p>
+                            {selectedNewsItem.platformOutputs[activeChannel].ctaUrl && (
+                              <a 
+                                href={selectedNewsItem.platformOutputs[activeChannel].ctaUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 mt-2 text-sm text-green-700 dark:text-green-300 hover:text-green-900 dark:hover:text-green-100 underline"
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                                {selectedNewsItem.platformOutputs[activeChannel].ctaUrl}
+                              </a>
+                            )}
                           </div>
                         )}
 

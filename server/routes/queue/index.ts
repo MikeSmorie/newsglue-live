@@ -144,9 +144,9 @@ router.post('/generate-newsjacks/:id', requireAuth, async (req, res) => {
       socialSettings[platform]?.enabled
     );
 
-    // If no platforms configured, use defaults for demonstration
+    // If no platforms configured, use defaults including blog
     if (platforms.length === 0) {
-      platforms = ['twitter', 'linkedin', 'instagram', 'facebook'];
+      platforms = ['blog', 'twitter', 'linkedin', 'instagram', 'facebook'];
       console.log('No platforms configured, using defaults:', platforms);
     }
 
@@ -161,7 +161,7 @@ router.post('/generate-newsjacks/:id', requireAuth, async (req, res) => {
 
       const prompt = `You are a NewsJack content strategist. Generate compelling ${platform} content that follows this methodology:
 
-PRIMARY OBJECTIVE: Start with the news. Frame the tension. Introduce the campaign. Drive urgency. Use channel-specific tone.
+PRIMARY OBJECTIVE: Start with the news. Frame the tension. Introduce the campaign. Drive urgency. Include campaign CTA.
 
 NEWS CONTEXT:
 Headline: ${newsItem.headline}
@@ -177,22 +177,26 @@ Audience Pain: ${campaign.audiencePain || 'Not provided'}
 
 PLATFORM REQUIREMENTS:
 - Platform: ${platform}
+- Target Length: ${platform === 'blog' ? '800 words' : platform === 'twitter' ? '280 characters' : platform === 'linkedin' ? '3000 characters' : platform === 'instagram' ? '2200 characters' : '1000 characters'}
 - News/Campaign Ratio: ${newsRatio}% news focus, ${campaignRatio}% campaign focus
 - Tone: ${platformConfig?.tone || 'Professional'}
-- Character Limit: ${platformConfig?.characterLimit || 'No limit'}
 
-Generate ${platform}-optimized content that:
-1. Opens with the news angle to grab attention
-2. Creates tension around the implications
-3. Seamlessly introduces the campaign as the solution
-4. Drives urgency for immediate action
-5. Uses platform-appropriate formatting and tone
+CONTENT STRUCTURE:
+1. Open with compelling news angle (hook readers immediately)
+2. Frame the tension/implications of the news
+3. Bridge to how this affects the target audience 
+4. Introduce the campaign as the solution
+5. Drive urgency for immediate action
+6. End with clear CTA including the campaign URL: ${campaign.ctaUrl || campaign.websiteUrl || 'Learn more'}
+
+CRITICAL: Always include the campaign CTA URL (${campaign.ctaUrl || campaign.websiteUrl}) in your response.
 
 Respond with JSON in this format:
 {
-  "content": "Your generated content here",
-  "hashtags": ["relevant", "hashtags"],
-  "cta": "Clear call-to-action",
+  "content": "Your generated content here - ${platform === 'blog' ? 'aim for 800 words with multiple paragraphs, subheadings, and comprehensive coverage' : 'concise and platform-optimized'}",
+  "hashtags": ["relevant", "hashtags", "for", "the", "platform"],
+  "cta": "Call-to-action with URL: ${campaign.ctaUrl || campaign.websiteUrl || 'Learn more'}",
+  "ctaUrl": "${campaign.ctaUrl || campaign.websiteUrl || ''}",
   "metrics": {
     "newsPercentage": ${newsRatio},
     "campaignPercentage": ${campaignRatio},
