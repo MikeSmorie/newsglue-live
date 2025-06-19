@@ -77,13 +77,12 @@ export default function Module6() {
       const res = await fetch(`/api/queue/fetch/${selectedCampaign.id}`, { credentials: 'include' });
       if (!res.ok) throw new Error('Failed to fetch queue');
       const data = await res.json();
-      // Handle both array and object responses
-      return Array.isArray(data) ? { newsItems: data } : data;
+      return data;
     },
     enabled: !!selectedCampaign?.id
   });
 
-  const newsQueue = queueData?.newsItems || queueData || [];
+  const newsQueue = queueData?.newsItems || [];
 
   // Generate newsjack content mutation
   const generateContentMutation = useMutation({
@@ -156,7 +155,7 @@ export default function Module6() {
   });
 
   // Filter news items by status
-  const filteredItems = newsQueue.filter(item => 
+  const filteredItems = (newsQueue as NewsItem[]).filter((item: NewsItem) => 
     statusFilter === 'all' || item.status === statusFilter
   );
 
@@ -422,7 +421,7 @@ export default function Module6() {
               </div>
             ) : (
               <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                {filteredItems.map((item) => (
+                {filteredItems.map((item: NewsItem) => (
                   <div
                     key={item.id}
                     className={`p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
