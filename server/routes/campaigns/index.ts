@@ -199,4 +199,81 @@ router.delete('/:id', requireAuth, async (req, res) => {
   }
 });
 
+// POST /api/campaigns/:id/clone - Clone a campaign
+router.post('/:id/clone', requireAuth, async (req, res) => {
+  try {
+    const originalCampaign = await db.query.campaigns.findFirst({
+      where: and(
+        eq(campaigns.id, req.params.id),
+        eq(campaigns.userId, req.user!.id)
+      ),
+      with: {
+        channels: true,
+      },
+    });
+
+    if (!originalCampaign) {
+      return res.status(404).json({ error: 'Campaign not found' });
+    }
+
+    const clonedCampaign = await db.insert(campaigns).values({
+      campaignName: `${originalCampaign.campaignName} (Copy)`,
+      name: null,
+      status: 'draft',
+      websiteUrl: originalCampaign.websiteUrl,
+      ctaUrl: originalCampaign.ctaUrl,
+      emotionalObjective: originalCampaign.emotionalObjective,
+      audiencePain: originalCampaign.audiencePain,
+      additionalData: originalCampaign.additionalData,
+      userId: req.user!.id,
+    }).returning();
+
+    if (originalCampaign.channels?.length > 0) {
+      const { campaignChannels } = await import('../../../db/schema');
+      const channelData = originalCampaign.channels.map(channel => ({
+        campaignId: clonedCampaign[0].id,
+        platform: channel.platform,
+        enabled: channel.enabled,
+      }));
+      await db.insert(campaignChannels).values(channelData);
+    }
+
+    res.status(201).json(clonedCampaign[0]);
+  } catch (error) {
+    console.error('Error cloning campaign:', error);
+    res.status(500).json({ error: 'Failed to clone campaign' });
+  }
+});
+
+// PATCH /api/campaigns/:id/status - Update campaign status
+router.patch('/:id/status', requireAuth, async (req, res) => {
+  try {
+    const { status } = req.body;
+    
+    if (!['draft', 'active', 'archived'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+
+    const updatedCampaign = await db.update(campaigns)
+      .set({
+        status,
+        updatedAt: new Date(),
+      })
+      .where(and(
+        eq(campaigns.id, req.params.id),
+        eq(campaigns.userId, req.user!.id)
+      ))
+      .returning();
+
+    if (updatedCampaign.length === 0) {
+      return res.status(404).json({ error: 'Campaign not found' });
+    }
+
+    res.json(updatedCampaign[0]);
+  } catch (error) {
+    console.error('Error updating campaign status:', error);
+    res.status(500).json({ error: 'Failed to update campaign status' });
+  }
+});
+
 export default router;

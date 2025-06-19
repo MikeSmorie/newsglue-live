@@ -14,15 +14,17 @@ interface Platform {
 }
 
 interface SimplePlatformSelectorProps {
+  selectedPlatforms?: string[];
   onSelectionChange?: (platforms: string[]) => void;
   disabled?: boolean;
 }
 
 export default function SimplePlatformSelector({ 
+  selectedPlatforms = [],
   onSelectionChange,
   disabled = false 
 }: SimplePlatformSelectorProps) {
-  const [selected, setSelected] = useState<string[]>([]);
+  const [selected, setSelected] = useState<string[]>(selectedPlatforms);
 
   const { data: platforms = [], isLoading } = useQuery<Platform[]>({
     queryKey: ['platforms'],
