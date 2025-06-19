@@ -1,57 +1,111 @@
-import express from 'express';
-import { db } from '../../db/index.js';
-import { backups, campaigns, newsItems } from '../../db/schema.js';
-import { eq, and, desc } from 'drizzle-orm';
+import { Router } from 'express';
+import { db } from '../../db';
+import { campaigns, newsItems, backups, campaignChannels } from '../../db/schema';
+import { eq, and } from 'drizzle-orm';
 import { z } from 'zod';
 
+const router = Router();
+
+// Auth middleware
 const requireAuth = (req: any, res: any, next: any) => {
   if (req.isAuthenticated()) return next();
   res.status(401).json({ message: "Not authenticated" });
 };
 
-const router = express.Router();
+// Backup data structure validation schema
+const backupSchema = z.object({
+  campaign: z.object({
+    campaignName: z.string(),
+    targetAudience: z.string().optional(),
+    brandDescription: z.string().optional(),
+    keyMessages: z.string().optional(),
+    brandVoice: z.string().optional(),
+    contentGuidelines: z.string().optional()
+  }),
+  newsItems: z.array(z.object({
+    headline: z.string(),
+    sourceUrl: z.string(),
+    content: z.string(),
+    contentType: z.string(),
+    status: z.string(),
+    platformOutputs: z.any().optional(),
+    generationMetrics: z.any().optional()
+  })).default([]),
+  channels: z.array(z.object({
+    platform: z.string(),
+    enabled: z.boolean()
+  })).default([]),
+  metadata: z.object({
+    version: z.string(),
+    createdAt: z.string(),
+    exportedBy: z.string().optional()
+  })
+});
 
-// POST /api/backup/create - Create campaign backup
+// POST /api/backup/create - Create and download backup
 router.post('/create', requireAuth, async (req, res) => {
   try {
     const { campaignId, name } = req.body;
     const userId = req.user!.id;
 
-    // Verify user owns the campaign
+    if (!campaignId) {
+      return res.status(400).json({ error: 'Campaign ID is required' });
+    }
+
+    // Verify campaign ownership
     const campaign = await db.query.campaigns.findFirst({
       where: and(
         eq(campaigns.id, campaignId),
         eq(campaigns.userId, userId)
-      )
+      ),
+      with: {
+        channels: true
+      }
     });
 
     if (!campaign) {
       return res.status(404).json({ error: 'Campaign not found or access denied' });
     }
 
-    // Gather all campaign data
+    // Get news items for this campaign
     const campaignNewsItems = await db.query.newsItems.findMany({
       where: eq(newsItems.campaignId, campaignId)
     });
 
-    // Create backup payload
+    // Prepare backup data
     const backupData = {
-      version: "1.0",
-      timestamp: new Date().toISOString(),
-      campaign: campaign,
-      newsItems: campaignNewsItems,
+      campaign: {
+        campaignName: campaign.campaignName,
+        targetAudience: campaign.audiencePain || '',
+        brandDescription: campaign.websiteUrl || '',
+        keyMessages: campaign.emotionalObjective || '',
+        brandVoice: campaign.additionalData || '',
+        contentGuidelines: campaign.additionalData || ''
+      },
+      newsItems: campaignNewsItems.map(item => ({
+        headline: item.headline,
+        sourceUrl: item.sourceUrl,
+        content: item.content,
+        contentType: item.contentType,
+        status: item.status,
+        platformOutputs: item.platformOutputs,
+        generationMetrics: item.generationMetrics
+      })),
+      channels: campaign.channels?.map(channel => ({
+        platform: channel.platform,
+        enabled: channel.enabled
+      })) || [],
       metadata: {
-        originalCampaignId: campaignId,
-        originalUserId: userId,
-        backupName: name,
-        itemCount: campaignNewsItems.length
+        version: '1.0',
+        createdAt: new Date().toISOString(),
+        exportedBy: userId.toString()
       }
     };
 
     // Create backup record
     const [backup] = await db.insert(backups).values({
-      userId,
-      campaignId,
+      userId: userId,
+      campaignId: campaignId,
       name: name || `${campaign.campaignName} - ${new Date().toLocaleDateString()}`,
       jsonPayload: JSON.stringify(backupData)
     }).returning();
@@ -61,9 +115,7 @@ router.post('/create', requireAuth, async (req, res) => {
       backup: {
         id: backup.id,
         name: backup.name,
-        createdAt: backup.createdAt,
-        campaignName: campaign.campaignName,
-        itemCount: campaignNewsItems.length
+        createdAt: backup.createdAt
       },
       downloadData: backupData
     });
@@ -84,32 +136,32 @@ router.get('/list', requireAuth, async (req, res) => {
         eq(backups.userId, userId),
         eq(backups.isDeleted, false)
       ),
-      orderBy: [desc(backups.createdAt)],
       with: {
         campaign: true
-      }
+      },
+      orderBy: (backups, { desc }) => [desc(backups.createdAt)]
     });
 
-    const backupList = userBackups.map(backup => {
-      const payload = JSON.parse(backup.jsonPayload);
+    const formattedBackups = userBackups.map(backup => {
+      const jsonData = JSON.parse(backup.jsonPayload);
       return {
         id: backup.id,
         name: backup.name,
         createdAt: backup.createdAt,
-        campaignName: backup.campaign?.campaignName || payload.campaign?.campaignName || 'Unknown Campaign',
-        itemCount: payload.metadata?.itemCount || 0,
-        hasValidCampaign: !!backup.campaign
+        campaignName: backup.campaign?.campaignName || 'Unknown Campaign',
+        itemCount: jsonData.newsItems?.length || 0,
+        hasValidCampaign: backup.campaign !== null
       };
     });
 
     res.json({
       success: true,
-      backups: backupList
+      backups: formattedBackups
     });
 
   } catch (error) {
-    console.error('Error listing backups:', error);
-    res.status(500).json({ error: 'Failed to list backups' });
+    console.error('Error fetching backups:', error);
+    res.status(500).json({ error: 'Failed to fetch backups' });
   }
 });
 
@@ -119,34 +171,9 @@ router.post('/upload', requireAuth, async (req, res) => {
     const { jsonData, restoreName } = req.body;
     const userId = req.user!.id;
 
-    // Validate backup format
-    const backupSchema = z.object({
-      version: z.string(),
-      timestamp: z.string(),
-      campaign: z.object({
-        campaignName: z.string(),
-        brandDescription: z.string().optional(),
-        targetAudience: z.string().optional(),
-        keyMessages: z.string().optional(),
-        brandVoice: z.string().optional(),
-        contentGuidelines: z.string().optional()
-      }),
-      newsItems: z.array(z.object({
-        headline: z.string(),
-        sourceUrl: z.string(),
-        content: z.string(),
-        contentType: z.string(),
-        status: z.string(),
-        platformOutputs: z.any().optional(),
-        generationMetrics: z.any().optional()
-      })),
-      metadata: z.object({
-        originalCampaignId: z.string().optional(),
-        originalUserId: z.number().optional(),
-        backupName: z.string().optional(),
-        itemCount: z.number().optional()
-      })
-    });
+    if (!jsonData) {
+      return res.status(400).json({ error: 'JSON data is required' });
+    }
 
     const parsedData = backupSchema.parse(jsonData);
 
@@ -155,9 +182,14 @@ router.post('/upload', requireAuth, async (req, res) => {
       userId: userId,
       campaignName: restoreName || `${parsedData.campaign.campaignName} (Restored)`,
       name: restoreName || `${parsedData.campaign.campaignName} (Restored)`,
-      tone: parsedData.campaign.brandVoice || '',
-      audiencePain: parsedData.campaign.targetAudience || '',
-      emotionalObjective: parsedData.campaign.keyMessages || ''
+      status: 'draft',
+      websiteUrl: parsedData.campaign.brandDescription || null,
+      ctaUrl: null,
+      emotionalObjective: parsedData.campaign.keyMessages || null,
+      audiencePain: parsedData.campaign.targetAudience || null,
+      additionalData: parsedData.campaign.contentGuidelines || null,
+      websiteAnalysis: null,
+      socialSettings: {}
     }).returning();
 
     // Restore news items
@@ -176,9 +208,20 @@ router.post('/upload', requireAuth, async (req, res) => {
       await db.insert(newsItems).values(newsItemsToInsert);
     }
 
+    // Restore channels
+    if (parsedData.channels.length > 0) {
+      const channelsToInsert = parsedData.channels.map(channel => ({
+        campaignId: newCampaign.id,
+        platform: channel.platform,
+        enabled: channel.enabled
+      }));
+
+      await db.insert(campaignChannels).values(channelsToInsert);
+    }
+
     // Create backup record for the upload
     await db.insert(backups).values({
-      userId,
+      userId: userId,
       campaignId: newCampaign.id,
       name: `Uploaded: ${restoreName || parsedData.campaign.campaignName}`,
       jsonPayload: JSON.stringify(parsedData)
@@ -246,8 +289,7 @@ router.get('/download/:id', requireAuth, async (req, res) => {
     const backup = await db.query.backups.findFirst({
       where: and(
         eq(backups.id, backupId),
-        eq(backups.userId, userId),
-        eq(backups.isDeleted, false)
+        eq(backups.userId, userId)
       )
     });
 
@@ -255,12 +297,11 @@ router.get('/download/:id', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Backup not found or access denied' });
     }
 
-    const backupData = JSON.parse(backup.jsonPayload);
-    const filename = `campaign-${backup.name.replace(/[^a-zA-Z0-9]/g, '-')}-${Date.now()}.json`;
-
+    const jsonData = JSON.parse(backup.jsonPayload);
+    
     res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.json(backupData);
+    res.setHeader('Content-Disposition', `attachment; filename="campaign-${backup.name.replace(/[^a-zA-Z0-9]/g, '-')}-${Date.now()}.json"`);
+    res.send(JSON.stringify(jsonData, null, 2));
 
   } catch (error) {
     console.error('Error downloading backup:', error);

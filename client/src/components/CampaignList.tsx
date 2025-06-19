@@ -11,7 +11,8 @@ import {
   Trash2, 
   Calendar,
   Settings,
-  AlertTriangle
+  AlertTriangle,
+  Shield
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
