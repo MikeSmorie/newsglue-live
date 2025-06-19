@@ -39,14 +39,18 @@ const tooltips = {
 };
 
 const toneOptions = [
-  { value: 'professional', label: 'Professional' },
-  { value: 'friendly', label: 'Friendly' },
-  { value: 'authoritative', label: 'Authoritative' },
-  { value: 'casual', label: 'Casual' },
-  { value: 'innovative', label: 'Innovative' },
-  { value: 'trustworthy', label: 'Trustworthy' },
-  { value: 'energetic', label: 'Energetic' },
-  { value: 'sophisticated', label: 'Sophisticated' },
+  { value: 'sage', label: 'Sage', description: 'Educational, wise, and informative - positions as expert and teacher' },
+  { value: 'rebel', label: 'Rebel', description: 'Challenging status quo, disruptive - appeals to those wanting change' },
+  { value: 'hero', label: 'Hero', description: 'Bold, courageous, determined - inspires action and overcoming challenges' },
+  { value: 'innocent', label: 'Innocent', description: 'Pure, optimistic, honest - builds trust through simplicity and goodness' },
+  { value: 'explorer', label: 'Explorer', description: 'Adventurous, pioneering, freedom-seeking - appeals to discovery and independence' },
+  { value: 'creator', label: 'Creator', description: 'Imaginative, artistic, innovative - appeals to self-expression and creativity' },
+  { value: 'ruler', label: 'Ruler', description: 'Authoritative, responsible, leadership-focused - appeals to control and success' },
+  { value: 'magician', label: 'Magician', description: 'Transformative, visionary, mysterious - promises extraordinary results' },
+  { value: 'lover', label: 'Lover', description: 'Passionate, intimate, devoted - appeals to relationships and experiences' },
+  { value: 'caregiver', label: 'Caregiver', description: 'Nurturing, generous, compassionate - focuses on helping and protecting others' },
+  { value: 'jester', label: 'Jester', description: 'Fun, lighthearted, playful - brings joy and doesn\'t take itself too seriously' },
+  { value: 'everyman', label: 'Everyman', description: 'Relatable, down-to-earth, authentic - appeals to belonging and common values' },
 ];
 
 export default function CampaignForm({ onSuccess }: { onSuccess?: () => void }) {
@@ -254,7 +258,10 @@ export default function CampaignForm({ onSuccess }: { onSuccess?: () => void }) 
                 <SelectContent>
                   {toneOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
-                      {option.label}
+                      <div className="flex flex-col">
+                        <span className="font-medium">{option.label}</span>
+                        <span className="text-xs text-muted-foreground">{option.description}</span>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
