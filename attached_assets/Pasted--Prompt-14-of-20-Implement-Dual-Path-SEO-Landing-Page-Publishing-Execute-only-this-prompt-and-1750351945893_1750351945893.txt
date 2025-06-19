@@ -1,0 +1,95 @@
+
+
+🧠 Prompt 14 of 20 – Implement Dual-Path SEO Landing Page Publishing
+
+Execute only this prompt and don’t try to interpret or anticipate what comes next.
+
+
+
+Purpose:
+
+Eliminate 404 errors on /news/:slug by ensuring the blog publishing system writes landing pages both locally and to the external SEO host.
+
+Scope:
+
+Create HTML landing pages in public/landing-pages/{slug}.html
+
+POST same content to remote SEO host for external publishing
+
+Ensure /news/:slug is served successfully by our app
+
+Ensure sitemap.xml includes updated slugs
+
+System Requirements & Implementation
+
+Directory & Static Serve Config
+
+
+
+✅ Ensure this exists:
+
+/public/landing-pages/
+
+
+
+✅ Ensure route is served in server/static-routes.ts before SPA fallback:
+
+app.use('/news', express.static(path.join(process.cwd(), 'public/landing-pages')));
+Backend Service Logic (server/landing-page/service.ts)
+
+
+
+🔁 In generateLandingPageContent(newsjackId: number):
+
+const slug = createSlug(newsjack.newsItem?.headline || 'newsjack');
+const htmlContent = buildLandingPageHtml(newsjack, campaign);
+
+// ✅ Save locally
+const filePath = path.join(process.cwd(), 'public/landing-pages', `${slug}.html`);
+fs.writeFileSync(filePath, htmlContent);
+
+// ✅ Send to external SEO host
+await fetch('https://seo-landing-host-michaelsthewrit.replit.app/api/landing-page', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ slug, html: htmlContent })
+});
+Database Update
+
+
+
+📦 Extend newsjackOutputs table with:
+
+landingPageStatus: 'draft' | 'published',
+landingPageSlug: string,
+landingPageUrl: string
+Toggle Route & Generation Hook
+
+
+
+🔁 In /api/landing-page/:newsjackId/toggle, trigger the above dual-path logic with fallback for retry if external fails, but local still succeeds.
+
+Sitemap Inclusion (server/routes/ai-sitemap.ts)
+
+
+
+Make sure it includes all landingPageSlug values with last modified time from DB.
+
+Testing
+
+
+
+✅ Create a test newsjack
+
+✅ Toggle SEO publish
+
+✅ Visit:
+
+/news/{slug} → must resolve
+
+External SEO host → must show published content
+
+✅ Check ai-sitemap.xml → must list new slug
+
+Once completed, this dual-path approach guarantees 100% success for local and external publishing without 404 risk.
+

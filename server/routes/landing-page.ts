@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { db } from '../../db/index.js';
 import { newsItems, users, campaigns } from '../../db/schema.js';
 import { eq, and } from 'drizzle-orm';
-import { generateLandingPageContent, createSlug, saveLandingPageHTML } from '../services/landing-page-service.js';
+import { generateLandingPageContent, generateLandingPageContentLegacy } from '../services/landing-page-service.js';
 import path from 'path';
 import fs from 'fs';
 
@@ -23,7 +23,7 @@ router.post('/generate', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Headline and content are required' });
     }
 
-    const landingPageContent = await generateLandingPageContent(headline, content, campaignData);
+    const landingPageContent = await generateLandingPageContentLegacy(headline, content, campaignData);
     
     res.json({
       success: true,
@@ -35,7 +35,7 @@ router.post('/generate', requireAuth, async (req, res) => {
   }
 });
 
-// POST /api/landing-page/:newsjackId/toggle - Toggle landing page publication
+// POST /api/landing-page/:newsjackId/toggle - Toggle landing page publication with dual-path approach
 router.post('/:newsjackId/toggle', requireAuth, async (req, res) => {
   try {
     const { newsjackId } = req.params;

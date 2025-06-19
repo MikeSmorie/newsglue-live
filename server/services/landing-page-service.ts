@@ -1,253 +1,308 @@
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { db } from '../../db/index.js';
+import { newsItems } from '../../db/schema.js';
+import { eq } from 'drizzle-orm';
 
 // Create slug from headline
-export function createSlug(headline: string): string {
+function createSlug(headline: string): string {
   return headline
     .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
-    .replace(/\s+/g, '-') // Replace spaces with hyphens
-    .replace(/-+/g, '-') // Replace multiple hyphens with single
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
     .trim()
-    .substring(0, 60); // Limit length for SEO
+    .substring(0, 100);
 }
 
-// Generate comprehensive landing page content with SEO optimization
-export async function generateLandingPageContent(
-  headline: string, 
-  content: string, 
-  campaignData?: any
-): Promise<string> {
+// Build landing page HTML content
+function buildLandingPageHtml(newsjack: any, campaign: any): string {
+  const blogContent = newsjack.platformOutputs?.blog?.content || '';
+  const headline = newsjack.headline || 'NewsJack Content';
   const slug = createSlug(headline);
-  const publishDate = new Date().toISOString();
-  const description = content.substring(0, 160).replace(/\n/g, ' ') + '...';
-  
-  // Extract first paragraph for excerpt
-  const excerpt = content.split('\n')[0] || description;
   
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${headline}</title>
     
     <!-- SEO Meta Tags -->
-    <title>${headline} | NewsGlue Insights</title>
-    <meta name="description" content="${description}">
-    <meta name="keywords" content="news, insights, analysis, ${campaignData?.brandName || 'business'}, ${campaignData?.targetAudience || 'industry'}">
-    <meta name="author" content="NewsGlue Platform">
-    <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://seo-landing-host-michaelsthewrit.replit.app/news/${slug}">
+    <meta name="description" content="${blogContent.substring(0, 160).replace(/"/g, '&quot;')}" />
+    <meta name="keywords" content="news, insights, analysis, ${campaign?.campaignName || ''}" />
+    <meta name="author" content="NewsGlue Platform" />
     
-    <!-- OpenGraph Tags -->
-    <meta property="og:title" content="${headline}">
-    <meta property="og:description" content="${description}">
-    <meta property="og:type" content="article">
-    <meta property="og:url" content="https://seo-landing-host-michaelsthewrit.replit.app/news/${slug}">
-    <meta property="og:site_name" content="NewsGlue Insights">
-    <meta property="article:published_time" content="${publishDate}">
-    <meta property="article:author" content="NewsGlue Platform">
+    <!-- Open Graph Tags -->
+    <meta property="og:title" content="${headline}" />
+    <meta property="og:description" content="${blogContent.substring(0, 160).replace(/"/g, '&quot;')}" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="${process.env.REPLIT_DEV_DOMAIN || 'https://newsglue.com'}/news/${slug}" />
     
     <!-- Twitter Card Tags -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="${headline}">
-    <meta name="twitter:description" content="${description}">
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${headline}" />
+    <meta name="twitter:description" content="${blogContent.substring(0, 160).replace(/"/g, '&quot;')}" />
     
-    <!-- Schema.org JSON-LD -->
+    <!-- Schema.org Markup -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "Article",
+      "@type": "BlogPosting",
       "headline": "${headline}",
-      "description": "${description}",
+      "description": "${blogContent.substring(0, 160).replace(/"/g, '&quot;')}",
       "author": {
         "@type": "Organization",
-        "name": "NewsGlue Platform",
-        "url": "https://newsglue.com"
+        "name": "NewsGlue Platform"
       },
       "publisher": {
         "@type": "Organization",
-        "name": "NewsGlue Insights",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://seo-landing-host-michaelsthewrit.replit.app/logo.png"
-        }
+        "name": "NewsGlue Platform"
       },
-      "datePublished": "${publishDate}",
-      "dateModified": "${publishDate}",
-      "mainEntityOfPage": {
-        "@type": "WebPage",
-        "@id": "https://seo-landing-host-michaelsthewrit.replit.app/news/${slug}"
-      },
-      "articleBody": "${content.replace(/"/g, '\\"').replace(/\n/g, '\\n')}"
+      "datePublished": "${new Date().toISOString()}",
+      "dateModified": "${new Date().toISOString()}"
     }
     </script>
     
-    <!-- Styling -->
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
+            color: #333;
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
-            color: #333;
             background: #fff;
         }
+        
         .header {
-            border-bottom: 1px solid #eee;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-        }
-        .title {
-            font-size: 2.2em;
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #1a1a1a;
-        }
-        .meta {
-            color: #666;
-            font-size: 0.9em;
-            margin-bottom: 20px;
-        }
-        .content {
-            font-size: 1.1em;
-            line-height: 1.8;
-        }
-        .content h1, .content h2, .content h3 {
-            color: #2563eb;
-            margin-top: 30px;
-            margin-bottom: 15px;
-        }
-        .content p {
-            margin-bottom: 20px;
-        }
-        .cta-section {
-            background: #f8fafc;
-            padding: 30px;
-            border-radius: 8px;
-            margin: 40px 0;
             text-align: center;
-            border: 1px solid #e2e8f0;
+            margin-bottom: 40px;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 20px;
         }
-        .cta-button {
-            display: inline-block;
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+        
+        .header .meta {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+        
+        .content {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            margin-bottom: 40px;
+        }
+        
+        .content h1, .content h2, .content h3 {
+            color: #1f2937;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .content h1 { font-size: 2rem; }
+        .content h2 { font-size: 1.5rem; }
+        .content h3 { font-size: 1.25rem; }
+        
+        .content p {
+            margin-bottom: 1.5rem;
+        }
+        
+        .cta {
             background: #2563eb;
             color: white;
-            padding: 12px 24px;
+            padding: 15px 30px;
+            border-radius: 8px;
             text-decoration: none;
-            border-radius: 6px;
+            display: inline-block;
             font-weight: bold;
-            margin-top: 15px;
+            margin: 20px 0;
+            transition: background 0.3s ease;
         }
-        .cta-button:hover {
+        
+        .cta:hover {
             background: #1d4ed8;
+            color: white;
         }
+        
         .footer {
-            border-top: 1px solid #eee;
-            padding-top: 20px;
-            margin-top: 40px;
             text-align: center;
-            color: #666;
-            font-size: 0.9em;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+        
+        .source-link {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9fafb;
+            border-left: 4px solid #10b981;
+            border-radius: 4px;
+        }
+        
+        .source-link a {
+            color: #059669;
+            text-decoration: none;
+        }
+        
+        .source-link a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
-    <!-- AI Discovery Block (Hidden from humans, visible to AI crawlers) -->
-    <div style="display:none;" id="ai-discovery-metadata">
-        <h1>AI Discovery Metadata</h1>
-        <p>Campaign: ${campaignData?.campaignName || 'Not specified'}</p>
-        <p>Brand: ${campaignData?.brandName || 'Not specified'}</p>
-        <p>Target Audience: ${campaignData?.targetAudience || 'Not specified'}</p>
-        <p>Emotional Objective: ${campaignData?.emotionalObjective || 'Not specified'}</p>
-        <p>Brand Voice: ${campaignData?.brandVoice || 'Not specified'}</p>
-        <p>Published: ${publishDate}</p>
-        <p>Content Type: NewsJack Article</p>
-        <p>Platform: NewsGlue AI Content Generation</p>
-    </div>
-
     <div class="header">
-        <h1 class="title">${headline}</h1>
+        <h1>${headline}</h1>
         <div class="meta">
-            Published on ${new Date().toLocaleDateString('en-US', { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-            })} | NewsGlue Insights
+            Published ${new Date().toLocaleDateString('en-US', { 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })} | NewsGlue Platform
         </div>
     </div>
-
+    
     <div class="content">
-        ${content.replace(/\n/g, '</p><p>').replace(/^<\/p>/, '').replace(/<p>$/, '')}
+        ${blogContent.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>').replace(/^/, '<p>').replace(/$/, '</p>')}
     </div>
-
-    ${campaignData?.ctaUrl ? `
-    <div class="cta-section">
-        <h3>Ready to Take Action?</h3>
-        <p>Discover more insights and solutions for your business.</p>
-        <a href="${campaignData.ctaUrl}" class="cta-button" target="_blank">Learn More</a>
+    
+    ${newsjack.platformOutputs?.blog?.ctaUrl && newsjack.platformOutputs.blog.ctaUrl !== 'null' ? `
+    <div style="text-align: center;">
+        <a href="${newsjack.platformOutputs.blog.ctaUrl}" class="cta" target="_blank" rel="noopener">
+            ${newsjack.platformOutputs?.blog?.cta || 'Learn More'}
+        </a>
     </div>
     ` : ''}
-
+    
+    ${newsjack.sourceUrl ? `
+    <div class="source-link">
+        <strong>Source:</strong> <a href="${newsjack.sourceUrl}" target="_blank" rel="noopener">${newsjack.sourceUrl}</a>
+    </div>
+    ` : ''}
+    
     <div class="footer">
-        <p>This article was generated using NewsGlue's AI-powered content creation platform.</p>
-        <p>&copy; ${new Date().getFullYear()} NewsGlue Platform. All rights reserved.</p>
+        <p>Powered by NewsGlue Platform | AI-Driven Content Intelligence</p>
     </div>
 </body>
 </html>`;
 }
 
-// Save landing page HTML to public directory
-export async function saveLandingPageHTML(
-  newsItem: any, 
-  slug: string, 
-  blogContent: string
-): Promise<string> {
-  // Ensure public/landing-pages directory exists
-  const publicDir = path.join(process.cwd(), 'public');
-  const landingPagesDir = path.join(publicDir, 'landing-pages');
-  
-  if (!fs.existsSync(publicDir)) {
-    fs.mkdirSync(publicDir, { recursive: true });
-  }
-  
-  if (!fs.existsSync(landingPagesDir)) {
-    fs.mkdirSync(landingPagesDir, { recursive: true });
-  }
-
-  // Get campaign data if available
-  let campaignData = null;
+// Generate and publish landing page content with dual-path approach
+export async function generateLandingPageContent(newsjackId: number): Promise<{ slug: string; url: string; status: string }> {
   try {
-    // This would need to be fetched from database in real implementation
-    campaignData = {
-      campaignName: 'Default Campaign',
-      brandName: 'NewsGlue',
-      targetAudience: 'Business professionals',
-      emotionalObjective: 'Inform and engage',
-      brandVoice: 'Professional and insightful',
-      ctaUrl: null
+    // Fetch the newsjack data
+    const newsItem = await db.query.newsItems.findFirst({
+      where: eq(newsItems.id, newsjackId),
+      with: {
+        campaign: true
+      }
+    });
+
+    if (!newsItem) {
+      throw new Error('News item not found');
+    }
+
+    // Create slug from headline
+    const slug = createSlug(newsItem.headline);
+    
+    // Build HTML content
+    const htmlContent = buildLandingPageHtml(newsItem, newsItem.campaign);
+    
+    // Ensure landing pages directory exists
+    const landingPagesDir = path.join(process.cwd(), 'public', 'landing-pages');
+    if (!fs.existsSync(landingPagesDir)) {
+      fs.mkdirSync(landingPagesDir, { recursive: true });
+    }
+    
+    // Save locally to public/landing-pages/{slug}.html
+    const filePath = path.join(landingPagesDir, `${slug}.html`);
+    fs.writeFileSync(filePath, htmlContent, 'utf8');
+    
+    let externalStatus = 'failed';
+    let externalUrl = '';
+    
+    // Send to external SEO host
+    try {
+      const response = await fetch('https://seo-landing-host-michaelsthewrit.replit.app/api/landing-page', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'User-Agent': 'NewsGlue-Platform/1.0'
+        },
+        body: JSON.stringify({ 
+          slug, 
+          html: htmlContent,
+          headline: newsItem.headline,
+          timestamp: new Date().toISOString()
+        }),
+        timeout: 10000 // 10 second timeout
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        externalStatus = 'published';
+        externalUrl = result.url || `https://seo-landing-host-michaelsthewrit.replit.app/news/${slug}`;
+      } else {
+        console.warn(`External SEO host returned ${response.status}: ${response.statusText}`);
+      }
+    } catch (error) {
+      console.warn('Failed to publish to external SEO host:', error);
+      // Continue with local success even if external fails
+    }
+    
+    // Update database with landing page info
+    const platformOutputs = newsItem.platformOutputs as any;
+    await db.update(newsItems)
+      .set({
+        platformOutputs: {
+          ...platformOutputs,
+          blog: {
+            ...platformOutputs.blog,
+            landingPageStatus: 'published',
+            landingPageSlug: slug,
+            landingPageUrl: `/news/${slug}`,
+            externalUrl: externalUrl,
+            externalStatus: externalStatus,
+            publishedAt: new Date().toISOString()
+          }
+        }
+      })
+      .where(eq(newsItems.id, newsjackId));
+    
+    return {
+      slug,
+      url: `/news/${slug}`,
+      status: 'published'
     };
+    
   } catch (error) {
-    console.error('Error fetching campaign data:', error);
+    console.error('Error generating landing page content:', error);
+    throw error;
   }
+}
 
-  // Generate complete HTML content
-  const htmlContent = await generateLandingPageContent(
-    newsItem.headline,
-    blogContent,
-    campaignData
-  );
-
-  // Save to file
-  const filePath = path.join(landingPagesDir, `${slug}.html`);
-  fs.writeFileSync(filePath, htmlContent, 'utf8');
-
-  // Return public URL
-  const baseUrl = process.env.LANDING_PAGE_BASE_URL || 'https://seo-landing-host-michaelsthewrit.replit.app';
-  return `${baseUrl}/news/${slug}`;
+// Legacy function for backward compatibility
+export async function generateLandingPageContentLegacy(headline: string, content: string, campaignData: any): Promise<string> {
+  const mockNewsItem = {
+    headline,
+    content,
+    sourceUrl: '',
+    platformOutputs: {
+      blog: {
+        content,
+        cta: 'Learn More',
+        ctaUrl: campaignData?.websiteUrl || ''
+      }
+    }
+  };
+  
+  return buildLandingPageHtml(mockNewsItem, campaignData);
 }

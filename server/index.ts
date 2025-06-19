@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from "http";
+import path from "path";
 import "express-async-errors";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
@@ -38,6 +39,9 @@ app.use(express.urlencoded({ extended: false }));
 
 // Serve static files from public directory
 app.use(express.static('public'));
+
+// Serve landing pages at /news/:slug before SPA fallback
+app.use('/news', express.static(path.join(process.cwd(), 'public/landing-pages')));
 
 // Request logging middleware
 app.use((req, res, next) => {
