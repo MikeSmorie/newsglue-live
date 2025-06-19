@@ -318,8 +318,8 @@ export default function Module6() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left Panel - News Queue */}
             <div className="lg:col-span-1">
-              <Card>
-                <CardHeader>
+              <Card className="h-[600px] flex flex-col">
+                <CardHeader className="flex-shrink-0">
                   <div className="flex justify-between items-center">
                     <div>
                       <CardTitle className="text-lg">News Queue</CardTitle>
@@ -327,147 +327,200 @@ export default function Module6() {
                         {filteredNewsItems.length} items in {selectedCampaign.campaignName}
                       </CardDescription>
                     </div>
-                    <Checkbox
-                      checked={selectedItems.length === filteredNewsItems.length && filteredNewsItems.length > 0}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setSelectedItems(filteredNewsItems.map(item => item.id));
-                        } else {
-                          setSelectedItems([]);
-                        }
-                      }}
-                    />
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          if (selectedItems.length === filteredNewsItems.length) {
+                            setSelectedItems([]);
+                          } else {
+                            setSelectedItems(filteredNewsItems.map(item => item.id));
+                          }
+                        }}
+                        disabled={filteredNewsItems.length === 0}
+                      >
+                        {selectedItems.length === filteredNewsItems.length ? 'Deselect All' : 'Select All'}
+                      </Button>
+                      {selectedItems.length > 0 && (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => {
+                            selectedItems.forEach(id => deleteItemMutation.mutate(id));
+                            setSelectedItems([]);
+                          }}
+                        >
+                          Delete ({selectedItems.length})
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="flex-1 overflow-hidden p-0">
                   {filteredNewsItems.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Filter className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>No news items found</p>
-                      <p className="text-sm">Try changing the filter or add news in Module 3</p>
+                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-6">
+                      <Filter className="h-12 w-12 mb-4 opacity-50" />
+                      <p className="text-center">No news items found</p>
+                      <p className="text-sm text-center">Try changing the filter or add news in Module 3</p>
                     </div>
                   ) : (
-                    filteredNewsItems.map((item) => (
-                      <div
-                        key={item.id}
-                        className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                          selectedNewsItem?.id === item.id ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50'
-                        }`}
-                        onClick={() => setSelectedNewsItem(item)}
-                      >
-                        <div className="flex items-start gap-2">
-                          <Checkbox
-                            checked={selectedItems.includes(item.id)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setSelectedItems(prev => [...prev, item.id]);
-                              } else {
-                                setSelectedItems(prev => prev.filter(id => id !== item.id));
+                    <div className="h-full overflow-y-auto">
+                      {filteredNewsItems
+                        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                        .map((item) => (
+                          <div
+                            key={item.id}
+                            className={`p-4 border-b cursor-pointer transition-colors ${
+                              selectedNewsItem?.id === item.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : 'hover:bg-gray-50'
+                            }`}
+                            onClick={() => {
+                              setSelectedNewsItem(item);
+                              // Scroll to top of right panel
+                              const rightPanel = document.getElementById('content-display-pane');
+                              if (rightPanel) {
+                                rightPanel.scrollTop = 0;
                               }
                             }}
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                          
-                          <div className="flex-1 min-w-0">
-                            <div className="flex justify-between items-start mb-2">
-                              <h4 className="font-medium text-sm truncate pr-2">{item.headline}</h4>
-                              {getStatusBadge(item.status)}
-                            </div>
-                            
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-                              <span className="capitalize">{item.contentType}</span>
-                              <span>•</span>
-                              <span>{new Date(item.createdAt).toLocaleDateString()}</span>
-                            </div>
-
-                            {item.platformOutputs && (
-                              <div className="flex items-center gap-1 mb-2">
-                                <Badge variant="outline" className="text-xs">
-                                  {getGeneratedPlatforms(item).length} platforms
-                                </Badge>
+                          >
+                            <div className="space-y-2">
+                              {/* Header Row */}
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex items-start gap-2 flex-1">
+                                  <Checkbox
+                                    checked={selectedItems.includes(item.id)}
+                                    onCheckedChange={(checked) => {
+                                      if (checked) {
+                                        setSelectedItems(prev => [...prev, item.id]);
+                                      } else {
+                                        setSelectedItems(prev => prev.filter(id => id !== item.id));
+                                      }
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="font-medium text-sm leading-tight mb-1 line-clamp-2">{item.headline}</h4>
+                                  </div>
+                                </div>
+                                {getStatusBadge(item.status)}
                               </div>
-                            )}
 
-                            <div className="flex gap-1">
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-6 px-2"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      generateContentMutation.mutate(item.id);
-                                    }}
-                                    disabled={generateContentMutation.isPending}
-                                  >
-                                    <Sparkles className="h-3 w-3" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Generate Content</p>
-                                </TooltipContent>
-                              </Tooltip>
+                              {/* Source URL Row */}
+                              <div className="text-xs text-muted-foreground">
+                                <span className="truncate block">{item.sourceUrl}</span>
+                              </div>
 
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-6 px-2"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      window.open(item.sourceUrl, '_blank');
-                                    }}
-                                  >
-                                    <ExternalLink className="h-3 w-3" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Open Source URL</p>
-                                </TooltipContent>
-                              </Tooltip>
+                              {/* Meta Row */}
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  <span>{new Date(item.createdAt).toLocaleDateString()}</span>
+                                  <span>•</span>
+                                  <span className="capitalize">{item.contentType}</span>
+                                  {item.platformOutputs && (
+                                    <>
+                                      <span>•</span>
+                                      <Badge variant="outline" className="text-xs">
+                                        {getGeneratedPlatforms(item).length} platforms
+                                      </Badge>
+                                    </>
+                                  )}
+                                </div>
 
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-6 px-2 text-red-600 hover:text-red-700"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      deleteItemMutation.mutate(item.id);
-                                    }}
-                                    disabled={deleteItemMutation.isPending}
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Delete Item</p>
-                                </TooltipContent>
-                              </Tooltip>
+                                {/* Action Icons */}
+                                <div className="flex gap-1">
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-7 w-7 p-0 bg-black hover:bg-gray-800 text-white hover:text-white"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          generateContentMutation.mutate(item.id);
+                                        }}
+                                        disabled={generateContentMutation.isPending}
+                                      >
+                                        <Sparkles className="h-3 w-3" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Generate Content</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-7 w-7 p-0"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          window.open(item.sourceUrl, '_blank');
+                                        }}
+                                      >
+                                        <ExternalLink className="h-3 w-3" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Open Source URL</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          deleteItemMutation.mutate(item.id);
+                                        }}
+                                        disabled={deleteItemMutation.isPending}
+                                      >
+                                        <Trash2 className="h-3 w-3" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Delete Item</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </div>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </div>
-                    ))
+                        ))}
+                    </div>
                   )}
                 </CardContent>
               </Card>
             </div>
 
-            {/* Right Panel - Content Generation */}
+            {/* Right Panel - Content Display Pane */}
             <div className="lg:col-span-2">
-              <Card>
-                <CardHeader>
+              <Card className="h-[600px] flex flex-col">
+                <CardHeader className="flex-shrink-0">
                   <div className="flex justify-between items-start">
                     <div>
                       <CardTitle className="text-lg">
-                        {selectedNewsItem ? selectedNewsItem.headline : 'Generated Content'}
+                        {selectedNewsItem ? selectedNewsItem.headline : 'Content Display'}
                       </CardTitle>
                       <CardDescription>
-                        {selectedNewsItem ? 'Platform-specific newsjack content' : 'Select a news item to view generated content'}
+                        {selectedNewsItem ? (
+                          <div className="space-y-1">
+                            <span>Campaign: {selectedCampaign.campaignName}</span>
+                            <br />
+                            <span className="text-xs">
+                              {selectedNewsItem.platformOutputs ? 
+                                `Generated for ${getGeneratedPlatforms(selectedNewsItem).length} platforms` : 
+                                'Ready for content generation'
+                              }
+                            </span>
+                          </div>
+                        ) : (
+                          'Select a news item to view or generate content'
+                        )}
                       </CardDescription>
                     </div>
                     {selectedNewsItem && (
@@ -492,7 +545,7 @@ export default function Module6() {
                     )}
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent id="content-display-pane" className="flex-1 overflow-y-auto">
                   {!selectedNewsItem ? (
                     <div className="text-center py-16 text-muted-foreground">
                       <Sparkles className="h-16 w-16 mx-auto mb-4 opacity-50" />
@@ -532,7 +585,7 @@ export default function Module6() {
                         </div>
                       )}
 
-                      {/* Generate NewsJack Button */}
+                      {/* Platform Generation Failsafe & Generate Button */}
                       {!selectedNewsItem.platformOutputs && (
                         <div className="text-center py-8">
                           <Button
@@ -556,6 +609,20 @@ export default function Module6() {
                           <p className="text-sm text-muted-foreground mt-2">
                             AI will create platform-specific content following NewsJack methodology
                           </p>
+                          
+                          {/* Platform Configuration Alert */}
+                          <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                            <div className="flex items-center gap-2 text-amber-800">
+                              <Zap className="h-4 w-4" />
+                              <span className="text-sm font-medium">Platform Configuration</span>
+                            </div>
+                            <p className="text-xs text-amber-700 mt-1">
+                              If generation fails, ensure platforms are configured in{' '}
+                              <a href="/module2" className="underline hover:text-amber-900">
+                                Module 2 Social Channels
+                              </a>
+                            </p>
+                          </div>
                         </div>
                       )}
 
@@ -564,18 +631,50 @@ export default function Module6() {
                         <div className="space-y-4">
                           <div className="flex justify-between items-center">
                             <h4 className="font-semibold">Generated Content</h4>
-                            <Button
-                              onClick={() => generateContentMutation.mutate(selectedNewsItem.id)}
-                              disabled={generateContentMutation.isPending}
-                              variant="outline"
-                              size="sm"
-                            >
-                              <RefreshCw className="mr-1 h-3 w-3" />
-                              Regenerate
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button
+                                onClick={() => generateContentMutation.mutate(selectedNewsItem.id)}
+                                disabled={generateContentMutation.isPending}
+                                variant="outline"
+                                size="sm"
+                              >
+                                <RefreshCw className="mr-1 h-3 w-3" />
+                                Regenerate
+                              </Button>
+                              {selectedNewsItem.status === 'draft' && (
+                                <Button
+                                  onClick={() => updateStatusMutation.mutate({ id: selectedNewsItem.id, status: 'active' })}
+                                  size="sm"
+                                  className="bg-green-600 hover:bg-green-700"
+                                >
+                                  Publish to Active
+                                </Button>
+                              )}
+                            </div>
                           </div>
 
-                          <Tabs defaultValue={Object.keys(selectedNewsItem.platformOutputs)[0]}>
+                          {/* Generation Metadata */}
+                          {selectedNewsItem.generationMetrics && (
+                            <div className="p-3 bg-blue-50 rounded-lg">
+                              <h5 className="font-medium text-sm mb-2">Generation Metadata</h5>
+                              <div className="grid grid-cols-3 gap-4 text-xs">
+                                <div>
+                                  <span className="text-muted-foreground">Token Usage:</span>
+                                  <span className="ml-1 font-medium">{selectedNewsItem.generationMetrics.tokenUsage || 'N/A'}</span>
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground">Generation Time:</span>
+                                  <span className="ml-1 font-medium">{selectedNewsItem.generationMetrics.generationTime || 'N/A'}</span>
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground">Generated:</span>
+                                  <span className="ml-1 font-medium">{new Date(selectedNewsItem.updatedAt).toLocaleString()}</span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          <Tabs defaultValue={Object.keys(selectedNewsItem.platformOutputs)[0]} className="w-full">
                             <TabsList className="grid w-full grid-cols-4">
                               {Object.entries(selectedNewsItem.platformOutputs).map(([platform]) => (
                                 <TabsTrigger key={platform} value={platform} className="capitalize">
@@ -589,7 +688,14 @@ export default function Module6() {
                                 <Card>
                                   <CardHeader className="pb-3">
                                     <div className="flex justify-between items-center">
-                                      <CardTitle className="text-base capitalize">{platform} Content</CardTitle>
+                                      <CardTitle className="text-base capitalize flex items-center gap-2">
+                                        {platform} Content
+                                        {content.manuallyEdited && (
+                                          <Badge variant="outline" className="text-xs">
+                                            Edited
+                                          </Badge>
+                                        )}
+                                      </CardTitle>
                                       <div className="flex gap-2">
                                         <Button
                                           size="sm"
@@ -611,9 +717,10 @@ export default function Module6() {
                                     </div>
                                   </CardHeader>
                                   <CardContent className="space-y-4">
-                                    <div className="p-3 bg-gray-50 rounded-lg">
-                                      <h5 className="font-medium text-sm mb-2">Content</h5>
-                                      <p className="text-sm whitespace-pre-wrap">{content.content}</p>
+                                    {/* Content Preview */}
+                                    <div className="p-4 bg-gray-50 rounded-lg border-l-4 border-l-blue-500">
+                                      <h5 className="font-medium text-sm mb-2 text-blue-700">NewsJack Content Preview</h5>
+                                      <div className="text-sm whitespace-pre-wrap leading-relaxed">{content.content}</div>
                                     </div>
 
                                     {content.hashtags && content.hashtags.length > 0 && (
@@ -621,7 +728,7 @@ export default function Module6() {
                                         <h5 className="font-medium text-sm mb-2">Hashtags</h5>
                                         <div className="flex flex-wrap gap-1">
                                           {content.hashtags.map((tag: string, index: number) => (
-                                            <Badge key={index} variant="outline" className="text-xs">
+                                            <Badge key={index} variant="outline" className="text-xs bg-blue-50">
                                               #{tag}
                                             </Badge>
                                           ))}
@@ -632,20 +739,29 @@ export default function Module6() {
                                     {content.cta && (
                                       <div>
                                         <h5 className="font-medium text-sm mb-2">Call to Action</h5>
-                                        <p className="text-sm font-medium text-blue-600">{content.cta}</p>
+                                        <div className="p-2 bg-green-50 border border-green-200 rounded">
+                                          <p className="text-sm font-medium text-green-700">{content.cta}</p>
+                                        </div>
                                       </div>
                                     )}
 
                                     {content.metrics && (
-                                      <div className="grid grid-cols-2 gap-4 pt-2 border-t">
-                                        <div>
+                                      <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                                        <div className="text-center p-3 bg-orange-50 rounded">
                                           <p className="text-xs text-muted-foreground">News Focus</p>
-                                          <p className="text-sm font-medium">{content.metrics.newsPercentage}%</p>
+                                          <p className="text-lg font-bold text-orange-600">{content.metrics.newsPercentage}%</p>
                                         </div>
-                                        <div>
+                                        <div className="text-center p-3 bg-purple-50 rounded">
                                           <p className="text-xs text-muted-foreground">Campaign Focus</p>
-                                          <p className="text-sm font-medium">{content.metrics.campaignPercentage}%</p>
+                                          <p className="text-lg font-bold text-purple-600">{content.metrics.campaignPercentage}%</p>
                                         </div>
+                                      </div>
+                                    )}
+
+                                    {content.metrics?.estimatedEngagement && (
+                                      <div className="mt-2 p-2 bg-gray-100 rounded text-center">
+                                        <p className="text-xs text-muted-foreground">Estimated Engagement</p>
+                                        <p className="text-sm font-medium">{content.metrics.estimatedEngagement}</p>
                                       </div>
                                     )}
                                   </CardContent>
