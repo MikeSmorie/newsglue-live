@@ -610,6 +610,7 @@ export const campaigns = pgTable("campaigns", {
   audiencePain: text("audience_pain"), // Pain-focused audience description
   additionalData: text("additional_data"), // Extra context and notes
   websiteAnalysis: text("website_analysis"), // Scraped website analysis data
+  socialSettings: jsonb("social_settings").default('{}'), // Social channel configurations
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
