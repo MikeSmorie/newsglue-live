@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Download, FileText, Copy, Loader2 } from 'lucide-react';
+import { Download, FileText, Copy, Loader2, Users } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
 import { useCampaignContext } from '@/hooks/use-campaign-context';
 
@@ -86,216 +86,202 @@ export default function Module7() {
           clientName: proposalData.clientName
         })
       });
-      
-      if (!response.ok) throw new Error('Download failed');
-      
+
+      if (!response.ok) {
+        throw new Error(`Failed to download ${format.toUpperCase()}`);
+      }
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
+      a.style.display = 'none';
       a.href = url;
-      a.download = `${proposalData.clientName.replace(/\s+/g, '-')}-proposal-${Date.now()}.${format}`;
+      a.download = `proposal-${proposalData.clientName}.${format}`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
       
       toast({
-        title: "Download Complete",
-        description: `Proposal downloaded as ${format.toUpperCase()}`,
+        title: "Download Started",
+        description: `${format.toUpperCase()} proposal is downloading.`,
       });
     } catch (error) {
       toast({
         title: "Download Failed",
-        description: "Failed to download proposal. Please try again.",
+        description: `Failed to download ${format.toUpperCase()} proposal.`,
         variant: "destructive"
       });
     }
   };
 
-  const handleCopyRichText = () => {
-    if (!proposalData) return;
-    
-    // Convert HTML to plain text for clipboard
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = proposalData.html;
-    const richText = tempDiv.textContent || tempDiv.innerText || '';
-    
-    navigator.clipboard.writeText(richText).then(() => {
+  const handleCopyProposal = () => {
+    if (proposalData?.html) {
+      navigator.clipboard.writeText(proposalData.html);
       toast({
-        title: "Copied to Clipboard",
-        description: "Rich text proposal copied to clipboard.",
+        title: "Copied",
+        description: "Proposal HTML copied to clipboard.",
       });
-    }).catch(() => {
-      toast({
-        title: "Copy Failed",
-        description: "Failed to copy to clipboard.",
-        variant: "destructive"
-      });
-    });
+    }
   };
 
-  const handleGenerate = () => {
-    if (!selectedCampaign || !clientName.trim()) {
+  const handleGenerateProposal = () => {
+    if (!activeCampaignId || !clientName.trim()) {
       toast({
         title: "Missing Information",
-        description: "Please select a campaign and enter a client name.",
+        description: "Please enter client name and ensure a campaign is available.",
         variant: "destructive"
       });
       return;
     }
-    
-    generateProposalMutation.mutate({
-      campaignId: selectedCampaign.id,
-      clientName: clientName.trim()
-    });
+
+    generateProposalMutation.mutate(clientName.trim());
   };
 
-  const currentDate = new Date().toLocaleDateString();
-  const validUntilDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString();
-
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-6 w-6" />
-            7 Proposal Builder
-          </CardTitle>
-          <CardDescription>
-            Generate professional strategic proposals for rapid client acquisition using live campaign data and newsjack outputs.
-          </CardDescription>
-        </CardHeader>
-        
-        <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="form">Generate Proposal</TabsTrigger>
-              <TabsTrigger value="preview" disabled={!proposalData}>Preview & Download</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="form" className="space-y-6">
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="campaign">Select Campaign</Label>
-                  <Select 
-                    value={selectedCampaign?.id || ''} 
-                    onValueChange={(value) => {
-                      const campaign = campaigns.find((c: Campaign) => c.id === value);
-                      setSelectedCampaign(campaign || null);
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choose a campaign to base the proposal on" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {campaigns.map((campaign: Campaign) => (
-                        <SelectItem key={campaign.id} value={campaign.id}>
-                          {campaign.campaignName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+    <div className="container max-w-7xl mx-auto p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <Users className="h-8 w-8 text-blue-600" />
+            Module 7: Proposal Builder
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Generate professional NewsJack proposals for rapid client acquisition
+          </p>
+          {activeCampaign && (
+            <p className="text-sm text-gray-500 mt-1">
+              Active Campaign: <span className="font-medium">{activeCampaign.campaignName}</span>
+            </p>
+          )}
+        </div>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="form">Create Proposal</TabsTrigger>
+          <TabsTrigger value="preview" disabled={!proposalData}>
+            Preview & Download
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="form" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Proposal Configuration</CardTitle>
+              <CardDescription>
+                Configure your strategic NewsJack proposal for client presentation
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {!activeCampaignId ? (
+                <div className="text-center py-8">
+                  <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    No Campaign Available
+                  </h3>
+                  <p className="text-gray-500 mb-4">
+                    Create a campaign in Module 1 to generate proposals.
+                  </p>
                 </div>
-                
-                <div>
-                  <Label htmlFor="clientName">Client Name</Label>
-                  <Input
-                    id="clientName"
-                    value={clientName}
-                    onChange={(e) => setClientName(e.target.value)}
-                    placeholder="Enter client/company name"
-                    className="mt-1"
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Proposal Date</Label>
-                    <Input value={currentDate} disabled className="mt-1" />
-                  </div>
-                  <div>
-                    <Label>Valid Until</Label>
-                    <Input value={validUntilDate} disabled className="mt-1" />
-                  </div>
-                </div>
-                
-                {selectedCampaign && (
-                  <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <h4 className="font-medium mb-2">Campaign Summary</h4>
-                    <div className="text-sm space-y-1">
-                      <p><strong>Campaign:</strong> {selectedCampaign.campaignName}</p>
-                      {selectedCampaign.websiteUrl && (
-                        <p><strong>Website:</strong> {selectedCampaign.websiteUrl}</p>
-                      )}
-                      {selectedCampaign.emotionalObjective && (
-                        <p><strong>Objective:</strong> {selectedCampaign.emotionalObjective}</p>
-                      )}
-                    </div>
-                  </div>
-                )}
-                
-                <Button 
-                  onClick={handleGenerate}
-                  disabled={generateProposalMutation.isPending || !selectedCampaign || !clientName.trim()}
-                  className="w-full"
-                  size="lg"
-                >
-                  {generateProposalMutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Generating Proposal...
-                    </>
-                  ) : (
-                    <>
-                      <FileText className="mr-2 h-4 w-4" />
-                      Generate Proposal
-                    </>
-                  )}
-                </Button>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="preview" className="space-y-6">
-              {proposalData && (
+              ) : (
                 <>
-                  <div className="space-y-4">
-                    <div className="flex flex-wrap gap-3">
-                      <Button onClick={() => handleDownload('docx')} variant="default">
-                        <Download className="mr-2 h-4 w-4" />
-                        Download Word Document
-                      </Button>
-                      <Button onClick={() => handleDownload('html')} variant="outline">
-                        <Download className="mr-2 h-4 w-4" />
-                        Download HTML
-                      </Button>
-                      <Button onClick={() => handleDownload('pdf')} variant="outline">
-                        <Download className="mr-2 h-4 w-4" />
-                        Download PDF
-                      </Button>
-                      <Button onClick={handleCopyRichText} variant="outline">
-                        <Copy className="mr-2 h-4 w-4" />
-                        Copy Rich Text
-                      </Button>
-                    </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      <p><strong>Word Document:</strong> Full proposal with comprehensive content sections, NewsJack examples, and detailed methodology</p>
-                      <p><strong>Download PDF:</strong> Generates true binary PDF file using Puppeteer rendering engine</p>
-                      <p><strong>Copy Rich Text:</strong> Complete formatted proposal for pasting into emails or documents</p>
+                  <div className="grid grid-cols-1 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="client-name">Client Name *</Label>
+                      <Input
+                        id="client-name"
+                        placeholder="Enter client or company name"
+                        value={clientName}
+                        onChange={(e) => setClientName(e.target.value)}
+                        className="max-w-md"
+                      />
                     </div>
                   </div>
-                  
-                  <div className="border rounded-lg bg-white dark:bg-gray-900 p-6 max-h-96 overflow-y-auto">
-                    <div 
-                      className="proposal-preview"
-                      dangerouslySetInnerHTML={{ __html: proposalData.html }}
-                    />
+
+                  <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg">
+                    <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
+                      Proposal Will Include:
+                    </h4>
+                    <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                      <li>• NewsJack methodology overview and case studies</li>
+                      <li>• Campaign-specific strategy and emotional positioning</li>
+                      <li>• Platform-specific content examples and CTAs</li>
+                      <li>• Performance metrics and efficiency demonstrations</li>
+                      <li>• Professional pricing and timeline structure</li>
+                    </ul>
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <Button
+                      onClick={handleGenerateProposal}
+                      disabled={!clientName.trim() || generateProposalMutation.isPending}
+                      className="min-w-[160px]"
+                    >
+                      {generateProposalMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <FileText className="mr-2 h-4 w-4" />
+                          Generate Proposal
+                        </>
+                      )}
+                    </Button>
                   </div>
                 </>
               )}
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="preview" className="space-y-6">
+          {proposalData && (
+            <>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Proposal Preview</CardTitle>
+                  <CardDescription>
+                    Professional NewsJack proposal for {proposalData.clientName}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex gap-3 mb-6">
+                    <Button 
+                      onClick={() => handleDownload('pdf')}
+                      className="min-w-[120px]"
+                    >
+                      <FileText className="mr-2 h-4 w-4" />
+                      Download PDF
+                    </Button>
+                    <Button 
+                      onClick={() => handleDownload('docx')}
+                      variant="outline"
+                      className="min-w-[120px]"
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      Download DOCX
+                    </Button>
+                    <Button 
+                      onClick={handleCopyProposal}
+                      variant="outline"
+                    >
+                      <Copy className="mr-2 h-4 w-4" />
+                      Copy HTML
+                    </Button>
+                  </div>
+
+                  <div 
+                    className="prose max-w-none border rounded-lg p-6 bg-white shadow-sm"
+                    dangerouslySetInnerHTML={{ __html: proposalData.html }}
+                  />
+                </CardContent>
+              </Card>
+            </>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -4,12 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { BarChart3, Clock, DollarSign, Target, Download, Copy, FileText, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { useCampaignContext } from "@/hooks/use-campaign-context";
 
 interface CampaignMetrics {
   id: number;
@@ -52,10 +52,9 @@ interface Campaign {
 }
 
 const PLATFORM_COLORS = {
-  'blog': '#8884d8',
-  'twitter': '#82ca9d',
-  'linkedin': '#ffc658',
-  'facebook': '#ff7300',
+  'facebook': '#1877f2',
+  'twitter': '#1da1f2',
+  'linkedin': '#0077b5',
   'instagram': '#8dd1e1',
   'youtube': '#d084d0'
 };
@@ -63,426 +62,359 @@ const PLATFORM_COLORS = {
 export default function Module8() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedCampaign, setSelectedCampaign] = useState<string>("");
   const [hourlyRate, setHourlyRate] = useState<string>("40.00");
-
-  // Fetch campaigns
-  const { data: campaigns = [] } = useQuery<Campaign[]>({
-    queryKey: ['/api/campaigns'],
-    queryFn: async () => {
-      const response = await fetch('/api/campaigns');
-      if (!response.ok) throw new Error('Failed to fetch campaigns');
-      return response.json();
-    }
-  });
+  const { activeCampaignId, activeCampaign } = useCampaignContext();
 
   // Fetch campaign metrics
   const { data: campaignMetrics, isLoading: metricsLoading } = useQuery<CampaignMetrics>({
-    queryKey: ['/api/metrics/campaign', selectedCampaign],
+    queryKey: ['/api/metrics/campaign', activeCampaignId],
     queryFn: async () => {
-      const response = await fetch(`/api/metrics/campaign/${selectedCampaign}`);
+      const response = await fetch(`/api/metrics/campaign/${activeCampaignId}`);
       if (!response.ok) throw new Error('Failed to fetch campaign metrics');
       return response.json();
     },
-    enabled: !!selectedCampaign
+    enabled: !!activeCampaignId
   });
 
   // Fetch output metrics
   const { data: outputMetrics = [], isLoading: outputLoading } = useQuery<OutputMetrics[]>({
-    queryKey: ['/api/metrics/outputs', selectedCampaign],
+    queryKey: ['/api/metrics/outputs', activeCampaignId],
     queryFn: async () => {
-      const response = await fetch(`/api/metrics/outputs/${selectedCampaign}`);
+      const response = await fetch(`/api/metrics/outputs/${activeCampaignId}`);
       if (!response.ok) throw new Error('Failed to fetch output metrics');
       return response.json();
     },
-    enabled: !!selectedCampaign
+    enabled: !!activeCampaignId
   });
 
   // Update hourly rate mutation
-  const updateHourlyRateMutation = useMutation({
-    mutationFn: async ({ campaignId, rate }: { campaignId: string; rate: string }) => {
-      const response = await fetch(`/api/metrics/campaign/${campaignId}/rate`, {
-        method: 'PUT',
+  const updateRateMutation = useMutation({
+    mutationFn: async ({ campaignId, hourlyRate }: { campaignId: string; hourlyRate: string }) => {
+      const response = await fetch('/api/metrics/update-rate', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ hourlyRate: rate })
+        credentials: 'include',
+        body: JSON.stringify({ campaignId, hourlyRate })
       });
       if (!response.ok) throw new Error('Failed to update hourly rate');
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/metrics/campaign', selectedCampaign] });
+      queryClient.invalidateQueries({ queryKey: ['/api/metrics/campaign', activeCampaignId] });
       toast({ title: "Hourly rate updated successfully" });
     }
   });
 
-  // Export metrics mutation
-  const exportMetricsMutation = useMutation({
-    mutationFn: async ({ campaignId, format }: { campaignId: string; format: 'pdf' | 'csv' }) => {
-      const response = await fetch(`/api/metrics/export/${campaignId}/${format}`, {
-        method: 'POST'
+  const handleUpdateRate = () => {
+    if (!activeCampaignId || !hourlyRate) return;
+    updateRateMutation.mutate({ campaignId: activeCampaignId, hourlyRate });
+  };
+
+  const handleExportReport = async () => {
+    if (!activeCampaignId || !campaignMetrics) return;
+    
+    try {
+      const response = await fetch('/api/metrics/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ campaignId: activeCampaignId })
       });
-      if (!response.ok) throw new Error('Failed to export metrics');
-      return response.blob();
-    },
-    onSuccess: (blob, variables) => {
+
+      if (!response.ok) throw new Error('Failed to export report');
+
+      const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.style.display = 'none';
       a.href = url;
-      a.download = `metrics-${selectedCampaign}.${variables.format}`;
+      a.download = `metrics-report-${activeCampaignId}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
-      toast({ title: `Metrics exported as ${variables.format.toUpperCase()}` });
-    }
-  });
-
-  // Generate sample metrics mutation
-  const generateSampleMutation = useMutation({
-    mutationFn: async (campaignId: string) => {
-      const response = await fetch(`/api/metrics/generate-sample/${campaignId}`, {
-        method: 'POST'
+      
+      toast({ title: "Report exported successfully" });
+    } catch (error) {
+      toast({ 
+        title: "Export failed", 
+        description: "Failed to export metrics report",
+        variant: "destructive" 
       });
-      if (!response.ok) throw new Error('Failed to generate sample metrics');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/metrics/campaign', selectedCampaign] });
-      queryClient.invalidateQueries({ queryKey: ['/api/metrics/outputs', selectedCampaign] });
-      toast({ title: "Sample metrics generated successfully" });
-    }
-  });
-
-  const handleUpdateRate = () => {
-    if (selectedCampaign && hourlyRate) {
-      updateHourlyRateMutation.mutate({ campaignId: selectedCampaign, rate: hourlyRate });
     }
   };
 
-  const handleExport = (format: 'pdf' | 'csv') => {
-    if (selectedCampaign) {
-      exportMetricsMutation.mutate({ campaignId: selectedCampaign, format });
-    }
-  };
-
-  const handleGenerateSample = () => {
-    if (selectedCampaign) {
-      generateSampleMutation.mutate(selectedCampaign);
-    }
-  };
-
-  const copyMetricsSummary = () => {
+  const handleCopyMetrics = () => {
     if (!campaignMetrics) return;
     
-    const summary = `
-Campaign Metrics Summary:
-• Total Outputs: ${campaignMetrics.totalOutputs}
-• Time Saved: ${Math.round(campaignMetrics.totalTimeSavedSeconds / 60)} minutes
-• Cost Saved: $${campaignMetrics.totalCostSaved}
-• Compliance Score: ${campaignMetrics.complianceScore}%
-• CTA Presence Rate: ${campaignMetrics.ctaPresenceRate}%
-• Efficiency Score: ${campaignMetrics.efficiencyScore}%
-    `.trim();
-    
-    navigator.clipboard.writeText(summary);
-    toast({ title: "Metrics summary copied to clipboard" });
+    const metricsText = `Campaign Metrics Summary:
+Total Outputs: ${campaignMetrics.totalOutputs}
+Time Saved: ${Math.round(campaignMetrics.totalTimeSavedSeconds / 60)} minutes
+Cost Saved: $${campaignMetrics.totalCostSaved}
+Compliance Score: ${campaignMetrics.complianceScore}%
+CTA Presence: ${campaignMetrics.ctaPresenceRate}%
+Efficiency Score: ${campaignMetrics.efficiencyScore}%`;
+
+    navigator.clipboard.writeText(metricsText);
+    toast({ title: "Metrics copied to clipboard" });
   };
 
-  // Prepare chart data
-  const timeComparisonData = outputMetrics.length > 0 ? [
-    {
-      name: 'NewsGlue AI',
-      time: Math.round(outputMetrics.reduce((acc, item) => acc + item.generationDurationSeconds, 0) / outputMetrics.length / 60)
-    },
-    {
-      name: 'Human Only',
-      time: Math.round(outputMetrics.reduce((acc, item) => acc + item.estimatedHumanTimeMinutes, 0) / outputMetrics.length)
-    },
-    {
-      name: 'Human + AI',
-      time: campaignMetrics?.humanAiEstimateMinutes || 15
-    }
-  ] : [];
-
-  const platformData = outputMetrics.reduce((acc, item) => {
-    const existing = acc.find(p => p.name === item.platform);
+  // Transform data for charts
+  const platformData = outputMetrics.reduce((acc: any[], metric) => {
+    const existing = acc.find(item => item.platform === metric.platform);
     if (existing) {
-      existing.value += 1;
+      existing.outputs += 1;
+      existing.timeSaved += metric.timeSavedSeconds;
+      existing.costSaved += parseFloat(metric.costSaved);
     } else {
-      acc.push({ name: item.platform, value: 1 });
+      acc.push({
+        platform: metric.platform,
+        outputs: 1,
+        timeSaved: metric.timeSavedSeconds,
+        costSaved: parseFloat(metric.costSaved)
+      });
     }
     return acc;
-  }, [] as { name: string; value: number }[]);
+  }, []);
+
+  const pieData = platformData.map(item => ({
+    name: item.platform.charAt(0).toUpperCase() + item.platform.slice(1),
+    value: item.outputs,
+    fill: PLATFORM_COLORS[item.platform as keyof typeof PLATFORM_COLORS] || '#8884d8'
+  }));
+
+  if (!activeCampaignId) {
+    return (
+      <div className="container max-w-7xl mx-auto p-6">
+        <div className="text-center py-12">
+          <BarChart3 className="mx-auto h-16 w-16 text-gray-400 mb-4" />
+          <h3 className="text-xl font-medium text-gray-900 mb-2">
+            No Campaign Available
+          </h3>
+          <p className="text-gray-500 mb-6">
+            Create a campaign in Module 1 to view performance metrics.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container max-w-7xl mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
-            <BarChart3 className="h-8 w-8 text-blue-600" />
+            <BarChart3 className="h-8 w-8 text-green-600" />
             Module 8: Metrics Engine
           </h1>
-          <p className="text-gray-600 mt-2">Track campaign performance and efficiency metrics</p>
+          <p className="text-gray-600 mt-2">
+            Performance analytics and efficiency tracking for NewsJack campaigns
+          </p>
+          {activeCampaign && (
+            <p className="text-sm text-gray-500 mt-1">
+              Active Campaign: <span className="font-medium">{activeCampaign.campaignName}</span>
+            </p>
+          )}
         </div>
       </div>
 
-      {/* Filter Bar */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filters & Settings</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="campaign-select">Select Campaign</Label>
-              <Select value={selectedCampaign} onValueChange={setSelectedCampaign}>
-                <SelectTrigger id="campaign-select">
-                  <SelectValue placeholder="Choose a campaign" />
-                </SelectTrigger>
-                <SelectContent>
-                  {campaigns.map((campaign) => (
-                    <SelectItem key={campaign.id} value={campaign.id}>
-                      {campaign.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="hourly-rate">Hourly Rate ($)</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="hourly-rate"
-                  type="number"
-                  step="0.01"
-                  value={hourlyRate}
-                  onChange={(e) => setHourlyRate(e.target.value)}
-                  placeholder="40.00"
-                />
-                <Button 
-                  onClick={handleUpdateRate}
-                  disabled={!selectedCampaign || updateHourlyRateMutation.isPending}
-                  size="sm"
-                >
-                  Update
-                </Button>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Export Options</Label>
-              <div className="flex gap-2 flex-wrap">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => handleExport('pdf')}
-                  disabled={!selectedCampaign || exportMetricsMutation.isPending}
-                >
-                  <FileText className="h-4 w-4 mr-2" />
-                  PDF
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => handleExport('csv')}
-                  disabled={!selectedCampaign || exportMetricsMutation.isPending}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  CSV
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={copyMetricsSummary}
-                  disabled={!campaignMetrics}
-                >
-                  <Copy className="h-4 w-4 mr-2" />
-                  Copy
-                </Button>
-                <Button 
-                  variant="secondary" 
-                  size="sm"
-                  onClick={handleGenerateSample}
-                  disabled={!selectedCampaign || generateSampleMutation.isPending}
-                >
-                  <TrendingUp className="h-4 w-4 mr-2" />
-                  Generate Sample
-                </Button>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {!selectedCampaign ? (
-        <Card>
-          <CardContent className="text-center py-12">
-            <BarChart3 className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">Select a campaign to view metrics</p>
-          </CardContent>
-        </Card>
-      ) : metricsLoading || outputLoading ? (
-        <Card>
-          <CardContent className="text-center py-12">
-            <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading metrics...</p>
-          </CardContent>
-        </Card>
-      ) : (
+      {metricsLoading || outputLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-6">
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : campaignMetrics ? (
         <>
           {/* Key Metrics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Outputs</CardTitle>
-                <Target className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{campaignMetrics?.totalOutputs || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  Across all platforms
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Time Saved</CardTitle>
-                <Clock className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {Math.round((campaignMetrics?.totalTimeSavedSeconds || 0) / 60)} min
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Total Outputs</p>
+                    <p className="text-3xl font-bold text-blue-600">{campaignMetrics.totalOutputs}</p>
+                  </div>
+                  <FileText className="h-8 w-8 text-blue-600" />
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Total time efficiency
-                </p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Cost Saved</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">${campaignMetrics?.totalCostSaved || "0.00"}</div>
-                <p className="text-xs text-muted-foreground">
-                  At ${hourlyRate}/hour
-                </p>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Time Saved</p>
+                    <p className="text-3xl font-bold text-green-600">
+                      {Math.round(campaignMetrics.totalTimeSavedSeconds / 60)}m
+                    </p>
+                  </div>
+                  <Clock className="h-8 w-8 text-green-600" />
+                </div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Efficiency Score</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Cost Saved</p>
+                    <p className="text-3xl font-bold text-emerald-600">
+                      ${campaignMetrics.totalCostSaved}
+                    </p>
+                  </div>
+                  <DollarSign className="h-8 w-8 text-emerald-600" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Efficiency</p>
+                    <p className="text-3xl font-bold text-purple-600">
+                      {campaignMetrics.efficiencyScore}%
+                    </p>
+                  </div>
+                  <TrendingUp className="h-8 w-8 text-purple-600" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Configuration and Actions */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Rate Configuration</CardTitle>
+                <CardDescription>Update hourly rate for cost calculations</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{campaignMetrics?.efficiencyScore || "0"}%</div>
-                <p className="text-xs text-muted-foreground">
-                  Overall campaign rating
-                </p>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="hourly-rate">Hourly Rate ($)</Label>
+                  <Input
+                    id="hourly-rate"
+                    type="number"
+                    step="0.01"
+                    value={hourlyRate}
+                    onChange={(e) => setHourlyRate(e.target.value)}
+                    placeholder="40.00"
+                  />
+                </div>
+                <Button 
+                  onClick={handleUpdateRate}
+                  disabled={updateRateMutation.isPending}
+                  className="w-full"
+                >
+                  Update Rate
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Compliance Metrics</CardTitle>
+                <CardDescription>Quality and compliance tracking</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Compliance Score</span>
+                  <Badge variant="secondary">{campaignMetrics.complianceScore}%</Badge>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">CTA Presence</span>
+                  <Badge variant="secondary">{campaignMetrics.ctaPresenceRate}%</Badge>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Quality Rating</span>
+                  <Badge variant="secondary">
+                    {outputMetrics.length > 0 
+                      ? Math.round(outputMetrics.reduce((acc, m) => acc + parseFloat(m.qualityRating), 0) / outputMetrics.length * 10) / 10
+                      : 0}/5
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Export Options</CardTitle>
+                <CardDescription>Download or share metrics data</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button onClick={handleExportReport} className="w-full">
+                  <Download className="mr-2 h-4 w-4" />
+                  Export PDF Report
+                </Button>
+                <Button onClick={handleCopyMetrics} variant="outline" className="w-full">
+                  <Copy className="mr-2 h-4 w-4" />
+                  Copy Summary
+                </Button>
               </CardContent>
             </Card>
           </div>
 
           {/* Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Time Comparison Chart */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Generation Time Comparison</CardTitle>
-                <CardDescription>Average time per output (minutes)</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={timeComparisonData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="time" fill="#8884d8" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+          {outputMetrics.length > 0 && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Platform Performance</CardTitle>
+                  <CardDescription>Output generation by platform</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={platformData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="platform" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="outputs" fill="#3b82f6" name="Outputs" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
 
-            {/* Platform Distribution */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Output Platform Breakdown</CardTitle>
-                <CardDescription>Content distribution by platform</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={platformData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, value }) => `${name}: ${value}`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {platformData.map((entry, index) => (
-                        <Cell 
-                          key={`cell-${index}`} 
-                          fill={PLATFORM_COLORS[entry.name as keyof typeof PLATFORM_COLORS] || '#8884d8'} 
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Platform Distribution</CardTitle>
+                  <CardDescription>Content distribution across platforms</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={pieData}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={80}
+                        dataKey="value"
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      >
+                        {pieData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.fill} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
-          {/* Compliance & Quality Metrics */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Quality & Compliance Metrics</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-green-600">
-                    {campaignMetrics?.complianceScore || "0"}%
-                  </div>
-                  <p className="text-sm text-gray-600">Compliance Score</p>
-                  <p className="text-xs text-gray-500">Word/character limits met</p>
-                </div>
-                
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-blue-600">
-                    {campaignMetrics?.ctaPresenceRate || "0"}%
-                  </div>
-                  <p className="text-sm text-gray-600">CTA Presence Rate</p>
-                  <p className="text-xs text-gray-500">Outputs with call-to-action</p>
-                </div>
-                
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-purple-600">
-                    {outputMetrics.filter(m => m.urlPresent).length}
-                  </div>
-                  <p className="text-sm text-gray-600">URLs Included</p>
-                  <p className="text-xs text-gray-500">Outputs with source links</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Output Details Table */}
+          {/* Detailed Output Metrics */}
           {outputMetrics.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Output Details</CardTitle>
-                <CardDescription>Individual output performance metrics</CardDescription>
+                <CardTitle>Detailed Output Metrics</CardTitle>
+                <CardDescription>Individual content generation performance</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
@@ -490,46 +422,47 @@ Campaign Metrics Summary:
                     <thead>
                       <tr className="border-b">
                         <th className="text-left p-2">Platform</th>
-                        <th className="text-left p-2">Generation Time</th>
-                        <th className="text-left p-2">Word Count</th>
-                        <th className="text-left p-2">Time Saved</th>
-                        <th className="text-left p-2">Cost Saved</th>
+                        <th className="text-left p-2">Duration</th>
+                        <th className="text-left p-2">Words</th>
                         <th className="text-left p-2">Quality</th>
                         <th className="text-left p-2">Compliance</th>
+                        <th className="text-left p-2">Time Saved</th>
+                        <th className="text-left p-2">Cost Saved</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {outputMetrics.slice(0, 10).map((output, index) => (
-                        <tr key={index} className="border-b">
+                      {outputMetrics.map((metric) => (
+                        <tr key={metric.id} className="border-b hover:bg-gray-50">
+                          <td className="p-2 capitalize">{metric.platform}</td>
+                          <td className="p-2">{metric.generationDurationSeconds}s</td>
+                          <td className="p-2">{metric.wordCount}</td>
+                          <td className="p-2">{metric.qualityRating}/5</td>
                           <td className="p-2">
-                            <Badge variant="outline">{output.platform}</Badge>
-                          </td>
-                          <td className="p-2">{output.generationDurationSeconds}s</td>
-                          <td className="p-2">{output.wordCount}</td>
-                          <td className="p-2">{Math.round(output.timeSavedSeconds / 60)}m</td>
-                          <td className="p-2">${output.costSaved}</td>
-                          <td className="p-2">
-                            {output.qualityRating ? `${output.qualityRating}/5` : "N/A"}
-                          </td>
-                          <td className="p-2">
-                            <Badge variant={output.complianceCheck ? "default" : "destructive"}>
-                              {output.complianceCheck ? "✓" : "✗"}
+                            <Badge variant={metric.complianceCheck ? "default" : "destructive"}>
+                              {metric.complianceCheck ? "✓" : "✗"}
                             </Badge>
                           </td>
+                          <td className="p-2">{Math.round(metric.timeSavedSeconds / 60)}m</td>
+                          <td className="p-2">${metric.costSaved}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
-                  {outputMetrics.length > 10 && (
-                    <p className="text-center text-gray-500 mt-4">
-                      Showing 10 of {outputMetrics.length} outputs
-                    </p>
-                  )}
                 </div>
               </CardContent>
             </Card>
           )}
         </>
+      ) : (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <BarChart3 className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Metrics Available</h3>
+            <p className="text-gray-500">
+              Generate content in other modules to see performance metrics here.
+            </p>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
