@@ -77,7 +77,7 @@ router.post('/create', requireAuth, async (req, res) => {
 // GET /api/backup/list - List user backups
 router.get('/list', requireAuth, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user!.id;
 
     const userBackups = await db.query.backups.findMany({
       where: and(
@@ -117,7 +117,7 @@ router.get('/list', requireAuth, async (req, res) => {
 router.post('/upload', requireAuth, async (req, res) => {
   try {
     const { jsonData, restoreName } = req.body;
-    const userId = req.user.id;
+    const userId = req.user!.id;
 
     // Validate backup format
     const backupSchema = z.object({
@@ -152,13 +152,12 @@ router.post('/upload', requireAuth, async (req, res) => {
 
     // Create new campaign with restored data
     const [newCampaign] = await db.insert(campaigns).values({
-      userId,
+      userId: userId,
       campaignName: restoreName || `${parsedData.campaign.campaignName} (Restored)`,
-      brandDescription: parsedData.campaign.brandDescription || '',
-      targetAudience: parsedData.campaign.targetAudience || '',
-      keyMessages: parsedData.campaign.keyMessages || '',
-      brandVoice: parsedData.campaign.brandVoice || '',
-      contentGuidelines: parsedData.campaign.contentGuidelines || ''
+      name: restoreName || `${parsedData.campaign.campaignName} (Restored)`,
+      tone: parsedData.campaign.brandVoice || '',
+      audiencePain: parsedData.campaign.targetAudience || '',
+      emotionalObjective: parsedData.campaign.keyMessages || ''
     }).returning();
 
     // Restore news items
@@ -210,7 +209,7 @@ router.post('/upload', requireAuth, async (req, res) => {
 router.delete('/:id', requireAuth, async (req, res) => {
   try {
     const backupId = req.params.id;
-    const userId = req.user.id;
+    const userId = req.user!.id;
 
     // Verify ownership
     const backup = await db.query.backups.findFirst({
@@ -241,7 +240,7 @@ router.delete('/:id', requireAuth, async (req, res) => {
 router.get('/download/:id', requireAuth, async (req, res) => {
   try {
     const backupId = req.params.id;
-    const userId = req.user.id;
+    const userId = req.user!.id;
 
     // Verify ownership
     const backup = await db.query.backups.findFirst({
