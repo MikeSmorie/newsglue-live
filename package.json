@@ -59,6 +59,7 @@
     "cmdk": "^1.0.0",
     "cors": "^2.8.5",
     "date-fns": "^3.6.0",
+    "docx": "^9.5.1",
     "drizzle-orm": "^0.38.2",
     "drizzle-zod": "^0.6.0",
     "embla-carousel-react": "^8.3.0",

@@ -29,8 +29,8 @@ export function generateProposalHTML(data: ProposalTemplateData): string {
         body {
             font-family: 'Open Sans', Arial, sans-serif;
             line-height: 1.6;
-            color: #333;
-            background: #ffffff;
+            color: #333333 !important;
+            background: #ffffff !important;
         }
         
         .container {
@@ -93,10 +93,31 @@ export function generateProposalHTML(data: ProposalTemplateData): string {
         
         .section h3 {
             font-size: 24px;
-            color: #333;
+            color: #333333 !important;
             margin-bottom: 20px;
             padding-bottom: 10px;
             border-bottom: 2px solid #F0C041;
+        }
+        
+        .section p, .section li {
+            color: #333333 !important;
+        }
+        
+        .insight-box {
+            background: #f8f9fa !important;
+            color: #333333 !important;
+            border-left: 4px solid #4A90E2;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .methodology-box {
+            background: #fff8e1 !important;
+            color: #333333 !important;
+            border: 1px solid #F0C041;
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 8px;
         }
         
         .section h4 {
