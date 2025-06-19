@@ -167,11 +167,12 @@ router.post('/download/:format', requireAuth, async (req, res) => {
 
       res.setHeader('Content-Type', 'text/html');
       res.setHeader('Content-Disposition', `inline; filename="${clientName.replace(/\s+/g, '-')}-proposal-printable.html"`);
+      res.setHeader('X-Content-Type-Options', 'nosniff');
       return res.send(printableHtml);
     }
 
     if (format === 'docx') {
-      // Create proper DOCX document
+      // Create comprehensive DOCX document
       const doc = new Document({
         sections: [{
           properties: {},
@@ -223,6 +224,100 @@ router.post('/download/:format', requireAuth, async (req, res) => {
               ],
             }),
             new Paragraph({
+              text: `Core Benefits:`,
+              heading: HeadingLevel.HEADING_4,
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `• Real-time content relevance`,
+                  break: 1,
+                }),
+                new TextRun({
+                  text: `• Enhanced brand visibility`,
+                  break: 1,
+                }),
+                new TextRun({
+                  text: `• Strategic audience engagement`,
+                  break: 1,
+                }),
+                new TextRun({
+                  text: `• Multi-platform content distribution`,
+                  break: 1,
+                }),
+              ],
+            }),
+            new Paragraph({
+              text: `Campaign Analysis`,
+              heading: HeadingLevel.HEADING_3,
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `Website: ${templateData.campaignData.websiteUrl || 'Not specified'}`,
+                  break: 1,
+                }),
+                new TextRun({
+                  text: `Target Audience: ${templateData.campaignData.audiencePain || 'Strategic positioning focus'}`,
+                  break: 1,
+                }),
+                new TextRun({
+                  text: `Emotional Objective: ${templateData.campaignData.emotionalObjective || 'Brand authority and engagement'}`,
+                  break: 1,
+                }),
+              ],
+            }),
+            new Paragraph({
+              text: `Executive Summary`,
+              heading: HeadingLevel.HEADING_3,
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `NewsGlue specializes in cementing brands to the news cycle through our proprietary NewsJack methodology. By strategically linking your brand messaging to trending news events, we create authentic, timely content that drives engagement and builds authority.`,
+                }),
+              ],
+            }),
+            new Paragraph({
+              text: `Multi-Platform Distribution`,
+              heading: HeadingLevel.HEADING_4,
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `We create platform-optimized content for maximum reach:`,
+                  break: 1,
+                }),
+                new TextRun({
+                  text: `• Blog Articles: In-depth thought leadership pieces (1200-2000 words)`,
+                  break: 1,
+                }),
+                new TextRun({
+                  text: `• Social Media: Platform-specific posts for Twitter, LinkedIn, Instagram, Facebook`,
+                  break: 1,
+                }),
+                new TextRun({
+                  text: `• SEO Landing Pages: Search-optimized content for organic discovery`,
+                  break: 1,
+                }),
+                new TextRun({
+                  text: `• Email Content: Newsletter-ready formats for direct engagement`,
+                  break: 1,
+                }),
+              ],
+            }),
+            new Paragraph({
+              text: `NewsJack Content Examples`,
+              heading: HeadingLevel.HEADING_3,
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `Based on current news analysis, we've identified ${templateData.newsItems.length || 0} potential NewsJack opportunities for your campaign.`,
+                }),
+              ],
+            }),
+            new Paragraph({
               text: `Investment & Next Steps`,
               heading: HeadingLevel.HEADING_3,
             }),
@@ -234,6 +329,10 @@ router.post('/download/:format', requireAuth, async (req, res) => {
                 new TextRun({
                   text: `Contact: Team@NewsGlue.io`,
                   break: 2,
+                }),
+                new TextRun({
+                  text: `NewsGlue.io - Cementing your brand to the news cycle`,
+                  break: 1,
                 }),
               ],
             }),

@@ -267,7 +267,7 @@ export default function Module7() {
                   <div className="flex flex-wrap gap-3">
                     <Button onClick={() => handleDownload('pdf')} variant="default">
                       <Download className="mr-2 h-4 w-4" />
-                      Download PDF
+                      Print to PDF
                     </Button>
                     <Button onClick={() => handleDownload('html')} variant="outline">
                       <Download className="mr-2 h-4 w-4" />
