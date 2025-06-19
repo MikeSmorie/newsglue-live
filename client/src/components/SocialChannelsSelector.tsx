@@ -81,9 +81,8 @@ export default function SocialChannelsSelector({
         .filter(channel => channel.enabled)
         .map(channel => channel.platform);
       setLocalSelection(enabledPlatforms);
-      onSelectionChange?.(enabledPlatforms);
     }
-  }, [currentChannels, onSelectionChange]);
+  }, [currentChannels]);
 
   // Update channels mutation
   const updateChannelsMutation = useMutation({

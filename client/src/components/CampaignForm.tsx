@@ -1,5 +1,5 @@
 // [CAMPAIGN FORM COMPONENT] - NewsJack methodology focused
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,10 @@ export default function CampaignForm() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+
+  const handlePlatformChange = useCallback((platforms: string[]) => {
+    setSelectedPlatforms(platforms);
+  }, []);
 
   const mutation = useMutation({
     mutationFn: async (data) => {
@@ -156,7 +160,7 @@ export default function CampaignForm() {
         <div className="border-t pt-4">
           <SocialChannelsSelector
             selectedPlatforms={selectedPlatforms}
-            onSelectionChange={setSelectedPlatforms}
+            onSelectionChange={handlePlatformChange}
             disabled={mutation.isPending}
           />
         </div>
