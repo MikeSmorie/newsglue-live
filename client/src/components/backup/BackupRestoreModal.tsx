@@ -257,7 +257,7 @@ export function BackupRestoreModal({ isOpen, onClose, campaignId, campaignName }
                       <SelectValue placeholder="Select campaign to backup" />
                     </SelectTrigger>
                     <SelectContent>
-                      {campaigns.map((campaign) => (
+                      {campaigns.map((campaign: any) => (
                         <SelectItem key={campaign.id} value={campaign.id}>
                           {campaign.campaignName}
                         </SelectItem>
