@@ -2,7 +2,7 @@ import express from 'express';
 import { z } from 'zod';
 import { db } from '../../../db';
 import { campaigns, insertCampaignSchema } from '../../../db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, like, desc, asc } from 'drizzle-orm';
 
 const requireAuth = (req: any, res: any, next: any) => {
   if (req.isAuthenticated()) return next();
@@ -19,14 +19,52 @@ const campaignCreateSchema = z.object({
   emotional_objective: z.string().optional(),
   audience_pain: z.string().optional(),
   additional_data: z.string().optional(),
+  status: z.enum(["draft", "active", "archived"]).optional().default("draft"),
 });
 
-// GET /api/campaigns - List all campaigns for authenticated user
+const campaignUpdateSchema = z.object({
+  name: z.string().min(1, "Campaign name is required").optional(),
+  website_url: z.string().optional(),
+  cta_url: z.string().optional(),
+  emotional_objective: z.string().optional(),
+  audience_pain: z.string().optional(),
+  additional_data: z.string().optional(),
+  status: z.enum(["draft", "active", "archived"]).optional(),
+});
+
+// GET /api/campaigns - List all campaigns for authenticated user with search and filter
 router.get('/', requireAuth, async (req, res) => {
   try {
+    const { search, status, sort = 'newest' } = req.query;
+    
+    // Build where conditions
+    const conditions = [eq(campaigns.userId, req.user!.id)];
+    if (search) {
+      conditions.push(like(campaigns.campaignName, `%${search}%`));
+    }
+    if (status) {
+      conditions.push(eq(campaigns.status, status as string));
+    }
+
+    // Determine sort order
+    let orderBy;
+    switch (sort) {
+      case 'oldest':
+        orderBy = [asc(campaigns.createdAt)];
+        break;
+      case 'a-z':
+        orderBy = [asc(campaigns.campaignName)];
+        break;
+      case 'z-a':
+        orderBy = [desc(campaigns.campaignName)];
+        break;
+      default: // newest
+        orderBy = [desc(campaigns.createdAt)];
+    }
+
     const userCampaigns = await db.query.campaigns.findMany({
-      where: eq(campaigns.userId, req.user!.id),
-      orderBy: (campaigns, { desc }) => [desc(campaigns.createdAt)],
+      where: and(...conditions),
+      orderBy,
       with: {
         channels: true,
       },
@@ -71,6 +109,7 @@ router.post('/', requireAuth, async (req, res) => {
     const newCampaign = await db.insert(campaigns).values({
       campaignName: validatedData.name,
       name: null, // Set to null to avoid constraint violation
+      status: validatedData.status || "draft",
       websiteUrl: validatedData.website_url || null,
       ctaUrl: validatedData.cta_url || null,
       emotionalObjective: validatedData.emotional_objective || null,

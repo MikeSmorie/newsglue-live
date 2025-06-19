@@ -593,12 +593,17 @@ export const selectPasswordResetTokenSchema = createSelectSchema(passwordResetTo
 export type InsertPasswordResetToken = typeof passwordResetTokens.$inferInsert;
 export type SelectPasswordResetToken = typeof passwordResetTokens.$inferSelect;
 
+// Campaign status enum
+export const campaignStatusEnum = z.enum(["draft", "active", "archived"]);
+export type CampaignStatus = z.infer<typeof campaignStatusEnum>;
+
 // Campaigns table - NewsJack methodology focused
 export const campaigns = pgTable("campaigns", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   campaignName: text("campaign_name").notNull(), // Campaign name
   name: text("name"), // Secondary name field
+  status: text("status").notNull().default("draft"), // Campaign status: draft, active, archived
   websiteUrl: text("website_url"), // Source URL for scraping
   ctaUrl: text("cta_url"), // Call-to-action URL
   emotionalObjective: text("emotional_objective"), // Target emotional response
