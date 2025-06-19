@@ -74,15 +74,21 @@ export default function SocialChannelsSelector({
     enabled: !!campaignId,
   });
 
-  // Initialize local selection from current channels only once
-  useEffect(() => {
-    if (currentChannels.length > 0 && localSelection.length === 0) {
+  // Initialize local selection only once to prevent loops
+  React.useEffect(() => {
+    if (selectedPlatforms.length > 0) {
+      setLocalSelection(selectedPlatforms);
+    }
+  }, [selectedPlatforms.join(',')]);
+
+  React.useEffect(() => {
+    if (currentChannels.length > 0 && !campaignId) {
       const enabledPlatforms = currentChannels
         .filter(channel => channel.enabled)
         .map(channel => channel.platform);
       setLocalSelection(enabledPlatforms);
     }
-  }, [currentChannels.length]);
+  }, [currentChannels.length, campaignId]);
 
   // Update channels mutation
   const updateChannelsMutation = useMutation({
