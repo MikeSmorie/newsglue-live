@@ -1,0 +1,94 @@
+Prompt 20 of 20 — Build Module 9: AI Discoverability Dashboard
+
+Execute only this prompt and don’t try to interpret or anticipate what comes next.
+
+⸻
+
+Purpose:
+Create a comprehensive Module 9 interface to monitor and validate the AI/SEO discoverability of NewsGlue-published content. This module ensures that published blogs are optimized for AI agent indexing and SEO visibility, and confirms compliance with discoverability best practices.
+
+⸻
+
+Scope:
+	•	Display all SEO-published NewsJacks (blogs) with their metadata health
+	•	Monitor sitemap presence, indexability, schema coverage, and bot access
+	•	Provide exportable intelligence for auditing
+
+⸻
+
+Frontend: module9/index.tsx
+	1.	Title: Module 9: AI Discoverability Engine
+Subtitle: Track AI and SEO indexing status of your published content
+	2.	Dashboard Sections:
+
+A. Published Blogs Table
+	•	Columns:
+	•	✅ Slug
+	•	✅ Status: Published / Missing / Error
+	•	✅ Sitemap Entry: Yes / No
+	•	✅ Metadata Score (out of 5)
+	•	✅ Last AI Ping (relative time)
+	•	✅ Action buttons: View, Re-Ping, Re-Generate
+
+B. Metadata Health Audit Panel
+	•	Show for selected blog:
+	•	✅ Canonical tag: Present / Missing
+	•	✅ OpenGraph: Present / Missing
+	•	✅ JSON-LD: Validated / Broken
+	•	✅ AI Discovery Block: Present
+	•	✅ Sitemap inclusion: Yes / No
+	•	✅ Preview link
+
+C. Sitemap Monitor
+	•	Live status of /ai-sitemap.xml
+	•	Count of published entries
+	•	Links and lastmod dates
+	•	Export XML snapshot
+
+D. Export Options
+	•	PDF: AI Indexing Report
+	•	CSV: All metadata validation status
+
+⸻
+
+Backend: routes/ai-discoverability.ts
+	1.	GET /api/discoverability/audit
+	•	Returns all blog-style NewsJack outputs with:
+	•	slug, metadata flags, publish date, sitemap status
+	2.	GET /api/discoverability/sitemap
+	•	Loads ai-sitemap.xml contents with entry counts and dates
+	3.	POST /api/discoverability/reping/:newsjackId
+	•	Re-pings sitemap + discovery endpoints (indexnow, AI bots)
+	4.	GET /api/discoverability/:newsjackId/status
+	•	Validates metadata from static HTML
+
+⸻
+
+Database:
+Extend newsjackOutputs:
+	•	lastAICrawlAt
+	•	metadataScore
+	•	sitemapStatus
+	•	indexable
+
+⸻
+
+Static File System:
+Ensure all blog outputs remain accessible at:
+/public/landing-pages/{slug}.html
+These are referenced from sitemap and crawled directly.
+
+⸻
+
+Metrics:
+	•	Track:
+	•	Indexability %
+	•	Metadata score avg.
+	•	Sitemap inclusion ratio
+	•	Crawled pages vs published
+
+⸻
+
+Proceed to execute this in full.
+
+Let me know when you’re ready for the Phase 2 module roadmap.
