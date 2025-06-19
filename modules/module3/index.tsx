@@ -7,10 +7,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Send, ChevronRight, Plus, Loader2 } from 'lucide-react';
+import { Send, ChevronRight, Plus, Loader2, Edit, Trash2, CheckSquare, Square } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface Campaign {
   id: string;
@@ -24,8 +27,9 @@ interface NewsItem {
   sourceUrl: string;
   content: string;
   contentType: 'external' | 'internal';
-  status: string;
+  status: 'draft' | 'sent' | 'complete' | 'error';
   createdAt: string;
+  updatedAt: string;
 }
 
 interface NewsSubmission {
@@ -39,6 +43,8 @@ interface NewsSubmission {
 export default function Module3() {
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<number[]>([]);
+  const [editingItem, setEditingItem] = useState<NewsItem | null>(null);
   const [formData, setFormData] = useState<NewsSubmission>({
     campaignId: '',
     headline: '',
@@ -49,6 +55,108 @@ export default function Module3() {
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Update news item mutation
+  const updateNewsMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: Partial<NewsSubmission> }) => {
+      const response = await fetch(`/api/news-items/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(data)
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update news item');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/news-items', selectedCampaign?.id] });
+      toast({
+        title: "News Updated",
+        description: "Your news item has been updated successfully.",
+        variant: "default"
+      });
+      setEditingItem(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Update Failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Delete news item mutation
+  const deleteNewsMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await fetch(`/api/news-items/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete news item');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/news-items', selectedCampaign?.id] });
+      toast({
+        title: "News Deleted",
+        description: "News item has been deleted successfully.",
+        variant: "default"
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Delete Failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Bulk delete mutation
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (itemIds: number[]) => {
+      const response = await fetch('/api/news-items/bulk', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ itemIds })
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete news items');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/news-items', selectedCampaign?.id] });
+      toast({
+        title: "Items Deleted",
+        description: `Successfully deleted ${data.deletedCount} news items.`,
+        variant: "default"
+      });
+      setSelectedItems([]);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Bulk Delete Failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
 
   // Fetch campaigns
   const { data: campaigns = [] } = useQuery<Campaign[]>({
@@ -165,7 +273,85 @@ export default function Module3() {
       return;
     }
 
-    submitMutation.mutate(formData);
+    if (editingItem) {
+      updateNewsMutation.mutate({ 
+        id: editingItem.id, 
+        data: formData 
+      });
+    } else {
+      submitMutation.mutate(formData);
+    }
+  };
+
+  const handleEdit = (item: NewsItem) => {
+    setEditingItem(item);
+    setFormData({
+      campaignId: item.campaignId,
+      headline: item.headline,
+      sourceUrl: item.sourceUrl,
+      content: item.content,
+      type: item.contentType
+    });
+    setIsFormOpen(true);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingItem(null);
+    setFormData({
+      campaignId: selectedCampaign?.id || '',
+      headline: '',
+      sourceUrl: '',
+      content: '',
+      type: 'external'
+    });
+    setIsFormOpen(false);
+  };
+
+  const handleSelectItem = (itemId: number, checked: boolean) => {
+    if (checked) {
+      setSelectedItems(prev => [...prev, itemId]);
+    } else {
+      setSelectedItems(prev => prev.filter(id => id !== itemId));
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedItems(newsItems.map(item => item.id));
+    } else {
+      setSelectedItems([]);
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedItems.length === 0) return;
+    bulkDeleteMutation.mutate(selectedItems);
+  };
+
+  const getStatusBadge = (status: NewsItem['status']) => {
+    const statusConfig = {
+      draft: { color: 'bg-yellow-100 text-yellow-800', label: 'Draft' },
+      sent: { color: 'bg-blue-100 text-blue-800', label: 'Sent' },
+      complete: { color: 'bg-green-100 text-green-800', label: 'Complete' },
+      error: { color: 'bg-red-100 text-red-800', label: 'Error' }
+    };
+
+    const config = statusConfig[status];
+    return (
+      <Badge className={`${config.color} border-0`}>
+        {config.label}
+      </Badge>
+    );
+  };
+
+  const getStatusTooltip = (status: NewsItem['status']) => {
+    const tooltips = {
+      draft: 'News item is queued and waiting for Module 6 to be ready',
+      sent: 'News item has been successfully sent to Module 6 for processing',
+      complete: 'News item has been fully processed and executed',
+      error: 'An error occurred during processing - click to review and resubmit'
+    };
+    return tooltips[status];
   };
 
   const handleGoToModule6 = () => {
