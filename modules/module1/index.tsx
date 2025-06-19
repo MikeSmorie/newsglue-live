@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Button } from '../../client/src/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../client/src/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../client/src/components/ui/tabs';
-import { Badge } from '../../client/src/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { useQuery } from '@tanstack/react-query';
 import { 
   Calendar, 
@@ -14,9 +14,9 @@ import {
   Lightbulb,
   Shield
 } from 'lucide-react';
-import CampaignList from '../../client/src/components/CampaignList';
-import CampaignForm from '../../client/src/components/CampaignForm';
-import { BackupRestoreModal } from '../../client/src/components/backup/BackupRestoreModal';
+import CampaignList from '@/components/CampaignList';
+import CampaignForm from '@/components/CampaignForm';
+import { BackupRestoreModal } from '@/components/backup/BackupRestoreModal';
 
 interface Campaign {
   id: string;

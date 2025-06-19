@@ -4,6 +4,7 @@ import { campaigns, newsItems } from "../../db/schema.js";
 import { eq } from "drizzle-orm";
 import { generateProposalHTML } from "../templates/proposal-template.js";
 import puppeteer from "puppeteer";
+import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
 import { createWriteStream, unlinkSync, existsSync } from "fs";
 import path from "path";
 
@@ -190,28 +191,81 @@ router.post('/download/:format', requireAuth, async (req, res) => {
     }
 
     if (format === 'docx') {
-      // For DOCX, we'll return HTML that can be opened in Word
-      // A proper DOCX would require additional libraries like docx
-      const docxHtml = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <title>Proposal - ${clientName}</title>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; }
-            .container { max-width: 800px; margin: 0 auto; padding: 20px; }
-          </style>
-        </head>
-        <body>
-          ${html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')}
-        </body>
-        </html>
-      `;
+      // Create proper DOCX document
+      const doc = new Document({
+        sections: [{
+          properties: {},
+          children: [
+            new Paragraph({
+              text: `Strategic NewsJack Proposal`,
+              heading: HeadingLevel.HEADING_1,
+            }),
+            new Paragraph({
+              text: `For ${clientName}`,
+              heading: HeadingLevel.HEADING_2,
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `Proposal Date: ${proposalDate}`,
+                  break: 1,
+                }),
+                new TextRun({
+                  text: `Valid Until: ${validUntil}`,
+                  break: 1,
+                }),
+              ],
+            }),
+            new Paragraph({
+              text: `Campaign Overview: ${templateData.campaignData.campaignName}`,
+              heading: HeadingLevel.HEADING_3,
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `Strategic Insight: We understand that ${clientName} needs content that not only informs but strategically positions your brand™.`,
+                }),
+              ],
+            }),
+            new Paragraph({
+              text: `Our Approach`,
+              heading: HeadingLevel.HEADING_3,
+            }),
+            new Paragraph({
+              text: `The NewsJack Methodology`,
+              heading: HeadingLevel.HEADING_4,
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `NewsJacking is the art and science of real-time content marketing that injects your brand into trending news conversations. Our methodology ensures your content captures attention while building brand authority.`,
+                }),
+              ],
+            }),
+            new Paragraph({
+              text: `Investment & Next Steps`,
+              heading: HeadingLevel.HEADING_3,
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `Ready to transform your content strategy? Let's discuss how NewsGlue can cement your brand to the news cycle.`,
+                }),
+                new TextRun({
+                  text: `Contact: Team@NewsGlue.io`,
+                  break: 2,
+                }),
+              ],
+            }),
+          ],
+        }],
+      });
 
+      const buffer = await Packer.toBuffer(doc);
+      
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
       res.setHeader('Content-Disposition', `attachment; filename="${clientName.replace(/\s+/g, '-')}-proposal.docx"`);
-      return res.send(docxHtml);
+      return res.send(buffer);
     }
 
   } catch (error) {
