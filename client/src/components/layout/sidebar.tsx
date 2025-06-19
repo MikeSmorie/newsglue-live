@@ -46,7 +46,7 @@ const auditModule = {
   restricted: true
 };
 
-const navigationItems = [
+const userMenuItems = [
   {
     name: "Dashboard",
     href: "/",
@@ -128,6 +128,7 @@ export function Sidebar() {
   const { user } = useUser();
   const { isSupergod } = useAdmin();
   const [adminOpen, setAdminOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const isActive = (href: string) => {
     if (href === "/") {
@@ -154,95 +155,52 @@ export function Sidebar() {
       </div>
       
       <ScrollArea className="flex-1 px-3">
-        <div className="space-y-1">
-          {navigationItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Button
-                key={item.href}
-                variant={isActive(item.href) ? "secondary" : "ghost"}
-                className={cn(
-                  "w-full justify-start text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800",
-                  isActive(item.href) && "bg-gray-100 dark:bg-gray-800"
-                )}
-                asChild
-              >
-                <a href={item.href}>
-                  <Icon className="mr-2 h-4 w-4" />
-                  {item.name}
-                </a>
-              </Button>
-            );
-          })}
-        </div>
-
-        <Separator className="my-4" />
-
-        <div className="space-y-1">
-          <h3 className="px-2 py-1 text-sm font-medium text-gray-600 dark:text-gray-400">
-            Modules
-          </h3>
-          {moduleItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Button
-                key={item.href}
-                variant={isActive(item.href) ? "secondary" : "ghost"}
-                size="sm"
-                className={cn(
-                  "w-full justify-start text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800",
-                  isActive(item.href) && "bg-gray-100 dark:bg-gray-800"
-                )}
-                asChild
-              >
-                <a href={item.href}>
-                  <Icon className="mr-2 h-3 w-3" />
-                  {item.name}
-                </a>
-              </Button>
-            );
-          })}
-          
-          {/* Omega-10 Audit Module - Admin/Supergod Only */}
-          {(user?.role === "admin" || user?.role === "supergod") && (
+        <Collapsible open={userMenuOpen} onOpenChange={setUserMenuOpen}>
+          <CollapsibleTrigger asChild>
             <Button
-              variant={isActive(auditModule.href) ? "secondary" : "ghost"}
-              size="sm"
-              className={cn(
-                "w-full justify-start text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/20",
-                isActive(auditModule.href) && "bg-red-50 dark:bg-red-950/20"
-              )}
-              asChild
+              variant="ghost"
+              className="w-full justify-between px-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
             >
-              <a href={auditModule.href}>
-                <FileText className="mr-2 h-3 w-3" />
-                {auditModule.name}
-              </a>
+              <div className="flex items-center">
+                <Settings className="mr-2 h-4 w-4" />
+                <span className="text-sm font-medium">Admin</span>
+              </div>
+              {userMenuOpen ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
             </Button>
-          )}
-        </div>
-
-        {(user?.role === "admin" || user?.role === "supergod") && (
-          <>
-            <Separator className="my-4" />
-            <Collapsible open={adminOpen} onOpenChange={setAdminOpen}>
-              <CollapsibleTrigger asChild>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-1 mt-1">
+            {userMenuItems.map((item) => {
+              const Icon = item.icon;
+              return (
                 <Button
-                  variant="ghost"
-                  className="w-full justify-between px-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-                >
-                  <div className="flex items-center">
-                    <Shield className="mr-2 h-4 w-4" />
-                    <span className="text-sm font-medium">Admin</span>
-                  </div>
-                  {adminOpen ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4" />
+                  key={item.href}
+                  variant={isActive(item.href) ? "secondary" : "ghost"}
+                  size="sm"
+                  className={cn(
+                    "w-full justify-start ml-4 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800",
+                    isActive(item.href) && "bg-gray-100 dark:bg-gray-800"
                   )}
+                  asChild
+                >
+                  <a href={item.href}>
+                    <Icon className="mr-2 h-3 w-3" />
+                    {item.name}
+                  </a>
                 </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-1 mt-1">
+              );
+            })}
+
+            {(user?.role === "admin" || user?.role === "supergod") && (
+              <>
+                <div className="ml-4 mt-2 mb-1">
+                  <h4 className="px-2 py-1 text-xs font-medium text-gray-500 dark:text-gray-500">
+                    Administration
+                  </h4>
+                </div>
                 {adminItems.map((item) => {
                   const Icon = item.icon;
                   return (
@@ -319,10 +277,56 @@ export function Sidebar() {
                     })}
                   </>
                 )}
-              </CollapsibleContent>
-            </Collapsible>
-          </>
-        )}
+              </>
+            )}
+          </CollapsibleContent>
+        </Collapsible>
+
+        <Separator className="my-4" />
+
+        <div className="space-y-1">
+          <h3 className="px-2 py-1 text-sm font-medium text-gray-600 dark:text-gray-400">
+            Modules
+          </h3>
+          {moduleItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Button
+                key={item.href}
+                variant={isActive(item.href) ? "secondary" : "ghost"}
+                size="sm"
+                className={cn(
+                  "w-full justify-start text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800",
+                  isActive(item.href) && "bg-gray-100 dark:bg-gray-800"
+                )}
+                asChild
+              >
+                <a href={item.href}>
+                  <Icon className="mr-2 h-3 w-3" />
+                  {item.name}
+                </a>
+              </Button>
+            );
+          })}
+          
+          {/* Omega-10 Audit Module - Admin/Supergod Only */}
+          {(user?.role === "admin" || user?.role === "supergod") && (
+            <Button
+              variant={isActive(auditModule.href) ? "secondary" : "ghost"}
+              size="sm"
+              className={cn(
+                "w-full justify-start text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/20",
+                isActive(auditModule.href) && "bg-red-50 dark:bg-red-950/20"
+              )}
+              asChild
+            >
+              <a href={auditModule.href}>
+                <FileText className="mr-2 h-3 w-3" />
+                {auditModule.name}
+              </a>
+            </Button>
+          )}
+        </div>
       </ScrollArea>
       
       {/* Version Footer */}
