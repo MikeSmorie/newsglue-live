@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useState } from "react";
 import { 
   Home, 
   Settings, 
@@ -18,7 +20,9 @@ import {
   FileText,
   Gift,
   BarChart3,
-  Brain
+  Brain,
+  ChevronDown,
+  ChevronRight
 } from "lucide-react";
 
 const moduleItems = [
@@ -123,6 +127,7 @@ export function Sidebar() {
   const [location] = useLocation();
   const { user } = useUser();
   const { isSupergod } = useAdmin();
+  const [adminOpen, setAdminOpen] = useState(false);
 
   const isActive = (href: string) => {
     if (href === "/") {
@@ -220,89 +225,102 @@ export function Sidebar() {
         {(user?.role === "admin" || user?.role === "supergod") && (
           <>
             <Separator className="my-4" />
-            <div className="space-y-1">
-              <h3 className="px-2 py-1 text-sm font-medium text-gray-600 dark:text-gray-400">
-                Administration
-              </h3>
-              {adminItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Button
-                    key={item.href}
-                    variant={isActive(item.href) ? "secondary" : "ghost"}
-                    size="sm"
-                    className={cn(
-                      "w-full justify-start text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800",
-                      isActive(item.href) && "bg-gray-100 dark:bg-gray-800"
-                    )}
-                    asChild
-                  >
-                    <a href={item.href}>
-                      <Icon className="mr-2 h-3 w-3" />
-                      {item.name}
-                    </a>
-                  </Button>
-                );
-              })}
-            </div>
-          </>
-        )}
+            <Collapsible open={adminOpen} onOpenChange={setAdminOpen}>
+              <CollapsibleTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-between px-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                >
+                  <div className="flex items-center">
+                    <Shield className="mr-2 h-4 w-4" />
+                    <span className="text-sm font-medium">Admin</span>
+                  </div>
+                  {adminOpen ? (
+                    <ChevronDown className="h-4 w-4" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4" />
+                  )}
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-1 mt-1">
+                {adminItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Button
+                      key={item.href}
+                      variant={isActive(item.href) ? "secondary" : "ghost"}
+                      size="sm"
+                      className={cn(
+                        "w-full justify-start ml-4 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800",
+                        isActive(item.href) && "bg-gray-100 dark:bg-gray-800"
+                      )}
+                      asChild
+                    >
+                      <a href={item.href}>
+                        <Icon className="mr-2 h-3 w-3" />
+                        {item.name}
+                      </a>
+                    </Button>
+                  );
+                })}
 
-        {user?.role === "supergod" && (
-          <>
-            <Separator className="my-4" />
-            <div className="space-y-1">
-              <h3 className="px-2 py-1 text-sm font-medium text-gray-600 dark:text-gray-400">
-                Supergod
-              </h3>
-              {supergodItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Button
-                    key={item.href}
-                    variant={isActive(item.href) ? "secondary" : "ghost"}
-                    size="sm"
-                    className={cn(
-                      "w-full justify-start text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800",
-                      isActive(item.href) && "bg-gray-100 dark:bg-gray-800"
-                    )}
-                    asChild
-                  >
-                    <a href={item.href}>
-                      <Icon className="mr-2 h-3 w-3" />
-                      {item.name}
-                    </a>
-                  </Button>
-                );
-              })}
-            </div>
-            
-            <Separator className="my-4" />
-            <div className="space-y-1">
-              <h3 className="px-2 py-1 text-sm font-medium text-gray-600 dark:text-gray-400">
-                System Controls
-              </h3>
-              {systemControlItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Button
-                    key={item.href}
-                    variant={isActive(item.href) ? "secondary" : "ghost"}
-                    size="sm"
-                    className={cn(
-                      "w-full justify-start text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/20",
-                      isActive(item.href) && "bg-blue-50 dark:bg-blue-950/20"
-                    )}
-                    asChild
-                  >
-                    <a href={item.href}>
-                      <Icon className="mr-2 h-3 w-3" />
-                      {item.name}
-                    </a>
-                  </Button>
-                );
-              })}
-            </div>
+                {user?.role === "supergod" && (
+                  <>
+                    <div className="ml-4 mt-2 mb-1">
+                      <h4 className="px-2 py-1 text-xs font-medium text-gray-500 dark:text-gray-500">
+                        Supergod
+                      </h4>
+                    </div>
+                    {supergodItems.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <Button
+                          key={item.href}
+                          variant={isActive(item.href) ? "secondary" : "ghost"}
+                          size="sm"
+                          className={cn(
+                            "w-full justify-start ml-4 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800",
+                            isActive(item.href) && "bg-gray-100 dark:bg-gray-800"
+                          )}
+                          asChild
+                        >
+                          <a href={item.href}>
+                            <Icon className="mr-2 h-3 w-3" />
+                            {item.name}
+                          </a>
+                        </Button>
+                      );
+                    })}
+
+                    <div className="ml-4 mt-2 mb-1">
+                      <h4 className="px-2 py-1 text-xs font-medium text-gray-500 dark:text-gray-500">
+                        System Controls
+                      </h4>
+                    </div>
+                    {systemControlItems.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <Button
+                          key={item.href}
+                          variant={isActive(item.href) ? "secondary" : "ghost"}
+                          size="sm"
+                          className={cn(
+                            "w-full justify-start ml-4 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/20",
+                            isActive(item.href) && "bg-blue-50 dark:bg-blue-950/20"
+                          )}
+                          asChild
+                        >
+                          <a href={item.href}>
+                            <Icon className="mr-2 h-3 w-3" />
+                            {item.name}
+                          </a>
+                        </Button>
+                      );
+                    })}
+                  </>
+                )}
+              </CollapsibleContent>
+            </Collapsible>
           </>
         )}
       </ScrollArea>
