@@ -415,20 +415,7 @@ export default function Module6() {
               </Select>
             </div>
 
-            {/* Campaign Dossier Export Button */}
-            {selectedCampaign && (
-              <div className="mb-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleCampaignDossierPDFExport()}
-                  className="w-full flex items-center gap-2"
-                >
-                  <FileText className="h-4 w-4" />
-                  Export Campaign Dossier
-                </Button>
-              </div>
-            )}
+
 
             {/* Status Filter Buttons */}
             <div className="flex flex-wrap gap-1">
@@ -715,6 +702,22 @@ export default function Module6() {
                       </TooltipContent>
                     </Tooltip>
                     
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCampaignDossierPDFExport()}
+                          className="flex items-center gap-2"
+                        >
+                          <FileText className="h-4 w-4" />
+                          Campaign Dossier
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Download comprehensive campaign dossier PDF
+                      </TooltipContent>
+                    </Tooltip>
 
                   </div>
                 </div>
