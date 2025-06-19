@@ -117,59 +117,85 @@ const generateNewsJackHTML = (newsItem: any, campaign: any) => {
 
 // Generate Campaign Dossier HTML content
 const generateCampaignDossierHTML = (campaign: any, newsItemsData: any[], channels: any[]) => {
-  // Generate Module 1 - Campaign Builder section
+  // Generate Module 1 - Campaign Builder section with comprehensive data
   const campaignBuilderContent = `
-    <div class="section">
-      <h2>📋 Campaign Configuration</h2>
+    <div class="section" id="module1">
+      <h2>Module 1: Campaign Configuration</h2>
       <table class="info-table">
-        <tr><th>Campaign Name</th><td>${campaign.campaignName || 'Not specified'}</td></tr>
-        <tr><th>Website URL</th><td>${campaign.websiteUrl || 'Not specified'}</td></tr>
-        <tr><th>Call-to-Action URL</th><td>${campaign.ctaUrl || 'Not specified'}</td></tr>
-        <tr><th>Target Audience</th><td>${campaign.targetAudience || 'Not specified'}</td></tr>
-        <tr><th>Brand Description</th><td>${campaign.brandDescription || 'Not specified'}</td></tr>
-        <tr><th>Key Messages</th><td>${campaign.keyMessages || 'Not specified'}</td></tr>
-        <tr><th>Brand Voice</th><td>${campaign.brandVoice || 'Not specified'}</td></tr>
-        <tr><th>Content Guidelines</th><td>${campaign.contentGuidelines || 'Not specified'}</td></tr>
-        <tr><th>Emotional Objective</th><td>${campaign.emotionalObjective || 'Not specified'}</td></tr>
-        <tr><th>Audience Pain Points</th><td>${campaign.audiencePainPoints || 'Not specified'}</td></tr>
-        <tr><th>Created</th><td>${formatDate(campaign.createdAt)}</td></tr>
-        <tr><th>Status</th><td>${campaign.status || 'Active'}</td></tr>
+        <tr><th>Campaign Name</th><td>${campaign.campaignName || 'Not provided'}</td></tr>
+        <tr><th>Website URL</th><td>${campaign.websiteUrl ? `<a href="${campaign.websiteUrl}" target="_blank">${campaign.websiteUrl}</a>` : 'Not provided'}</td></tr>
+        <tr><th>Call-to-Action URL</th><td>${campaign.ctaUrl ? `<a href="${campaign.ctaUrl}" target="_blank">${campaign.ctaUrl}</a>` : 'Not provided'}</td></tr>
+        <tr><th>Target Audience</th><td>${campaign.targetAudience || 'Not provided'}</td></tr>
+        <tr><th>Brand Description</th><td>${campaign.brandDescription || 'Not provided'}</td></tr>
+        <tr><th>Key Messages</th><td>${campaign.keyMessages || 'Not provided'}</td></tr>
+        <tr><th>Brand Voice</th><td>${campaign.brandVoice || 'Not provided'}</td></tr>
+        <tr><th>Content Guidelines</th><td>${campaign.contentGuidelines || 'Not provided'}</td></tr>
+        <tr><th>Emotional Objective</th><td>${campaign.emotionalObjective || 'Not provided'}</td></tr>
+        <tr><th>Audience Pain Points</th><td>${campaign.audiencePainPoints || campaign.audiencePain || 'Not provided'}</td></tr>
+        <tr><th>Brand Archetype</th><td>${campaign.brandArchetype || 'Not provided'}</td></tr>
+        <tr><th>Additional Data</th><td>${campaign.additionalData || 'Not provided'}</td></tr>
+        <tr><th>Campaign Status</th><td><span class="status-${campaign.status || 'active'}">${campaign.status || 'Active'}</span></td></tr>
+        <tr><th>Created Date</th><td>${formatDate(campaign.createdAt)}</td></tr>
+        <tr><th>Last Updated</th><td>${formatDate(campaign.updatedAt || campaign.createdAt)}</td></tr>
       </table>
     </div>
   `;
 
-  // Generate Module 2 - Social Channel Settings section
+  // Generate Module 2 - Social Channel Settings section with comprehensive platform data
   let channelsContent = '';
   if (channels && channels.length > 0) {
     const channelsRows = channels.map(channel => {
-      const tone = channel.tone || 'Not specified';
-      const wordLimit = channel.wordLimit || channel.characterLimit || 'Not specified';
-      const contentRatio = channel.newsContentRatio || 'Not specified';
+      const platform = channel.platform || 'Unknown Platform';
+      const enabled = channel.enabled !== undefined ? (channel.enabled ? 'Enabled' : 'Disabled') : 'Not provided';
+      const tone = channel.tone || channel.brandTone || 'Not provided';
+      const wordLimit = channel.wordLimit || channel.characterLimit || channel.maxLength || 'Not provided';
+      const contentRatio = channel.newsContentRatio || channel.contentRatio || 'Not provided';
+      const postingFrequency = channel.postingFrequency || 'Not provided';
+      const hashtagStrategy = channel.hashtagStrategy || 'Not provided';
       
       return `
         <tr>
-          <td>${channel.platform}</td>
-          <td>${channel.enabled ? 'Enabled' : 'Disabled'}</td>
+          <td><strong>${platform.charAt(0).toUpperCase() + platform.slice(1)}</strong></td>
+          <td><span class="status-${enabled.toLowerCase()}">${enabled}</span></td>
           <td>${tone}</td>
           <td>${wordLimit}</td>
-          <td>${contentRatio}</td>
+          <td>${contentRatio}${typeof contentRatio === 'number' ? '%' : ''}</td>
+          <td>${postingFrequency}</td>
+          <td>${hashtagStrategy}</td>
         </tr>
       `;
     }).join('');
     
     channelsContent = `
-      <div class="section">
-        <h2>📱 Social Channel Configuration</h2>
+      <div class="section" id="module2">
+        <h2>Module 2: Social Channel Strategy</h2>
         <table class="info-table">
           <tr>
             <th>Platform</th>
             <th>Status</th>
-            <th>Tone</th>
-            <th>Word/Char Limit</th>
-            <th>News/Campaign Ratio</th>
+            <th>Brand Tone</th>
+            <th>Content Limits</th>
+            <th>News/Campaign Mix</th>
+            <th>Posting Frequency</th>
+            <th>Hashtag Strategy</th>
           </tr>
           ${channelsRows}
         </table>
+        
+        <div class="subsection">
+          <h4>Platform-Specific Notes:</h4>
+          ${channels.map(channel => {
+            if (channel.notes || channel.specificSettings) {
+              return `
+                <div class="platform-notes">
+                  <strong>${(channel.platform || 'Platform').charAt(0).toUpperCase() + (channel.platform || 'Platform').slice(1)}:</strong>
+                  <p>${channel.notes || channel.specificSettings || 'No specific notes'}</p>
+                </div>
+              `;
+            }
+            return '';
+          }).join('')}
+        </div>
       </div>
     `;
   } else {
@@ -245,16 +271,44 @@ const generateCampaignDossierHTML = (campaign: any, newsItemsData: any[], channe
         `;
       }
       
-      // Generate item-level metrics
+      // Generate comprehensive item-level metrics with benchmarks
+      const humanTime = platformCount * 15; // 15 minutes per platform
+      const humanAiTime = platformCount * 8; // 8 minutes with AI assistance
+      const newsGlueTime = generationTime || 30; // Actual generation time
+      const timeSaved = humanTime - (newsGlueTime / 60);
+      const efficiencyGain = humanTime > 0 ? Math.round((timeSaved / humanTime) * 100) : 0;
+      
+      // Track actions taken (copy, edit, regenerate)
+      const actionsData = metrics.actions || {};
+      const copyActions = actionsData.copies || 0;
+      const editActions = actionsData.edits || 0;
+      const regenActions = actionsData.regenerations || 0;
+      
       itemMetricsHTML = `
         <div class="subsection">
-          <h4>⚡ Generation Metrics:</h4>
+          <h4>⚡ Generation Performance Metrics:</h4>
           <table class="metrics-table">
             <tr><th>AI Model Used</th><td>${aiModel}</td></tr>
             <tr><th>Generation Time</th><td>${generationTime ? `${generationTime}s` : 'Not recorded'}</td></tr>
             <tr><th>Total Word Count</th><td>${wordCount || 'Not calculated'}</td></tr>
             <tr><th>Platform Outputs</th><td>${platformCount}</td></tr>
-            <tr><th>Est. Human Time Saved</th><td>${platformCount * 15} minutes</td></tr>
+            <tr><th>Character Variance</th><td>${metrics.characterVariance || 'Not calculated'}</td></tr>
+          </table>
+          
+          <h4>🏁 Time Benchmarks:</h4>
+          <table class="metrics-table">
+            <tr><th>Human Time (Est.)</th><td>${humanTime} minutes</td></tr>
+            <tr><th>Human + AI Time (Est.)</th><td>${humanAiTime} minutes</td></tr>
+            <tr><th>NewsGlue Time (Actual)</th><td>${(newsGlueTime / 60).toFixed(1)} minutes</td></tr>
+            <tr><th>Time Saved</th><td>${timeSaved.toFixed(1)} minutes (${efficiencyGain}% efficiency)</td></tr>
+          </table>
+          
+          <h4>📊 User Actions Taken:</h4>
+          <table class="metrics-table">
+            <tr><th>Copy Actions</th><td>${copyActions}</td></tr>
+            <tr><th>Edit Actions</th><td>${editActions}</td></tr>
+            <tr><th>Regenerate Actions</th><td>${regenActions}</td></tr>
+            <tr><th>Total Interactions</th><td>${copyActions + editActions + regenActions}</td></tr>
           </table>
         </div>
       `;
@@ -399,14 +453,23 @@ const generateCampaignDossierHTML = (campaign: any, newsItemsData: any[], channe
             <div class="subtitle">Campaign Created: ${formatDate(campaign.createdAt)}</div>
         </div>
 
-        <div class="toc">
-            <h3>Table of Contents</h3>
-            <ul>
-                <li><a href="#section1">Section 1: Campaign Setup</a></li>
-                <li><a href="#section2">Section 2: Social Platform Strategy</a></li>
-                <li><a href="#section3">Section 3: News Items & NewsJacks</a></li>
-                <li><a href="#section4">Section 4: Performance Metrics</a></li>
-            </ul>
+        <!-- Cover Page -->
+        <div class="cover-page">
+            <div class="cover-title">Campaign Dossier</div>
+            <div class="cover-subtitle">${campaign.campaignName}</div>
+            <div class="cover-date">Generated: ${formatDate(new Date())}</div>
+            <div class="cover-company">Powered by NewsGlue Platform</div>
+        </div>
+
+        <!-- Table of Contents -->
+        <div class="page-break">
+            <div class="toc">
+                <h3>Table of Contents</h3>
+                <div class="toc-item"><a href="#module1">Module 1: Campaign Configuration</a></div>
+                <div class="toc-item"><a href="#module2">Module 2: Social Channel Strategy</a></div>
+                <div class="toc-item"><a href="#module6">Module 6: NewsJack Content & Analytics</a></div>
+                <div class="toc-item"><a href="#performance">Performance Benchmark Report</a></div>
+            </div>
         </div>
 
         ${campaignBuilderContent}
