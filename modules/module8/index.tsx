@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { BarChart3, Clock, DollarSign, Target, Download, Copy, FileText, TrendingUp, RotateCcw } from "lucide-react";
+import { BarChart3, Clock, DollarSign, Target, Download, Copy, FileText, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { useCampaignContext } from "@/hooks/use-campaign-context";
@@ -110,67 +110,34 @@ export default function Module8() {
     updateRateMutation.mutate({ campaignId: activeCampaignId, hourlyRate });
   };
 
-  const handleExportPDF = async () => {
+  const handleExportReport = async () => {
     if (!activeCampaignId || !campaignMetrics) return;
     
     try {
-      const response = await fetch('/api/metrics/export/pdf', {
+      const response = await fetch('/api/metrics/export', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ campaignId: activeCampaignId })
       });
 
-      if (!response.ok) throw new Error('Failed to export PDF report');
+      if (!response.ok) throw new Error('Failed to export report');
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.style.display = 'none';
       a.href = url;
-      a.download = `metrics-report-${activeCampaignId}-${Date.now()}.pdf`;
+      a.download = `metrics-report-${activeCampaignId}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       
-      toast({ title: "PDF report exported successfully" });
+      toast({ title: "Report exported successfully" });
     } catch (error) {
       toast({ 
         title: "Export failed", 
-        description: "Failed to export PDF report",
-        variant: "destructive" 
-      });
-    }
-  };
-
-  const handleExportCSV = async () => {
-    if (!activeCampaignId || !outputMetrics.length) return;
-    
-    try {
-      const response = await fetch('/api/metrics/export/csv', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ campaignId: activeCampaignId })
-      });
-
-      if (!response.ok) throw new Error('Failed to export CSV data');
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = `metrics-data-${activeCampaignId}-${Date.now()}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      
-      toast({ title: "CSV data exported successfully" });
-    } catch (error) {
-      toast({ 
-        title: "Export failed", 
-        description: "Failed to export CSV data",
+        description: "Failed to export metrics report",
         variant: "destructive" 
       });
     }
@@ -189,32 +156,6 @@ Efficiency Score: ${campaignMetrics.efficiencyScore}%`;
 
     navigator.clipboard.writeText(metricsText);
     toast({ title: "Metrics copied to clipboard" });
-  };
-
-  const handleRegenerateData = async () => {
-    if (!activeCampaignId) return;
-    
-    try {
-      const response = await fetch(`/api/metrics/reset/${activeCampaignId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      if (!response.ok) throw new Error('Regeneration failed');
-
-      queryClient.invalidateQueries({ queryKey: ['/api/metrics/campaign', activeCampaignId] });
-      queryClient.invalidateQueries({ queryKey: ['/api/metrics/outputs', activeCampaignId] });
-
-      toast({
-        title: "Sample data regenerated",
-        description: "Beautiful statistics have been restored"
-      });
-    } catch (error) {
-      toast({
-        title: "Regeneration failed", 
-        variant: "destructive"
-      });
-    }
   };
 
   // Transform data for charts
@@ -274,27 +215,6 @@ Efficiency Score: ${campaignMetrics.efficiencyScore}%`;
             </p>
           )}
         </div>
-        
-        {activeCampaignId && campaignMetrics && (
-          <div className="flex gap-3">
-            <Button 
-              onClick={handleExportPDF}
-              variant="outline"
-              className="min-w-[120px]"
-            >
-              <FileText className="mr-2 h-4 w-4" />
-              Export PDF
-            </Button>
-            <Button 
-              onClick={handleExportCSV}
-              variant="outline"
-              className="min-w-[120px]"
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Export CSV
-            </Button>
-          </div>
-        )}
       </div>
 
       {metricsLoading || outputLoading ? (
@@ -427,13 +347,13 @@ Efficiency Score: ${campaignMetrics.efficiencyScore}%`;
                 <CardDescription>Download or share metrics data</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
+                <Button onClick={handleExportReport} className="w-full">
+                  <Download className="mr-2 h-4 w-4" />
+                  Export PDF Report
+                </Button>
                 <Button onClick={handleCopyMetrics} variant="outline" className="w-full">
                   <Copy className="mr-2 h-4 w-4" />
                   Copy Summary
-                </Button>
-                <Button onClick={handleRegenerateData} variant="outline" className="w-full">
-                  <RotateCcw className="mr-2 h-4 w-4" />
-                  Regenerate Sample Data
                 </Button>
               </CardContent>
             </Card>
