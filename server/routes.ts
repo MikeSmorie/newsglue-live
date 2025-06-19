@@ -37,6 +37,7 @@ import campaignChannelRoutes from "./routes/campaign-channels";
 import newsitemsRouter from "./routes/newsitems";
 import newsItemsRouter from "./routes/news-items";
 import websiteScraperRouter from "./routes/website-scraper";
+import pdfRouter from "./routes/pdf";
 import { db } from "../db";
 import { users } from "../db/schema";
 import { eq, and, or, desc, asc, sql } from "drizzle-orm";
