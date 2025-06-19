@@ -1,13 +1,18 @@
 import { Router } from 'express';
-import { db } from '../db/index.js';
-import { newsItems, users } from '../db/schema.js';
+import { db } from '../../db/index.js';
+import { newsItems, users, campaigns } from '../../db/schema.js';
 import { eq, and } from 'drizzle-orm';
-import { requireAuth } from '../middleware/auth.js';
 import { generateLandingPageContent, createSlug, saveLandingPageHTML } from '../services/landing-page-service.js';
 import path from 'path';
 import fs from 'fs';
 
 const router = Router();
+
+// Simple auth check
+const requireAuth = (req: any, res: any, next: any) => {
+  if (req.isAuthenticated()) return next();
+  res.status(401).json({ message: "Not authenticated" });
+};
 
 // POST /api/landing-page/generate - Generate landing page content
 router.post('/generate', requireAuth, async (req, res) => {
@@ -36,16 +41,16 @@ router.post('/:newsjackId/toggle', requireAuth, async (req, res) => {
     const { newsjackId } = req.params;
     const userId = req.user!.id;
 
-    // Find the news item and verify ownership
+    // Find the news item and verify ownership through campaign
     const newsItem = await db.query.newsItems.findFirst({
-      where: and(
-        eq(newsItems.id, parseInt(newsjackId)),
-        eq(newsItems.userId, userId)
-      )
+      where: eq(newsItems.id, parseInt(newsjackId)),
+      with: {
+        campaign: true
+      }
     });
 
-    if (!newsItem) {
-      return res.status(404).json({ error: 'News item not found' });
+    if (!newsItem || newsItem.campaign.userId !== userId) {
+      return res.status(404).json({ error: 'News item not found or access denied' });
     }
 
     // Check if blog content exists in platformOutputs
