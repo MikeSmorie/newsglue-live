@@ -185,11 +185,19 @@ export default function CampaignForm({ onSuccess, onCancel, editingCampaign }: C
   };
 
   const onSubmit = (data: CampaignFormData) => {
-    console.log('Form submission started:', { data, selectedPlatforms, editingCampaign: !!editingCampaign });
-    createMutation.mutate({
+    console.log('=== FORM SUBMISSION STARTED ===');
+    console.log('Form data:', data);
+    console.log('Selected platforms:', selectedPlatforms);
+    console.log('Editing campaign:', editingCampaign);
+    console.log('Is editing mode:', !!editingCampaign);
+    
+    const submitData = {
       ...data,
       platforms: selectedPlatforms,
-    });
+    };
+    
+    console.log('Final submit data:', submitData);
+    createMutation.mutate(submitData);
   };
 
   const TooltipWrapper = ({ children, content }: { children: React.ReactNode; content: string }) => (
@@ -588,7 +596,7 @@ The more detail you provide, the better the AI can create targeted NewsJack cont
             </Button>
             <Button 
               type="submit" 
-              disabled={createMutation.isPending || selectedPlatforms.length === 0}
+              disabled={createMutation.isPending}
               className="min-w-[140px]"
             >
               {createMutation.isPending 
