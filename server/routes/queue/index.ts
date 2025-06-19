@@ -215,7 +215,7 @@ Respond with JSON in this format:
           model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
           messages: [{ role: "user", content: prompt }],
           response_format: { type: "json_object" },
-          max_tokens: 1000
+          max_tokens: platform === 'blog' ? 2000 : 1000
         });
 
         const generatedContent = JSON.parse(response.choices[0].message.content || '{}');
