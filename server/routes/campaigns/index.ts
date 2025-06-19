@@ -15,6 +15,8 @@ const router = express.Router();
 const campaignCreateSchema = z.object({
   campaignName: z.string().min(1, "Campaign name is required"),
   campaignUrl: z.string().url().optional().or(z.literal("")),
+  websiteUrl: z.string().url().optional().or(z.literal("")),
+  additionalData: z.string().optional(),
   tone: z.string().optional(),
   strategy_q1: z.string().optional(),
   strategy_q2: z.string().optional(),
