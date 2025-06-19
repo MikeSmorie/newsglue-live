@@ -60,16 +60,16 @@ const DEFAULT_PLATFORMS = [
 const DEFAULT_CHANNEL_CONFIG: ChannelConfig = {
   tone: 'Professional',
   wordCount: 280,
-  contentRatio: '70/30 (70% content, 30% engagement)',
+  contentRatio: '70/30 (70% news, 30% campaign)',
   enabled: true
 };
 
 const TONE_OPTIONS = ['Professional', 'Casual', 'Authoritative', 'Friendly', 'Engaging', 'Educational'];
 const CONTENT_RATIO_OPTIONS = [
-  '70/30 (70% content, 30% engagement)',
-  '60/40 (60% content, 40% engagement)',
-  '80/20 (80% content, 20% engagement)',
-  '50/50 (50% content, 50% engagement)'
+  '70/30 (70% news, 30% campaign)',
+  '60/40 (60% news, 40% campaign)',
+  '80/20 (80% news, 20% campaign)',
+  '50/50 (50% news, 50% campaign)'
 ];
 
 export default function Module2() {
