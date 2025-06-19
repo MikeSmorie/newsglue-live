@@ -171,13 +171,13 @@ router.put('/:id', requireAuth, async (req, res) => {
       
       // Insert new channels
       if (validatedData.platforms.length > 0) {
-        const channelData = validatedData.platforms.map(platform => ({
-          campaignId: req.params.id,
-          platform: platform,
-          enabled: true,
-        }));
-        
-        await db.insert(campaignChannels).values(channelData);
+        for (const platform of validatedData.platforms) {
+          await db.insert(campaignChannels).values({
+            campaignId: req.params.id,
+            platform: platform,
+            enabled: true,
+          });
+        }
       }
     }
 
