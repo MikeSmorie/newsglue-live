@@ -3,7 +3,7 @@ import { db } from "../../db/index.js";
 import { campaigns, newsItems } from "../../db/schema.js";
 import { eq } from "drizzle-orm";
 import { generateProposalHTML } from "../templates/proposal-template.js";
-import puppeteer from "puppeteer";
+// import puppeteer from "puppeteer"; // Disabled due to Replit compatibility issues
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
 import { createWriteStream, unlinkSync, existsSync } from "fs";
 import path from "path";
@@ -136,58 +136,38 @@ router.post('/download/:format', requireAuth, async (req, res) => {
     }
 
     if (format === 'pdf') {
-      // Generate PDF using Puppeteer
-      const browser = await puppeteer.launch({
-        headless: true,
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-accelerated-2d-canvas',
-          '--disable-gpu',
-          '--window-size=1920x1080'
-        ]
-      });
+      // For now, return HTML that can be printed to PDF by the browser
+      // This provides better compatibility across environments
+      const printableHtml = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Proposal - ${clientName}</title>
+          <style>
+            @media print {
+              body { margin: 0; }
+              .no-print { display: none; }
+              .page-break { page-break-before: always; }
+            }
+          </style>
+          ${html.match(/<style[^>]*>[\s\S]*?<\/style>/gi)?.join('') || ''}
+        </head>
+        <body>
+          <div class="no-print" style="position: fixed; top: 10px; right: 10px; background: #007bff; color: white; padding: 10px; border-radius: 5px; z-index: 1000;">
+            <button onclick="window.print()" style="background: none; border: none; color: white; cursor: pointer;">
+              📄 Print to PDF
+            </button>
+          </div>
+          ${html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '').replace(/<!DOCTYPE[^>]*>|<html[^>]*>|<\/html>|<head[^>]*>[\s\S]*?<\/head>|<body[^>]*>|<\/body>/gi, '')}
+        </body>
+        </html>
+      `;
 
-      try {
-        const page = await browser.newPage();
-        
-        // Set content with base URL for assets
-        await page.setContent(html, { 
-          waitUntil: 'networkidle0',
-          timeout: 30000 
-        });
-
-        // Generate PDF
-        const pdfBuffer = await page.pdf({
-          format: 'A4',
-          printBackground: true,
-          margin: {
-            top: '20mm',
-            right: '20mm',
-            bottom: '20mm',
-            left: '20mm'
-          },
-          displayHeaderFooter: true,
-          headerTemplate: '<div></div>',
-          footerTemplate: `
-            <div style="font-size: 10px; color: #666; text-align: center; width: 100%; margin: 0 20mm;">
-              <span>NewsGlue.io | Team@NewsGlue.io | Cementing your brand to the news cycle</span>
-              <span style="float: right;">Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>
-            </div>
-          `
-        });
-
-        await browser.close();
-
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="${clientName.replace(/\s+/g, '-')}-proposal.pdf"`);
-        return res.send(pdfBuffer);
-
-      } catch (pdfError) {
-        await browser.close();
-        throw pdfError;
-      }
+      res.setHeader('Content-Type', 'text/html');
+      res.setHeader('Content-Disposition', `inline; filename="${clientName.replace(/\s+/g, '-')}-proposal-printable.html"`);
+      return res.send(printableHtml);
     }
 
     if (format === 'docx') {
