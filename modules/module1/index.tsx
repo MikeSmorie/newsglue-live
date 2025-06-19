@@ -11,10 +11,12 @@ import {
   TrendingUp,
   Users,
   FileText,
-  Lightbulb
+  Lightbulb,
+  Shield
 } from 'lucide-react';
 import CampaignList from '../../client/src/components/CampaignList';
 import CampaignForm from '../../client/src/components/CampaignForm';
+import { BackupRestoreModal } from '../../client/src/components/backup/BackupRestoreModal';
 
 interface Campaign {
   id: string;
@@ -29,6 +31,8 @@ interface Campaign {
 export default function Module1() {
   const [activeTab, setActiveTab] = useState('overview');
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
+  const [showBackupModal, setShowBackupModal] = useState(false);
+  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
 
   const { data: campaigns = [], isLoading } = useQuery<Campaign[]>({
     queryKey: ['campaigns'],
@@ -105,10 +109,20 @@ export default function Module1() {
             Create emotion-driven content that connects trending news with your brand
           </p>
         </div>
-        <Button onClick={handleCreateCampaign} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          New Campaign
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => setShowBackupModal(true)} 
+            className="flex items-center gap-2"
+          >
+            <Shield className="h-4 w-4" />
+            Backup & Restore
+          </Button>
+          <Button onClick={handleCreateCampaign} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            New Campaign
+          </Button>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -256,6 +270,14 @@ export default function Module1() {
           />
         </TabsContent>
       </Tabs>
+
+      {/* Backup & Restore Modal */}
+      <BackupRestoreModal
+        isOpen={showBackupModal}
+        onClose={() => setShowBackupModal(false)}
+        campaignId={selectedCampaign?.id}
+        campaignName={selectedCampaign?.campaignName}
+      />
     </div>
   );
 }
