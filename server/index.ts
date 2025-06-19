@@ -5,6 +5,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { ModuleManager } from "./moduleManager";
 import { generateNewsjackContent } from "./routes/newsjack-exec";
+import { initializeDataIntegrityMonitoring } from "./middleware/dataIntegrityMonitor";
 
 interface IModule {
   name: string;
@@ -111,6 +112,9 @@ app.get("/api/module/test", async (req, res) => {
   } else {
     serveStatic(app); // Production: Static file serving
   }
+
+  // Initialize data integrity monitoring
+  initializeDataIntegrityMonitoring();
 
   // Start server on port 5000
   const PORT = 5000;
