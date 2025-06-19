@@ -74,15 +74,15 @@ export default function SocialChannelsSelector({
     enabled: !!campaignId,
   });
 
-  // Update local selection when current channels change
+  // Initialize local selection from current channels only once
   useEffect(() => {
-    if (currentChannels.length > 0) {
+    if (currentChannels.length > 0 && localSelection.length === 0) {
       const enabledPlatforms = currentChannels
         .filter(channel => channel.enabled)
         .map(channel => channel.platform);
       setLocalSelection(enabledPlatforms);
     }
-  }, [currentChannels]);
+  }, [currentChannels.length]);
 
   // Update channels mutation
   const updateChannelsMutation = useMutation({

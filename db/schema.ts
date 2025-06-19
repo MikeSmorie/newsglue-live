@@ -597,7 +597,8 @@ export type SelectPasswordResetToken = typeof passwordResetTokens.$inferSelect;
 export const campaigns = pgTable("campaigns", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  name: text("name").notNull(), // Campaign name
+  campaignName: text("campaign_name").notNull(), // Campaign name
+  name: text("name"), // Secondary name field
   websiteUrl: text("website_url"), // Source URL for scraping
   ctaUrl: text("cta_url"), // Call-to-action URL
   emotionalObjective: text("emotional_objective"), // Target emotional response

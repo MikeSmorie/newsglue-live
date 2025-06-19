@@ -60,8 +60,17 @@ export default function CampaignForm() {
   });
 
   const onSubmit = (data: any) => {
-    console.log('NewsJack campaign data:', data);
-    mutation.mutate(data);
+    // Map form fields to database schema
+    const campaignData = {
+      campaign_name: data.name,
+      website_url: data.website_url,
+      cta_url: data.cta_url,
+      emotional_objective: data.emotional_objective,
+      audience_pain: data.audience_pain,
+      additional_data: data.additional_data,
+    };
+    console.log('NewsJack campaign data:', campaignData);
+    mutation.mutate(campaignData);
   };
 
   return (
