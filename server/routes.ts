@@ -40,7 +40,7 @@ import websiteScraperRouter from "./routes/website-scraper";
 import pdfRouter from "./routes/pdf";
 import landingPageRouter from "./routes/landing-page.js";
 import aiSitemapRouter from "./routes/ai-sitemap.js";
-import proposalRouter from "./routes/proposal.js";
+import proposalRouter from "./routes/proposal";
 import { db } from "../db";
 import { users } from "../db/schema";
 import { eq, and, or, desc, asc, sql } from "drizzle-orm";
@@ -246,6 +246,15 @@ export async function registerRoutes(app: Express) {
    * GET /api/landing-page/:newsjackId/status - Get landing page status
    */
   app.use("/api/landing-page", requireAuth, landingPageRouter);
+
+  /**
+   * PROPOSAL BUILDER API
+   * Auth: Required
+   * Role: User/Admin/Supergod
+   * POST /api/proposal/generate - Generate strategic proposal
+   * POST /api/proposal/download/:format - Download proposal in PDF/HTML/DOCX format
+   */
+  app.use("/api/proposal", requireAuth, proposalRouter);
 
   /**
    * AI SITEMAP API

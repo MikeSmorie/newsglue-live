@@ -186,7 +186,7 @@ export default function Module7() {
                   <Select 
                     value={selectedCampaign?.id || ''} 
                     onValueChange={(value) => {
-                      const campaign = campaigns.find(c => c.id === value);
+                      const campaign = campaigns.find((c: Campaign) => c.id === value);
                       setSelectedCampaign(campaign || null);
                     }}
                   >
