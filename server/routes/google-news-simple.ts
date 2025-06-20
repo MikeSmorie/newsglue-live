@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { db } from '../../db/index.js';
-import { newsItems, campaigns, campaignKeywords, googleNewsArticles } from '../../db/schema.js';
-import { eq, and, asc, desc, sql } from 'drizzle-orm';
+import { newsItems, campaigns } from '../../db/schema.js';
+import { eq, and } from 'drizzle-orm';
 import OpenAI from 'openai';
 
 const router = Router();
@@ -13,7 +13,8 @@ const requireAuth = (req: any, res: any, next: any) => {
   res.status(401).json({ message: "Not authenticated" });
 };
 
-// In-memory storage for articles only (keywords are now in database)
+// In-memory storage for keywords and articles
+const campaignKeywords = new Map();
 const campaignArticles = new Map();
 
 // Get keywords for campaign
@@ -31,13 +32,13 @@ router.get('/keywords/:campaignId', requireAuth, async (req, res) => {
     }
 
     // Fetch keywords from database
-    const dbKeywords = await db.select().from(campaignKeywords).where(eq(campaignKeywords.campaignId, campaignId)).orderBy(asc(campaignKeywords.createdAt));
+    const dbKeywords = await db.execute(`SELECT * FROM campaign_keywords WHERE campaign_id = '${campaignId}' ORDER BY created_at ASC`);
     
-    let keywords = dbKeywords.map((row) => ({
+    let keywords = dbKeywords.map((row: any) => ({
       id: row.id.toString(),
       keyword: row.keyword,
-      isDefault: row.isDefault,
-      campaignId: row.campaignId,
+      isDefault: row.is_default,
+      campaignId: row.campaign_id,
       source: row.source
     }));
 
@@ -52,16 +53,14 @@ router.get('/keywords/:campaignId', requireAuth, async (req, res) => {
         const defaultKeyword = campaignWords.join(' ').trim();
         
         // Insert default keyword into database
-        const result = await db.insert(campaignKeywords).values({
-          campaignId,
-          keyword: defaultKeyword,
-          isDefault: true,
-          source: 'campaign'
-        }).returning();
+        const result = await db.query(
+          'INSERT INTO campaign_keywords (campaign_id, keyword, is_default, source) VALUES ($1, $2, $3, $4) RETURNING *',
+          [campaignId, defaultKeyword, true, 'campaign']
+        );
         
         keywords = [{
-          id: result[0].id.toString(),
-          keyword: result[0].keyword,
+          id: result.rows[0].id.toString(),
+          keyword: result.rows[0].keyword,
           isDefault: true,
           campaignId,
           source: 'campaign'
@@ -149,37 +148,21 @@ Output clean JSON format:
     const aiResponse = JSON.parse(response.choices[0].message.content || '{}');
     const suggestedKeywords = aiResponse.keywords || [];
 
-    // Clear existing AI-generated keywords from database
-    await db.delete(campaignKeywords).where(
-      and(
-        eq(campaignKeywords.campaignId, campaignId),
-        eq(campaignKeywords.source, 'AI')
-      )
-    );
+    // Clear existing AI-generated keywords from database and add fresh suggestions
+    await db.query('DELETE FROM campaign_keywords WHERE campaign_id = $1 AND source = $2', [campaignId, 'AI']);
     
     // Insert new AI keywords into database
-    const newKeywords = [];
     for (const keyword of suggestedKeywords) {
-      const result = await db.insert(campaignKeywords).values({
-        campaignId,
-        keyword: keyword.trim(),
-        isDefault: false,
-        source: 'AI'
-      }).returning();
-      
-      newKeywords.push({
-        id: result[0].id.toString(),
-        keyword: result[0].keyword,
-        isDefault: false,
-        campaignId,
-        source: 'AI'
-      });
+      await db.query(
+        'INSERT INTO campaign_keywords (campaign_id, keyword, is_default, source) VALUES ($1, $2, $3, $4)',
+        [campaignId, keyword.trim(), false, 'AI']
+      );
     }
 
     res.json({ 
       count: newKeywords.length,
       keywords: newKeywords,
-      total: newKeywords.length
+      total: updatedKeywords.length
     });
   } catch (error) {
     console.error('Error suggesting keywords:', error);
@@ -202,21 +185,16 @@ router.post('/keywords/:campaignId', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Campaign not found' });
     }
 
-    // Insert keyword into database
-    const result = await db.insert(campaignKeywords).values({
-      campaignId,
+    const keywords = campaignKeywords.get(campaignId) || [];
+    const newKeyword = {
+      id: `user-${Date.now()}`,
       keyword: keyword.trim(),
       isDefault: false,
-      source: 'user'
-    }).returning();
-
-    const newKeyword = {
-      id: result[0].id.toString(),
-      keyword: result[0].keyword,
-      isDefault: false,
-      campaignId,
-      source: 'user'
+      campaignId
     };
+
+    keywords.push(newKeyword);
+    campaignKeywords.set(campaignId, keywords);
 
     res.json(newKeyword);
   } catch (error) {
@@ -235,25 +213,17 @@ router.put('/keywords/:keywordId', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Keyword text is required' });
     }
 
-    // Update keyword in database
-    const result = await db.update(campaignKeywords)
-      .set({ keyword: newKeyword.trim() })
-      .where(eq(campaignKeywords.id, parseInt(keywordId)))
-      .returning();
-
-    if (result.length === 0) {
-      return res.status(404).json({ error: 'Keyword not found' });
+    // Find and update in all campaigns
+    for (const [campaignId, keywords] of campaignKeywords.entries()) {
+      const keywordIndex = keywords.findIndex(k => k.id === keywordId);
+      if (keywordIndex !== -1) {
+        keywords[keywordIndex].keyword = newKeyword.trim();
+        campaignKeywords.set(campaignId, keywords);
+        return res.json({ success: true, keyword: keywords[keywordIndex] });
+      }
     }
 
-    const updatedKeyword = {
-      id: result[0].id.toString(),
-      keyword: result[0].keyword,
-      isDefault: result[0].isDefault,
-      campaignId: result[0].campaignId,
-      source: result[0].source
-    };
-
-    res.json({ success: true, keyword: updatedKeyword });
+    res.status(404).json({ error: 'Keyword not found' });
   } catch (error) {
     console.error('Error editing keyword:', error);
     res.status(500).json({ error: 'Failed to edit keyword' });
@@ -265,21 +235,21 @@ router.delete('/keywords/:keywordId', requireAuth, async (req, res) => {
   try {
     const { keywordId } = req.params;
 
-    // Check if keyword exists and is not default
-    const existingKeyword = await db.select().from(campaignKeywords).where(eq(campaignKeywords.id, parseInt(keywordId))).limit(1);
-    
-    if (existingKeyword.length === 0) {
-      return res.status(404).json({ error: 'Keyword not found' });
-    }
-    
-    if (existingKeyword[0].isDefault) {
-      return res.status(400).json({ error: 'Cannot remove default keywords' });
+    for (const [campaignId, keywords] of Array.from(campaignKeywords.entries())) {
+      const keywordIndex = keywords.findIndex((k: any) => k.id === keywordId);
+      if (keywordIndex !== -1) {
+        const keyword = keywords[keywordIndex];
+        if (!keyword.isDefault) {
+          keywords.splice(keywordIndex, 1);
+          campaignKeywords.set(campaignId, keywords);
+          return res.json({ success: true });
+        } else {
+          return res.status(400).json({ error: 'Cannot remove default keywords' });
+        }
+      }
     }
 
-    // Delete keyword from database
-    await db.delete(campaignKeywords).where(eq(campaignKeywords.id, parseInt(keywordId)));
-    
-    return res.json({ success: true });
+    res.status(404).json({ error: 'Keyword not found' });
   } catch (error) {
     console.error('Error removing keyword:', error);
     res.status(500).json({ error: 'Failed to remove keyword' });
@@ -300,25 +270,12 @@ router.post('/search-keyword/:campaignId/:keywordId', requireAuth, async (req, r
       return res.status(404).json({ error: 'Campaign not found' });
     }
 
-    // Get keyword from database
-    const keywordResult = await db.select().from(campaignKeywords).where(
-      and(
-        eq(campaignKeywords.campaignId, campaignId),
-        eq(campaignKeywords.id, parseInt(keywordId))
-      )
-    ).limit(1);
+    const keywords = campaignKeywords.get(campaignId) || [];
+    const keyword = keywords.find(k => k.id === keywordId);
     
-    if (keywordResult.length === 0) {
+    if (!keyword) {
       return res.status(404).json({ error: 'Keyword not found' });
     }
-    
-    const keyword = {
-      id: keywordResult[0].id.toString(),
-      keyword: keywordResult[0].keyword,
-      isDefault: keywordResult[0].isDefault,
-      campaignId: keywordResult[0].campaignId,
-      source: keywordResult[0].source
-    };
 
     // Search Google News for real articles using the keyword
     const googleNewsUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(keyword.keyword)}&language=en&sortBy=publishedAt&pageSize=20`;
@@ -371,32 +328,10 @@ router.post('/search-keyword/:campaignId/:keywordId', requireAuth, async (req, r
       ];
     }
 
-    // Store articles in database for persistence
-    for (const article of realArticles) {
-      try {
-        // Check if article already exists to prevent duplicates
-        const existing = await db.select().from(googleNewsArticles).where(eq(googleNewsArticles.url, article.url)).limit(1);
-        
-        if (existing.length === 0) {
-          await db.insert(googleNewsArticles).values({
-            id: article.id,
-            campaignId,
-            title: article.title,
-            description: article.description,
-            url: article.url,
-            urlToImage: article.urlToImage,
-            publishedAt: article.publishedAt,
-            sourceName: article.source.name,
-            sourceId: article.source.id,
-            relevanceScore: article.relevanceScore,
-            keywords: article.keywords,
-            searchKeywordId: parseInt(keywordId)
-          });
-        }
-      } catch (error) {
-        console.error('Error storing article:', error);
-      }
-    }
+    // Store articles
+    const existingArticles = campaignArticles.get(campaignId) || [];
+    const updatedArticles = [...existingArticles, ...realArticles];
+    campaignArticles.set(campaignId, updatedArticles);
 
     res.json({ 
       success: true, 
@@ -424,20 +359,10 @@ router.post('/search/:campaignId', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Campaign not found' });
     }
 
-    // Get keywords from database
-    const dbKeywords = await db.select().from(campaignKeywords).where(eq(campaignKeywords.campaignId, campaignId));
-    
-    if (dbKeywords.length === 0) {
+    const keywords = campaignKeywords.get(campaignId) || [];
+    if (keywords.length === 0) {
       return res.status(400).json({ error: 'No keywords configured for search' });
     }
-    
-    const keywords = dbKeywords.map((row) => ({
-      id: row.id.toString(),
-      keyword: row.keyword,
-      isDefault: row.isDefault,
-      campaignId: row.campaignId,
-      source: row.source
-    }));
 
     // Search all keywords using real Google News API
     let allArticles = [];
@@ -528,125 +453,63 @@ router.get('/articles/:campaignId', requireAuth, async (req, res) => {
   }
 });
 
-// Transfer articles to Module 6 (mirroring Module 3 protocol)
+// Transfer articles to Module 6
 router.post('/transfer/:campaignId', requireAuth, async (req, res) => {
   try {
     const { campaignId } = req.params;
     const { articleIds } = req.body;
     const userId = req.user!.id;
 
-    // Fail-safe: prevent transfer if campaign ID is missing
-    if (!campaignId) {
-      return res.status(400).json({ error: 'Campaign ID is required' });
-    }
-
-    // Verify campaign exists AND user owns it (critical security check)
     const campaign = await db.query.campaigns.findFirst({
-      where: and(
-        eq(campaigns.id, campaignId),
-        eq(campaigns.userId, userId)
-      )
+      where: and(eq(campaigns.id, campaignId), eq(campaigns.userId, userId))
     });
 
     if (!campaign) {
-      return res.status(404).json({ 
-        error: 'Campaign not found or access denied' 
-      });
+      return res.status(404).json({ error: 'Campaign not found' });
     }
 
-    // Get articles from database for transfer
-    const dbArticles = await db.select().from(googleNewsArticles).where(eq(googleNewsArticles.campaignId, campaignId));
-    const articlesToTransfer = dbArticles.filter((article: any) => articleIds.includes(article.id));
+    const articles = campaignArticles.get(campaignId) || [];
+    const articlesToTransfer = articles.filter((article: any) => articleIds.includes(article.id));
 
     if (articlesToTransfer.length === 0) {
       return res.status(400).json({ error: 'No articles found to transfer' });
     }
 
-    const transferredItems = [];
-
     for (const article of articlesToTransfer) {
-      try {
-        // Check if article already exists in Module 6 to prevent duplicates
-        const existingItem = await db.query.newsItems.findFirst({
-          where: and(
-            eq(newsItems.campaignId, campaignId),
-            eq(newsItems.sourceUrl, article.url)
-          )
-        });
+      const fullContent = `${article.title}\n\n${article.description}\n\nThis article from ${article.source.name} provides valuable insights that could be leveraged for NewsJacking opportunities. The content discusses current industry trends and developments that align with campaign objectives.`;
 
-        if (existingItem) {
-          console.log(`[Module 5→6] Article already exists in Module 6: ${article.title}`);
-          continue;
-        }
-
-        // Create enhanced content following Module 3 format
-        const fullContent = `${article.title}
-
-${article.description}
-
-This article was published by ${article.sourceName} and discusses important industry developments that could be relevant for NewsJacking opportunities. The content provides insights into current market trends and could serve as a foundation for creating timely, relevant content that connects your brand to breaking news.
-
-Key takeaways from this article include strategic implications for businesses in the digital marketing space, potential opportunities for thought leadership, and emerging trends that savvy marketers should monitor for NewsJacking potential.
-
-Source: ${article.sourceName}
-Published: ${article.publishedAt}
-Relevance Score: ${article.relevanceScore}%`;
-
-        // Insert into news items (Module 6 format) - exact same schema as Module 3
-        const [newNewsItem] = await db.insert(newsItems).values({
-          campaignId,
-          headline: article.title,
-          content: fullContent,
-          sourceUrl: article.url,
-          contentType: 'googlenews',
-          status: 'draft',
-          metadataScore: Math.min(article.relevanceScore || 80, 100),
-          platformOutputs: {
-            source: article.sourceName,
-            publishedAt: article.publishedAt,
-            relevanceScore: article.relevanceScore,
-            keywords: article.keywords || [],
-            imageUrl: article.urlToImage,
-            transferredFrom: 'module5',
-            transferredAt: new Date().toISOString()
-          }
-        }).returning();
-
-        transferredItems.push({
-          id: article.id,
-          title: article.title,
-          newId: newNewsItem.id
-        });
-
-        console.log(`✅ [Module 5→6] Transferred article to Module 6: ${article.title}`);
-
-      } catch (transferError) {
-        console.error(`❌ [Module 5→6] Failed to transfer article ${article.id}:`, transferError);
-      }
+      await db.insert(newsItems).values({
+        campaignId,
+        headline: article.title,
+        content: fullContent,
+        sourceUrl: article.url,
+        contentType: 'googlenews',
+        status: 'active',
+        metadataScore: article.relevanceScore || 80,
+        platformOutputs: JSON.stringify({
+          source: article.source.name,
+          publishedAt: article.publishedAt,
+          relevanceScore: article.relevanceScore,
+          keywords: article.keywords,
+          imageUrl: article.urlToImage
+        })
+      });
     }
 
-    // Remove transferred articles from Module 5 database
-    for (const articleId of articleIds) {
-      await db.delete(googleNewsArticles).where(eq(googleNewsArticles.id, articleId));
-    }
+    const remainingArticles = articles.filter((article: any) => !articleIds.includes(article.id));
+    campaignArticles.set(campaignId, remainingArticles);
 
-    return res.status(200).json({ 
-      success: true,
-      count: transferredItems.length,
-      transferred: transferredItems,
-      message: `Successfully transferred ${transferredItems.length} article(s) to Module 6`
+    res.json({ 
+      count: articlesToTransfer.length,
+      transferred: articlesToTransfer.map((a: any) => ({ id: a.id, title: a.title }))
     });
-
   } catch (error) {
-    console.error('❌ [Module 5→6] Error transferring articles:', error);
-    res.status(500).json({ 
-      error: 'Failed to transfer articles',
-      message: error instanceof Error ? error.message : 'Unknown error'
-    });
+    console.error('Error transferring articles:', error);
+    res.status(500).json({ error: 'Failed to transfer articles' });
   }
 });
 
-// Delete articles from database
+// Delete articles
 router.delete('/articles', requireAuth, async (req, res) => {
   try {
     const { articleIds } = req.body;
@@ -657,11 +520,13 @@ router.delete('/articles', requireAuth, async (req, res) => {
 
     let deletedCount = 0;
 
-    // Delete articles from database
-    for (const articleId of articleIds) {
-      const result = await db.delete(googleNewsArticles).where(eq(googleNewsArticles.id, articleId)).returning();
-      if (result.length > 0) {
-        deletedCount++;
+    for (const [campaignId, articles] of Array.from(campaignArticles.entries())) {
+      const originalLength = articles.length;
+      const remainingArticles = articles.filter((article: any) => !articleIds.includes(article.id));
+      
+      if (remainingArticles.length < originalLength) {
+        campaignArticles.set(campaignId, remainingArticles);
+        deletedCount += originalLength - remainingArticles.length;
       }
     }
 
@@ -672,82 +537,6 @@ router.delete('/articles', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Error deleting articles:', error);
     res.status(500).json({ error: 'Failed to delete articles' });
-  }
-});
-
-// Get articles for campaign (persistent from database) - FORCE FRESH RESPONSE
-router.get('/articles/:campaignId', requireAuth, async (req, res) => {
-  console.log(`🚨 [GOOGLE-NEWS-SIMPLE] Route HIT - articles/${req.params.campaignId}`);
-  
-  // Comprehensive cache disabling
-  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  res.set('Pragma', 'no-cache');
-  res.set('Expires', '0');
-  res.set('Surrogate-Control', 'no-store');
-  res.set('Last-Modified', new Date().toUTCString());
-  res.set('ETag', 'no-cache');
-  
-  try {
-    const { campaignId } = req.params;
-    const userId = req.user!.id;
-
-    console.log(`🔍 [Module 5 Backend] FRESH REQUEST - Fetching articles for campaign ${campaignId}, user ${userId}`);
-
-    // Verify campaign exists
-    const campaign = await db.query.campaigns.findFirst({
-      where: and(eq(campaigns.id, campaignId), eq(campaigns.userId, userId))
-    });
-
-    if (!campaign) {
-      console.log(`❌ [Module 5 Backend] Campaign not found: ${campaignId}`);
-      return res.status(404).json({ error: 'Campaign not found' });
-    }
-
-    // Debug the campaign ID format
-    console.log(`🔍 [Module 5 Backend] Campaign ID type: ${typeof campaignId}, value: "${campaignId}"`);
-    
-    // Force fresh database query with explicit logging
-    const dbArticles = await db.select().from(googleNewsArticles)
-      .where(eq(googleNewsArticles.campaignId, campaignId))
-      .orderBy(desc(googleNewsArticles.createdAt));
-    
-    console.log(`✅ [Module 5 Backend] FRESH QUERY - Found ${dbArticles.length} articles for campaign ${campaignId}`);
-    
-    // If no articles found, check what's actually in the database
-    if (dbArticles.length === 0) {
-      const allArticles = await db.select().from(googleNewsArticles).limit(5);
-      console.log(`🔍 [Module 5 Backend] No articles found for campaign. Sample DB records:`, allArticles.map(a => ({ id: a.id, campaignId: a.campaignId })));
-    }
-    
-    if (dbArticles.length > 0) {
-      console.log(`📄 [Module 5 Backend] Sample article: ${dbArticles[0].title}`);
-    }
-    
-    // Convert to frontend format
-    const articles = dbArticles.map(article => ({
-      id: article.id,
-      title: article.title,
-      description: article.description,
-      url: article.url,
-      urlToImage: article.urlToImage,
-      publishedAt: article.publishedAt,
-      source: {
-        id: article.sourceId,
-        name: article.sourceName
-      },
-      relevanceScore: article.relevanceScore,
-      keywords: article.keywords || []
-    }));
-
-    console.log(`✅ [Module 5 Backend] RETURNING ${articles.length} articles to frontend - NO CACHE`);
-    console.log(`🔧 [Module 5 Backend] Cache headers set: no-store, no-cache, must-revalidate`);
-    console.log(`📊 [Module 5 Backend] Sample article data:`, articles.slice(0, 2));
-    console.log(`🔍 [Module 5 Backend] Full response structure:`, JSON.stringify(articles[0], null, 2));
-    
-    return res.status(200).json(articles);
-  } catch (error) {
-    console.error('Error fetching articles:', error);
-    res.status(500).json({ error: 'Failed to fetch articles' });
   }
 });
 

@@ -762,34 +762,6 @@ export const campaignChannels = pgTable("campaign_channels", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-// Campaign keywords table for Module 5 keyword management
-export const campaignKeywords = pgTable("campaign_keywords", {
-  id: serial("id").primaryKey(),
-  campaignId: uuid("campaign_id").notNull().references(() => campaigns.id, { onDelete: "cascade" }),
-  keyword: text("keyword").notNull(),
-  isDefault: boolean("is_default").default(false),
-  source: text("source").default("user"), // 'user', 'AI', 'campaign'
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-// Module 5 search results persistence table
-export const googleNewsArticles = pgTable("google_news_articles", {
-  id: text("id").primaryKey(), // Use external article ID
-  campaignId: uuid("campaign_id").notNull().references(() => campaigns.id, { onDelete: "cascade" }),
-  title: text("title").notNull(),
-  description: text("description"),
-  url: text("url").notNull(),
-  urlToImage: text("url_to_image"),
-  publishedAt: text("published_at"),
-  sourceName: text("source_name"),
-  sourceId: text("source_id"),
-  relevanceScore: integer("relevance_score").default(80),
-  keywords: jsonb("keywords").default('[]'),
-  searchKeywordId: integer("search_keyword_id").references(() => campaignKeywords.id),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
 // Campaigns relations
 export const campaignsRelations = relations(campaigns, ({ one, many }) => ({
   user: one(users, {
@@ -797,7 +769,6 @@ export const campaignsRelations = relations(campaigns, ({ one, many }) => ({
     references: [users.id],
   }),
   channels: many(campaignChannels),
-  keywords: many(campaignKeywords),
 }));
 
 // Campaign channels relations
@@ -805,27 +776,6 @@ export const campaignChannelsRelations = relations(campaignChannels, ({ one }) =
   campaign: one(campaigns, {
     fields: [campaignChannels.campaignId],
     references: [campaigns.id],
-  }),
-}));
-
-// Campaign keywords relations
-export const campaignKeywordsRelations = relations(campaignKeywords, ({ one, many }) => ({
-  campaign: one(campaigns, {
-    fields: [campaignKeywords.campaignId],
-    references: [campaigns.id],
-  }),
-  articles: many(googleNewsArticles),
-}));
-
-// Google News articles relations
-export const googleNewsArticlesRelations = relations(googleNewsArticles, ({ one }) => ({
-  campaign: one(campaigns, {
-    fields: [googleNewsArticles.campaignId],
-    references: [campaigns.id],
-  }),
-  searchKeyword: one(campaignKeywords, {
-    fields: [googleNewsArticles.searchKeywordId],
-    references: [campaignKeywords.id],
   }),
 }));
 

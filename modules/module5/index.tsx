@@ -90,27 +90,15 @@ export default function Module5GoogleNews() {
     enabled: !!activeCampaign?.id,
   });
 
-  // Fetch news articles with cache-busting
+  // Fetch news articles
   const { data: articles = [], isLoading: articlesLoading, refetch: refetchArticles } = useQuery({
     queryKey: ['/api/google-news', activeCampaign?.id, 'articles'],
     queryFn: async () => {
-      console.log(`🔍 [Module 5 Frontend] Fetching articles for campaign: ${activeCampaign?.id}`);
-      const response = await fetch(`/api/google-news/articles/${activeCampaign?.id}`, {
-        method: 'GET',
-        headers: {
-          'Cache-Control': 'no-cache'
-        },
-        cache: 'no-store' // Prevent browser from caching response
-      });
+      const response = await fetch(`/api/google-news/articles/${activeCampaign?.id}`);
       if (!response.ok) throw new Error('Failed to fetch articles');
-      const data = await response.json();
-      console.log(`📊 [Module 5 Frontend] Received ${data.length} articles:`, data);
-      return data;
+      return response.json();
     },
     enabled: !!activeCampaign?.id,
-    staleTime: 0, // Always consider data stale
-    refetchOnMount: true,
-    refetchOnWindowFocus: true
   });
 
   // Add keyword mutation
@@ -265,15 +253,7 @@ export default function Module5GoogleNews() {
       return response.json();
     },
     onSuccess: (data) => {
-      // Comprehensive cache invalidation and fresh data fetch
-      queryClient.removeQueries({ queryKey: ['/api/google-news', activeCampaign?.id, 'articles'] });
       queryClient.invalidateQueries({ queryKey: ['/api/google-news', activeCampaign?.id, 'articles'] });
-      
-      // Force immediate refetch with no cache
-      setTimeout(() => {
-        refetchArticles();
-      }, 100);
-      
       toast({
         title: "Keyword search completed",
         description: `Found ${data.count} articles for "${data.keyword}"`,
@@ -304,17 +284,12 @@ export default function Module5GoogleNews() {
       queryClient.invalidateQueries({ queryKey: ['/api/google-news', activeCampaign?.id, 'articles'] });
       setSelectedArticles([]);
       toast({ 
-        title: "Sent ✅", 
-        description: data.message || `${data.count} articles sent to Execution Module` 
+        title: "Articles transferred successfully", 
+        description: `${data.count} articles sent to Module 6` 
       });
     },
-    onError: (error: any) => {
-      const errorMessage = error.message || "Transfer failed";
-      toast({ 
-        title: "Transfer failed", 
-        description: errorMessage,
-        variant: "destructive" 
-      });
+    onError: () => {
+      toast({ title: "Transfer failed", variant: "destructive" });
     },
   });
 
@@ -703,7 +678,6 @@ export default function Module5GoogleNews() {
             <div className="text-center py-8 text-muted-foreground">
               <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>No articles found. Click "Search All Keywords" to find relevant news.</p>
-              <p className="text-xs mt-2 text-red-500">DEBUG: Articles array length: {articles.length}</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -779,25 +753,14 @@ export default function Module5GoogleNews() {
                                 <ExternalLink className="h-3 w-3" />
                               </Button>
                               
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => transferArticlesMutation.mutate([article.id])}
-                                    disabled={transferArticlesMutation.isPending}
-                                  >
-                                    {transferArticlesMutation.isPending ? (
-                                      <Loader2 className="h-3 w-3 animate-spin" />
-                                    ) : (
-                                      <Send className="h-3 w-3" />
-                                    )}
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Send to Execution Module</p>
-                                </TooltipContent>
-                              </Tooltip>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => transferArticlesMutation.mutate([article.id])}
+                                disabled={transferArticlesMutation.isPending}
+                              >
+                                <Send className="h-3 w-3" />
+                              </Button>
                               
                               <Button
                                 variant="ghost"
