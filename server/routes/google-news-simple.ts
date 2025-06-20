@@ -692,9 +692,10 @@ router.get('/articles/:campaignId', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Campaign not found' });
     }
 
-    // Get persistent articles from database
+    // Get persistent articles from database  
     const dbArticles = await db.select().from(googleNewsArticles).where(eq(googleNewsArticles.campaignId, campaignId)).orderBy(desc(googleNewsArticles.createdAt));
     console.log(`✅ [Module 5 Backend] Found ${dbArticles.length} articles in database for campaign ${campaignId}`);
+    console.log(`🔍 [Module 5 Backend] Sample article data:`, dbArticles.length > 0 ? JSON.stringify(dbArticles[0], null, 2) : 'No articles');
     
     // Convert to frontend format
     const articles = dbArticles.map(article => ({
