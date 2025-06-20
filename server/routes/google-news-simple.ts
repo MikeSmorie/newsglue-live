@@ -371,10 +371,32 @@ router.post('/search-keyword/:campaignId/:keywordId', requireAuth, async (req, r
       ];
     }
 
-    // Store articles
-    const existingArticles = campaignArticles.get(campaignId) || [];
-    const updatedArticles = [...existingArticles, ...realArticles];
-    campaignArticles.set(campaignId, updatedArticles);
+    // Store articles in database for persistence
+    for (const article of realArticles) {
+      try {
+        // Check if article already exists to prevent duplicates
+        const existing = await db.select().from(googleNewsArticles).where(eq(googleNewsArticles.url, article.url)).limit(1);
+        
+        if (existing.length === 0) {
+          await db.insert(googleNewsArticles).values({
+            id: article.id,
+            campaignId,
+            title: article.title,
+            description: article.description,
+            url: article.url,
+            urlToImage: article.urlToImage,
+            publishedAt: article.publishedAt,
+            sourceName: article.source.name,
+            sourceId: article.source.id,
+            relevanceScore: article.relevanceScore,
+            keywords: article.keywords,
+            searchKeywordId: parseInt(keywordId)
+          });
+        }
+      } catch (error) {
+        console.error('Error storing article:', error);
+      }
+    }
 
     res.json({ 
       success: true, 
@@ -521,8 +543,9 @@ router.post('/transfer/:campaignId', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Campaign not found' });
     }
 
-    const articles = campaignArticles.get(campaignId) || [];
-    const articlesToTransfer = articles.filter((article: any) => articleIds.includes(article.id));
+    // Get articles from database for transfer
+    const dbArticles = await db.select().from(googleNewsArticles).where(eq(googleNewsArticles.campaignId, campaignId));
+    const articlesToTransfer = dbArticles.filter((article: any) => articleIds.includes(article.id));
 
     if (articlesToTransfer.length === 0) {
       return res.status(400).json({ error: 'No articles found to transfer' });
@@ -543,7 +566,7 @@ router.post('/transfer/:campaignId', requireAuth, async (req, res) => {
       }
 
       // Create enhanced content for NewsJack generation
-      const fullContent = `${article.title}\n\n${article.description}\n\nSource: ${article.source.name}\nPublished: ${article.publishedAt}\nRelevance Score: ${article.relevanceScore}%\n\nThis article provides valuable NewsJacking opportunities aligned with your campaign objectives. The content discusses current industry trends and developments that can be leveraged for timely, relevant content creation.`;
+      const fullContent = `${article.title}\n\n${article.description}\n\nSource: ${article.sourceName}\nPublished: ${article.publishedAt}\nRelevance Score: ${article.relevanceScore}%\n\nThis article provides valuable NewsJacking opportunities aligned with your campaign objectives. The content discusses current industry trends and developments that can be leveraged for timely, relevant content creation.`;
 
       // Insert using actual database schema structure
       await db.insert(newsItems).values({
@@ -555,7 +578,7 @@ router.post('/transfer/:campaignId', requireAuth, async (req, res) => {
         status: 'draft',
         metadataScore: Math.min(article.relevanceScore || 80, 100),
         platformOutputs: {
-          source: article.source.name,
+          source: article.sourceName,
           publishedAt: article.publishedAt,
           relevanceScore: article.relevanceScore,
           keywords: article.keywords || [],
@@ -568,8 +591,10 @@ router.post('/transfer/:campaignId', requireAuth, async (req, res) => {
       console.log(`✅ Transferred article to Module 6: ${article.title}`);
     }
 
-    const remainingArticles = articles.filter((article: any) => !articleIds.includes(article.id));
-    campaignArticles.set(campaignId, remainingArticles);
+    // Remove transferred articles from database
+    for (const articleId of articleIds) {
+      await db.delete(googleNewsArticles).where(eq(googleNewsArticles.id, articleId));
+    }
 
     res.json({ 
       success: true,
@@ -583,7 +608,7 @@ router.post('/transfer/:campaignId', requireAuth, async (req, res) => {
   }
 });
 
-// Delete articles
+// Delete articles from database
 router.delete('/articles', requireAuth, async (req, res) => {
   try {
     const { articleIds } = req.body;
@@ -594,13 +619,11 @@ router.delete('/articles', requireAuth, async (req, res) => {
 
     let deletedCount = 0;
 
-    for (const [campaignId, articles] of Array.from(campaignArticles.entries())) {
-      const originalLength = articles.length;
-      const remainingArticles = articles.filter((article: any) => !articleIds.includes(article.id));
-      
-      if (remainingArticles.length < originalLength) {
-        campaignArticles.set(campaignId, remainingArticles);
-        deletedCount += originalLength - remainingArticles.length;
+    // Delete articles from database
+    for (const articleId of articleIds) {
+      const result = await db.delete(googleNewsArticles).where(eq(googleNewsArticles.id, articleId)).returning();
+      if (result.length > 0) {
+        deletedCount++;
       }
     }
 
@@ -611,6 +634,46 @@ router.delete('/articles', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Error deleting articles:', error);
     res.status(500).json({ error: 'Failed to delete articles' });
+  }
+});
+
+// Get articles for campaign (persistent from database)
+router.get('/articles/:campaignId', requireAuth, async (req, res) => {
+  try {
+    const { campaignId } = req.params;
+    const userId = req.user!.id;
+
+    const campaign = await db.query.campaigns.findFirst({
+      where: and(eq(campaigns.id, campaignId), eq(campaigns.userId, userId))
+    });
+
+    if (!campaign) {
+      return res.status(404).json({ error: 'Campaign not found' });
+    }
+
+    // Get persistent articles from database
+    const dbArticles = await db.select().from(googleNewsArticles).where(eq(googleNewsArticles.campaignId, campaignId)).orderBy(desc(googleNewsArticles.createdAt));
+    
+    // Convert to frontend format
+    const articles = dbArticles.map(article => ({
+      id: article.id,
+      title: article.title,
+      description: article.description,
+      url: article.url,
+      urlToImage: article.urlToImage,
+      publishedAt: article.publishedAt,
+      source: {
+        id: article.sourceId,
+        name: article.sourceName
+      },
+      relevanceScore: article.relevanceScore,
+      keywords: article.keywords
+    }));
+
+    res.json(articles);
+  } catch (error) {
+    console.error('Error fetching articles:', error);
+    res.status(500).json({ error: 'Failed to fetch articles' });
   }
 });
 
