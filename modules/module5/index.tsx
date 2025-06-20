@@ -681,6 +681,10 @@ export default function Module5GoogleNews() {
             </div>
           ) : (
             <div className="space-y-4">
+              {(() => {
+                console.log('Rendering articles:', articles.length);
+                return null;
+              })()}
               <div className="flex items-center gap-2 pb-2 border-b">
                 <Checkbox
                   checked={selectedArticles.length === articles.length}

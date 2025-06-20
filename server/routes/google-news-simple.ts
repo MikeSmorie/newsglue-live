@@ -202,17 +202,27 @@ router.post('/keywords/:campaignId', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Campaign not found' });
     }
 
-    const keywords = campaignKeywords.get(campaignId) || [];
-    const newKeyword = {
-      id: `user-${Date.now()}`,
-      keyword: keyword.trim(),
-      isDefault: false,
-      source: 'user',
-      campaignId
-    };
+    // Insert keyword into database
+    await db.execute(sql`
+      INSERT INTO module5_keywords (campaign_id, keyword, is_default)
+      VALUES (${campaignId}, ${keyword.trim()}, false)
+      ON CONFLICT (campaign_id, keyword) DO NOTHING
+    `);
 
-    keywords.push(newKeyword);
-    campaignKeywords.set(campaignId, keywords);
+    // Get the inserted keyword
+    const result = await db.execute(sql`
+      SELECT id, campaign_id, keyword, is_default, created_at
+      FROM module5_keywords 
+      WHERE campaign_id = ${campaignId} AND keyword = ${keyword.trim()}
+    `);
+
+    const row = result.rows[0] as any;
+    const newKeyword = {
+      id: row.id.toString(),
+      keyword: row.keyword,
+      isDefault: row.is_default,
+      campaignId: row.campaign_id
+    };
 
     res.json(newKeyword);
   } catch (error) {
@@ -231,15 +241,25 @@ router.put('/keywords/:keywordId', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Keyword text is required' });
     }
 
-    // Find and update in all campaigns
-    const campaignEntries = Array.from(campaignKeywords.entries());
-    for (const [campaignId, keywords] of campaignEntries) {
-      const keywordIndex = keywords.findIndex((k: any) => k.id === keywordId);
-      if (keywordIndex !== -1) {
-        keywords[keywordIndex].keyword = newKeyword.trim();
-        campaignKeywords.set(campaignId, keywords);
-        return res.json({ success: true, keyword: keywords[keywordIndex] });
-      }
+    // Update keyword in database
+    const result = await db.execute(sql`
+      UPDATE module5_keywords 
+      SET keyword = ${newKeyword.trim()}
+      WHERE id = ${keywordId}
+      RETURNING id, campaign_id, keyword, is_default, created_at
+    `);
+    
+    if (result.rows.length > 0) {
+      const row = result.rows[0] as any;
+      return res.json({ 
+        success: true, 
+        keyword: {
+          id: row.id.toString(),
+          keyword: row.keyword,
+          isDefault: row.is_default,
+          campaignId: row.campaign_id
+        }
+      });
     }
 
     res.status(404).json({ error: 'Keyword not found' });
@@ -452,6 +472,14 @@ router.get('/articles/:campaignId', requireAuth, async (req, res) => {
   try {
     const { campaignId } = req.params;
     const userId = req.user!.id;
+    
+    console.log('MODULE5: Loading articles for campaign:', campaignId);
+    
+    // Validate campaignId format
+    if (!campaignId || typeof campaignId !== 'string') {
+      console.error('Invalid campaignId format:', campaignId);
+      return res.status(400).json({ error: 'Invalid campaign ID format' });
+    }
 
     const campaign = await db.query.campaigns.findFirst({
       where: and(eq(campaigns.id, campaignId), eq(campaigns.userId, userId))
@@ -461,12 +489,16 @@ router.get('/articles/:campaignId', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Campaign not found' });
     }
 
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    
     const articles = await db.execute(sql`
       SELECT id, campaign_id, keyword_used, title, summary, source, url, image_url, relevance_score, created_at
       FROM module5_articles 
       WHERE campaign_id = ${campaignId}
       ORDER BY created_at DESC
     `);
+    
+    console.log(`MODULE5: Found ${articles.rows.length} articles for campaign ${campaignId}`);
     
     // Map database format to frontend expected format
     const mappedArticles = articles.rows.map((article: any) => ({
