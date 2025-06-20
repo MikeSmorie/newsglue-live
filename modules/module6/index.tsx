@@ -662,14 +662,14 @@ export default function Module6() {
                         )}
                         <StatusBadge status={item.status} />
                         
-                        {/* NewsJack Status Indicator */}
-                        {getGeneratedPlatforms(item).length > 0 ? (
-                          <div className="px-2 py-0.5 text-xs font-bold rounded-full bg-gradient-to-r from-green-400 to-emerald-400 text-white shadow-lg border border-green-300">
-                            ✓ {getGeneratedPlatforms(item).length}xNJ
+                        {/* NewsJack Status Indicator - VERY OBVIOUS VISUAL DISTINCTION */}
+                        {item.platformOutputs && Object.keys(item.platformOutputs).length > 0 ? (
+                          <div className="px-3 py-1 text-xs font-extrabold rounded-full bg-green-500 text-white shadow-xl border-2 border-green-300 ring-2 ring-green-200">
+                            ✅ {Object.keys(item.platformOutputs).length}xNJ
                           </div>
                         ) : (
-                          <div className="px-2 py-0.5 text-xs font-bold rounded-full bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-lg border-2 border-yellow-400 animate-pulse">
-                            ⚠ NEEDS NJ
+                          <div className="px-3 py-1 text-xs font-extrabold rounded-full bg-red-600 text-white shadow-xl border-2 border-yellow-300 ring-2 ring-red-200 animate-pulse">
+                            🚨 NEEDS NJ
                           </div>
                         )}
                       </div>
