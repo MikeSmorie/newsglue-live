@@ -874,8 +874,8 @@ export default function Module6() {
                           <Button
                             variant="outline"
                             onClick={() => {
-                              const content = selectedNewsItem.platformOutputs[activeChannel];
-                              const richText = `**${content.content}**\n\n${content.hashtags ? content.hashtags.map((tag: string) => '#' + tag).join(' ') + '\n\n' : ''}${content.cta ? '*' + content.cta + '*' : ''}`;
+                              const content = selectedNewsItem.platformOutputs?.[activeChannel];
+                              const richText = `**${content?.content || ''}**\n\n${content?.hashtags ? content.hashtags.map((tag: string) => '#' + tag).join(' ') + '\n\n' : ''}${content?.cta ? '*' + content.cta + '*' : ''}`;
                               handleCopyToClipboard(richText);
                             }}
                           >
@@ -924,7 +924,7 @@ export default function Module6() {
                           <div className="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 p-4 rounded-lg">
                             <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">Hashtags</h4>
                             <div className="flex flex-wrap gap-2">
-                              {selectedNewsItem.platformOutputs[activeChannel].hashtags.map((tag: string, index: number) => (
+                              {selectedNewsItem.platformOutputs?.[activeChannel]?.hashtags?.map((tag: string, index: number) => (
                                 <Badge key={index} variant="outline" className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200">
                                   #{tag}
                                 </Badge>
