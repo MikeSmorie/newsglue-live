@@ -660,12 +660,12 @@ export default function Module6() {
                         
                         {/* NewsJack Status Indicator */}
                         {getGeneratedPlatforms(item).length > 0 ? (
-                          <div className="px-2 py-0.5 text-xs font-bold rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-sm">
-                            {getGeneratedPlatforms(item).length}xNJ
+                          <div className="px-2 py-0.5 text-xs font-bold rounded-full bg-gradient-to-r from-green-400 to-emerald-400 text-white shadow-lg border border-green-300">
+                            ✓ {getGeneratedPlatforms(item).length}xNJ
                           </div>
                         ) : (
-                          <div className="px-2 py-0.5 text-xs font-bold rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-sm animate-pulse">
-                            0xNJ
+                          <div className="px-2 py-0.5 text-xs font-bold rounded-full bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-lg border-2 border-yellow-400 animate-pulse">
+                            ⚠ NEEDS NJ
                           </div>
                         )}
                       </div>
