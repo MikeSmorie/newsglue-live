@@ -793,7 +793,7 @@ export default function Module6() {
                 ) : (
                   <div className="space-y-6">
                     {/* Content Output Display */}
-                    {selectedNewsItem.platformOutputs[activeChannel] && (
+                    {selectedNewsItem.platformOutputs?.[activeChannel]?.content && (
                       <>
                         {/* Styled Output */}
                         <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
@@ -920,7 +920,7 @@ export default function Module6() {
                         </div>
 
                         {/* Additional Content Elements */}
-                        {selectedNewsItem.platformOutputs[activeChannel].hashtags && (
+                        {selectedNewsItem.platformOutputs?.[activeChannel]?.hashtags && (
                           <div className="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 p-4 rounded-lg">
                             <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">Hashtags</h4>
                             <div className="flex flex-wrap gap-2">
@@ -933,19 +933,19 @@ export default function Module6() {
                           </div>
                         )}
 
-                        {selectedNewsItem.platformOutputs[activeChannel].cta && (
+                        {selectedNewsItem.platformOutputs?.[activeChannel]?.cta && (
                           <div className="bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 p-4 rounded-lg">
                             <h4 className="text-sm font-medium text-green-900 dark:text-green-100 mb-2">Call to Action</h4>
-                            <p className="text-sm text-green-800 dark:text-green-200">{selectedNewsItem.platformOutputs[activeChannel].cta}</p>
-                            {selectedNewsItem.platformOutputs[activeChannel].ctaUrl && (
+                            <p className="text-sm text-green-800 dark:text-green-200">{selectedNewsItem.platformOutputs?.[activeChannel]?.cta}</p>
+                            {selectedNewsItem.platformOutputs?.[activeChannel]?.ctaUrl && (
                               <a 
-                                href={selectedNewsItem.platformOutputs[activeChannel].ctaUrl}
+                                href={selectedNewsItem.platformOutputs?.[activeChannel]?.ctaUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center gap-1 mt-2 text-sm text-green-700 dark:text-green-300 hover:text-green-900 dark:hover:text-green-100 underline"
                               >
                                 <ExternalLink className="h-3 w-3" />
-                                {selectedNewsItem.platformOutputs[activeChannel].ctaUrl}
+                                {selectedNewsItem.platformOutputs?.[activeChannel]?.ctaUrl}
                               </a>
                             )}
                           </div>
@@ -962,12 +962,12 @@ export default function Module6() {
                                 <span className="font-medium text-gray-900 dark:text-white">
                                   {activeChannel === 'twitter' ? '280' : 
                                    activeChannel === 'linkedin' ? '3000' : 
-                                   activeChannel === 'instagram' ? '2200' : '1000'} / {selectedNewsItem.platformOutputs[activeChannel].content.length} chars
+                                   activeChannel === 'instagram' ? '2200' : '1000'} / {selectedNewsItem.platformOutputs?.[activeChannel]?.content?.length || 0} chars
                                 </span>
                               </div>
                               <div className="flex justify-between text-sm">
                                 <span className="text-gray-600 dark:text-gray-300">Word Count:</span>
-                                <span className="font-medium text-gray-900 dark:text-white">{selectedNewsItem.platformOutputs[activeChannel].content.split(/\s+/).length} words</span>
+                                <span className="font-medium text-gray-900 dark:text-white">{selectedNewsItem.platformOutputs?.[activeChannel]?.content?.split(/\s+/).length || 0} words</span>
                               </div>
                               <div className="flex justify-between text-sm">
                                 <span className="text-gray-600 dark:text-gray-300">AI Model:</span>
