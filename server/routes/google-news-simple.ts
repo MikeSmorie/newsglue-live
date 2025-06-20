@@ -398,7 +398,21 @@ router.post('/search/:campaignId', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Campaign not found' });
     }
 
-    const keywords = campaignKeywords.get(campaignId) || [];
+    // Get keywords from database
+    const keywordResults = await db.execute(sql`
+      SELECT id, campaign_id, keyword, is_default, created_at
+      FROM module5_keywords 
+      WHERE campaign_id = ${campaignId}
+      ORDER BY created_at ASC
+    `);
+    
+    const keywords = keywordResults.rows.map((row: any) => ({
+      id: row.id.toString(),
+      keyword: row.keyword,
+      isDefault: row.is_default,
+      campaignId: row.campaign_id
+    }));
+    
     if (keywords.length === 0) {
       return res.status(400).json({ error: 'No keywords configured for search' });
     }
