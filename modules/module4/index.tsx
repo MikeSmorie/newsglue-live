@@ -404,384 +404,405 @@ export default function Module4NewsAggregator() {
         </CardHeader>
       </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Left Panel - Search Configuration */}
-          <Card className={`transition-all duration-300 ${activePanel === 'search' ? 'ring-2 ring-blue-500' : ''}`}>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">Search Panel</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setActivePanel('search')}
-                  className={activePanel === 'search' ? 'bg-blue-50 dark:bg-blue-900' : ''}
-                >
-                  <Grid3X3 className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Add New Keyword */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Add Search Keywords</label>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Enter keyword..."
-                    value={newKeyword}
-                    onChange={(e) => setNewKeyword(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        handleAddKeyword();
-                      }
-                    }}
-                    disabled={addKeywordMutation.isPending}
-                  />
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button 
-                        onClick={handleAddKeyword} 
-                        disabled={!newKeyword.trim() || addKeywordMutation.isPending}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Add keyword</TooltipContent>
-                  </Tooltip>
-                </div>
-              </div>
+      {/* Toggle Panel Bar */}
+      <Card className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2">
+            <Button
+              variant={activePanel === 'search' ? 'default' : 'outline'}
+              onClick={() => setActivePanel('search')}
+              className="flex-1"
+            >
+              <Search className="mr-2 h-4 w-4" />
+              Search Panel
+            </Button>
+            <Button
+              variant={activePanel === 'results' ? 'default' : 'outline'}
+              onClick={() => setActivePanel('results')}
+              className="flex-1"
+            >
+              <Grid3X3 className="mr-2 h-4 w-4" />
+              Search Results
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
-              {/* AI Keyword Suggestions */}
-              <div className="flex gap-2">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      onClick={() => suggestKeywordsMutation.mutate()}
-                      disabled={isSuggestingKeywords || !activeCampaign}
-                      className="flex-1"
-                    >
-                      {isSuggestingKeywords ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      ) : (
-                        <Brain className="h-4 w-4 mr-2" />
-                      )}
-                      {isSuggestingKeywords ? 'Suggesting...' : 'Suggest Keywords'}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>AI-powered keyword suggestions</TooltipContent>
-                </Tooltip>
-                
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      onClick={() => clearAllKeywordsMutation.mutate()}
-                      disabled={keywords.filter((k: SearchKeyword) => !k.isDefault).length === 0}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Clear all user keywords</TooltipContent>
-                </Tooltip>
-              </div>
-
-              <Separator />
-
-              {/* Keywords List */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium">Active Keywords ({keywords.length})</label>
-                  {keywords.length > 0 && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => searchArticlesMutation.mutate()}
-                          disabled={isSearching || keywords.length === 0}
-                        >
-                          {isSearching ? (
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          ) : (
-                            <Search className="h-4 w-4 mr-2" />
-                          )}
-                          {isSearching ? 'Searching...' : 'Search All'}
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Search all keywords</TooltipContent>
-                    </Tooltip>
-                  )}
-                </div>
-
-                {keywordsLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin" />
-                  </div>
-                ) : keywords.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">No keywords configured</p>
-                    <p className="text-xs">Add keywords to start searching</p>
-                  </div>
+      {/* Keywords Panel - Only show when Search Panel is active */}
+      {activePanel === 'search' && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">Search Keywords</CardTitle>
+              <Button
+                onClick={() => suggestKeywordsMutation.mutate()}
+                disabled={isSuggestingKeywords || suggestKeywordsMutation.isPending}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                {isSuggestingKeywords ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Suggesting...
+                  </>
                 ) : (
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {keywords.map((keyword: SearchKeyword) => (
-                      <div
-                        key={keyword.id}
-                        className="flex items-center gap-2 p-2 border rounded-lg bg-background hover:bg-muted/50"
-                      >
-                        {editingKeyword === keyword.id ? (
-                          <div className="flex gap-1 flex-1">
-                            <Input
-                              value={editKeywordText}
-                              onChange={(e) => setEditKeywordText(e.target.value)}
-                              onKeyPress={(e) => {
-                                if (e.key === 'Enter') {
-                                  editKeywordMutation.mutate({
-                                    keywordId: keyword.id,
-                                    newText: editKeywordText,
-                                  });
-                                }
-                                if (e.key === 'Escape') {
-                                  setEditingKeyword(null);
-                                  setEditKeywordText("");
-                                }
-                              }}
-                              className="h-8 text-sm"
-                              autoFocus
-                            />
-                            <Button
-                              size="sm"
-                              onClick={() => {
+                  <>
+                    <Brain className="h-4 w-4" />
+                    Suggest Keywords
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Add new keyword..."
+                value={newKeyword}
+                onChange={(e) => setNewKeyword(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleAddKeyword()}
+              />
+              <Button 
+                onClick={handleAddKeyword}
+                disabled={!newKeyword.trim() || addKeywordMutation.isPending}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            {/* Clear All Keywords Button */}
+            {keywords.some((k: SearchKeyword) => !k.isDefault) && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => clearAllKeywordsMutation.mutate()}
+                disabled={clearAllKeywordsMutation.isPending}
+                className="w-full mb-2"
+              >
+                {clearAllKeywordsMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                    Clearing Keywords...
+                  </>
+                ) : (
+                  <>
+                    <X className="mr-2 h-3 w-3" />
+                    Clear All Keywords
+                  </>
+                )}
+              </Button>
+            )}
+
+            {/* Keywords List */}
+            <div className="space-y-2">
+              {keywordsLoading ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-sm">Loading keywords...</span>
+                </div>
+              ) : keywords.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No keywords configured</p>
+                  <p className="text-xs">Add keywords or use AI suggestions</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {/* Search All Button */}
+                  <Button
+                    variant="outline"
+                    onClick={() => searchArticlesMutation.mutate()}
+                    disabled={isSearching || keywords.length === 0}
+                    className="w-full"
+                  >
+                    {isSearching ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Searching All Keywords...
+                      </>
+                    ) : (
+                      <>
+                        <Search className="mr-2 h-4 w-4" />
+                        Search All Keywords ({keywords.length})
+                      </>
+                    )}
+                  </Button>
+
+                  {/* Individual Keywords */}
+                  {keywords.map((keyword: SearchKeyword) => (
+                    <div
+                      key={keyword.id}
+                      className="flex items-center gap-2 p-3 border rounded-lg bg-background hover:bg-muted/50"
+                    >
+                      {editingKeyword === keyword.id ? (
+                        <div className="flex gap-1 flex-1">
+                          <Input
+                            value={editKeywordText}
+                            onChange={(e) => setEditKeywordText(e.target.value)}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
                                 editKeywordMutation.mutate({
                                   keywordId: keyword.id,
                                   newText: editKeywordText,
                                 });
-                              }}
-                              disabled={editKeywordMutation.isPending}
-                            >
-                              <CheckCircle2 className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
+                              }
+                              if (e.key === 'Escape') {
                                 setEditingKeyword(null);
                                 setEditKeywordText("");
-                              }}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <>
-                            <div className="flex-1">
-                              <span className="text-sm font-medium">{keyword.keyword}</span>
-                              {keyword.isDefault && (
-                                <Badge variant="secondary" className="ml-2 text-xs">
-                                  Default
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex gap-1">
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => {
-                                      setEditingKeyword(keyword.id);
-                                      setEditKeywordText(keyword.keyword);
-                                    }}
-                                    disabled={keyword.isDefault}
-                                  >
-                                    <Edit2 className="h-3 w-3" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>📎 Edit keyword</TooltipContent>
-                              </Tooltip>
-                              
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => searchKeywordMutation.mutate(keyword.id)}
-                                    disabled={searchKeywordMutation.isPending}
-                                  >
-                                    <Search className="h-3 w-3" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>🔍 Search keyword</TooltipContent>
-                              </Tooltip>
-                              
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => removeKeywordMutation.mutate(keyword.id)}
-                                    disabled={keyword.isDefault || removeKeywordMutation.isPending}
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>🗑️ Delete keyword</TooltipContent>
-                              </Tooltip>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Right Panel - Search Results */}
-          <Card className={`transition-all duration-300 ${activePanel === 'results' ? 'ring-2 ring-blue-500' : ''}`}>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">Search Results</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setActivePanel('results')}
-                  className={activePanel === 'results' ? 'bg-blue-50 dark:bg-blue-900' : ''}
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {articlesLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                </div>
-              ) : articles.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No articles found</p>
-                  <p className="text-xs">Run a search to find articles</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {/* Bulk Actions */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        checked={selectedArticles.length === articles.length && articles.length > 0}
-                        onCheckedChange={handleSelectAll}
-                      />
-                      <span className="text-sm">
-                        {selectedArticles.length > 0 
-                          ? `${selectedArticles.length} selected`
-                          : `${articles.length} articles`
-                        }
-                      </span>
-                    </div>
-                    
-                    {selectedArticles.length > 0 && (
-                      <div className="flex gap-2">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              size="sm"
-                              onClick={() => transferArticlesMutation.mutate(selectedArticles)}
-                              disabled={transferArticlesMutation.isPending}
-                            >
-                              <Send className="h-4 w-4 mr-1" />
-                              Send to Module 6
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>🡆 Send to Module 6</TooltipContent>
-                        </Tooltip>
-                        
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => deleteArticlesMutation.mutate(selectedArticles)}
-                              disabled={deleteArticlesMutation.isPending}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Delete selected</TooltipContent>
-                        </Tooltip>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Articles List */}
-                  <div className="space-y-3 max-h-96 overflow-y-auto">
-                    {articles.map((article: NewsArticle) => (
-                      <div
-                        key={article.id}
-                        className="p-3 border rounded-lg bg-background hover:bg-muted/50 transition-colors"
-                      >
-                        <div className="flex items-start gap-3">
-                          <Checkbox
-                            checked={selectedArticles.includes(article.id)}
-                            onCheckedChange={(checked) => handleArticleSelect(article.id)}
+                              }
+                            }}
+                            className="h-8 text-sm"
+                            autoFocus
                           />
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              editKeywordMutation.mutate({
+                                keywordId: keyword.id,
+                                newText: editKeywordText,
+                              });
+                            }}
+                            disabled={editKeywordMutation.isPending}
+                          >
+                            <CheckCircle2 className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setEditingKeyword(null);
+                              setEditKeywordText("");
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex-1">
+                            <span className="text-sm font-medium">{keyword.keyword}</span>
+                            {keyword.isDefault && (
+                              <Badge variant="secondary" className="ml-2 text-xs">
+                                Default
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex gap-1">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setEditingKeyword(keyword.id);
+                                    setEditKeywordText(keyword.keyword);
+                                  }}
+                                  disabled={keyword.isDefault}
+                                >
+                                  <Edit2 className="h-3 w-3" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>📎 Edit keyword</TooltipContent>
+                            </Tooltip>
+                            
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => searchKeywordMutation.mutate(keyword.id)}
+                                  disabled={searchKeywordMutation.isPending}
+                                >
+                                  <Search className="h-3 w-3" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>🔍 Search keyword</TooltipContent>
+                            </Tooltip>
+                            
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => removeKeywordMutation.mutate(keyword.id)}
+                                  disabled={keyword.isDefault || removeKeywordMutation.isPending}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>🗑️ Delete keyword</TooltipContent>
+                            </Tooltip>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Results Panel - Only show when Search Results is active */}
+      {activePanel === 'results' && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">
+                Search Results {articles.length > 0 && `(${articles.length} articles)`}
+              </CardTitle>
+              {articles.length > 0 && (
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleSelectAll}
+                  >
+                    {selectedArticles.length === articles.length ? 'Deselect All' : 'Select All'}
+                  </Button>
+                  {selectedArticles.length > 0 && (
+                    <>
+                      <Button
+                        size="sm"
+                        onClick={() => transferArticlesMutation.mutate(selectedArticles)}
+                        disabled={transferArticlesMutation.isPending}
+                      >
+                        <Send className="h-4 w-4 mr-1" />
+                        Send to Module 6 ({selectedArticles.length})
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => deleteArticlesMutation.mutate(selectedArticles)}
+                        disabled={deleteArticlesMutation.isPending}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Delete ({selectedArticles.length})
+                      </Button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            {articlesLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin" />
+                <span className="ml-2">Loading articles...</span>
+              </div>
+            ) : articles.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p className="text-lg font-medium mb-2">No articles found</p>
+                <p className="text-sm">Switch to Search Panel to configure keywords and run searches</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {articles.map((article: NewsArticle) => (
+                  <div
+                    key={article.id}
+                    className="p-4 border rounded-lg bg-background hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-start gap-3">
+                      <Checkbox
+                        checked={selectedArticles.includes(article.id)}
+                        onCheckedChange={(checked) => handleArticleSelect(article.id)}
+                        className="mt-1"
+                      />
+                      
+                      <div className="flex-1 space-y-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <h3 className="font-semibold text-base leading-tight">
+                            {article.title}
+                          </h3>
                           
-                          <div className="flex-1 space-y-2">
-                            <div className="flex items-start justify-between">
-                              <h4 className="font-medium text-sm leading-tight line-clamp-2">
-                                {article.title}
-                              </h4>
-                              
-                              <Tooltip>
-                                <TooltipTrigger asChild>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <Badge
+                              className={`text-xs font-medium ${getRelevanceBadgeColor(article.relevanceScore)}`}
+                            >
+                              {article.relevanceScore}% match
+                            </Badge>
+                            
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  asChild
+                                >
                                   <a
                                     href={article.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="ml-2 p-1 hover:bg-muted rounded"
                                   >
-                                    <ExternalLink className="h-3 w-3" />
+                                    <ExternalLink className="h-4 w-4" />
                                   </a>
-                                </TooltipTrigger>
-                                <TooltipContent>🔗 Open source article</TooltipContent>
-                              </Tooltip>
-                            </div>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>🔗 Open source article</TooltipContent>
+                            </Tooltip>
+                          </div>
+                        </div>
+                        
+                        {article.description && (
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            {article.description}
+                          </p>
+                        )}
+                        
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <Badge variant="outline" className="text-xs">
+                              {article.source.name}
+                            </Badge>
                             
-                            {article.description && (
-                              <p className="text-xs text-muted-foreground line-clamp-2">
-                                {article.description}
-                              </p>
-                            )}
-                            
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <Badge variant="outline" className="text-xs">
-                                  {article.source.name}
-                                </Badge>
-                                
-                                <Badge
-                                  className={`text-xs ${getRelevanceBadgeColor(article.relevanceScore)}`}
+                            <span className={`text-xs font-medium ${getArticleAge(article.publishedAt).color}`}>
+                              {getArticleAge(article.publishedAt).text}
+                            </span>
+                          </div>
+                          
+                          <div className="flex gap-1">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => transferArticlesMutation.mutate([article.id])}
+                                  disabled={transferArticlesMutation.isPending}
                                 >
-                                  {article.relevanceScore}%
-                                </Badge>
-                                
-                                <span className={`text-xs ${getArticleAge(article.publishedAt).color}`}>
-                                  {getArticleAge(article.publishedAt).text}
-                                </span>
-                              </div>
-                            </div>
+                                  <Send className="h-3 w-3 mr-1" />
+                                  Send to Module 6
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>🡆 Send to Module 6</TooltipContent>
+                            </Tooltip>
+                            
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => deleteArticlesMutation.mutate([article.id])}
+                                  disabled={deleteArticlesMutation.isPending}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>🗑️ Delete article</TooltipContent>
+                            </Tooltip>
                           </div>
                         </div>
                       </div>
-                    ))}
+                    </div>
                   </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
       </div>
     </TooltipProvider>
   );
