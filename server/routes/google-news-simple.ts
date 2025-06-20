@@ -13,8 +13,7 @@ const requireAuth = (req: any, res: any, next: any) => {
   res.status(401).json({ message: "Not authenticated" });
 };
 
-// In-memory storage for keywords and articles
-const campaignKeywords = new Map();
+// In-memory storage for articles only (keywords are now in database)
 const campaignArticles = new Map();
 
 // Get keywords for campaign
@@ -53,14 +52,16 @@ router.get('/keywords/:campaignId', requireAuth, async (req, res) => {
         const defaultKeyword = campaignWords.join(' ').trim();
         
         // Insert default keyword into database
-        const result = await db.query(
-          'INSERT INTO campaign_keywords (campaign_id, keyword, is_default, source) VALUES ($1, $2, $3, $4) RETURNING *',
-          [campaignId, defaultKeyword, true, 'campaign']
-        );
+        const result = await db.insert(campaignKeywords).values({
+          campaignId,
+          keyword: defaultKeyword,
+          isDefault: true,
+          source: 'campaign'
+        }).returning();
         
         keywords = [{
-          id: result.rows[0].id.toString(),
-          keyword: result.rows[0].keyword,
+          id: result[0].id.toString(),
+          keyword: result[0].keyword,
           isDefault: true,
           campaignId,
           source: 'campaign'
@@ -148,21 +149,37 @@ Output clean JSON format:
     const aiResponse = JSON.parse(response.choices[0].message.content || '{}');
     const suggestedKeywords = aiResponse.keywords || [];
 
-    // Clear existing AI-generated keywords from database and add fresh suggestions
-    await db.query('DELETE FROM campaign_keywords WHERE campaign_id = $1 AND source = $2', [campaignId, 'AI']);
+    // Clear existing AI-generated keywords from database
+    await db.delete(campaignKeywords).where(
+      and(
+        eq(campaignKeywords.campaignId, campaignId),
+        eq(campaignKeywords.source, 'AI')
+      )
+    );
     
     // Insert new AI keywords into database
+    const newKeywords = [];
     for (const keyword of suggestedKeywords) {
-      await db.query(
-        'INSERT INTO campaign_keywords (campaign_id, keyword, is_default, source) VALUES ($1, $2, $3, $4)',
-        [campaignId, keyword.trim(), false, 'AI']
-      );
+      const result = await db.insert(campaignKeywords).values({
+        campaignId,
+        keyword: keyword.trim(),
+        isDefault: false,
+        source: 'AI'
+      }).returning();
+      
+      newKeywords.push({
+        id: result[0].id.toString(),
+        keyword: result[0].keyword,
+        isDefault: false,
+        campaignId,
+        source: 'AI'
+      });
     }
 
     res.json({ 
       count: newKeywords.length,
       keywords: newKeywords,
-      total: updatedKeywords.length
+      total: newKeywords.length
     });
   } catch (error) {
     console.error('Error suggesting keywords:', error);
@@ -185,16 +202,21 @@ router.post('/keywords/:campaignId', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Campaign not found' });
     }
 
-    const keywords = campaignKeywords.get(campaignId) || [];
-    const newKeyword = {
-      id: `user-${Date.now()}`,
+    // Insert keyword into database
+    const result = await db.insert(campaignKeywords).values({
+      campaignId,
       keyword: keyword.trim(),
       isDefault: false,
-      campaignId
-    };
+      source: 'user'
+    }).returning();
 
-    keywords.push(newKeyword);
-    campaignKeywords.set(campaignId, keywords);
+    const newKeyword = {
+      id: result[0].id.toString(),
+      keyword: result[0].keyword,
+      isDefault: false,
+      campaignId,
+      source: 'user'
+    };
 
     res.json(newKeyword);
   } catch (error) {
@@ -213,17 +235,25 @@ router.put('/keywords/:keywordId', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Keyword text is required' });
     }
 
-    // Find and update in all campaigns
-    for (const [campaignId, keywords] of campaignKeywords.entries()) {
-      const keywordIndex = keywords.findIndex(k => k.id === keywordId);
-      if (keywordIndex !== -1) {
-        keywords[keywordIndex].keyword = newKeyword.trim();
-        campaignKeywords.set(campaignId, keywords);
-        return res.json({ success: true, keyword: keywords[keywordIndex] });
-      }
+    // Update keyword in database
+    const result = await db.update(campaignKeywords)
+      .set({ keyword: newKeyword.trim() })
+      .where(eq(campaignKeywords.id, parseInt(keywordId)))
+      .returning();
+
+    if (result.length === 0) {
+      return res.status(404).json({ error: 'Keyword not found' });
     }
 
-    res.status(404).json({ error: 'Keyword not found' });
+    const updatedKeyword = {
+      id: result[0].id.toString(),
+      keyword: result[0].keyword,
+      isDefault: result[0].isDefault,
+      campaignId: result[0].campaignId,
+      source: result[0].source
+    };
+
+    res.json({ success: true, keyword: updatedKeyword });
   } catch (error) {
     console.error('Error editing keyword:', error);
     res.status(500).json({ error: 'Failed to edit keyword' });
@@ -235,19 +265,21 @@ router.delete('/keywords/:keywordId', requireAuth, async (req, res) => {
   try {
     const { keywordId } = req.params;
 
-    for (const [campaignId, keywords] of Array.from(campaignKeywords.entries())) {
-      const keywordIndex = keywords.findIndex((k: any) => k.id === keywordId);
-      if (keywordIndex !== -1) {
-        const keyword = keywords[keywordIndex];
-        if (!keyword.isDefault) {
-          keywords.splice(keywordIndex, 1);
-          campaignKeywords.set(campaignId, keywords);
-          return res.json({ success: true });
-        } else {
-          return res.status(400).json({ error: 'Cannot remove default keywords' });
-        }
-      }
+    // Check if keyword exists and is not default
+    const existingKeyword = await db.select().from(campaignKeywords).where(eq(campaignKeywords.id, parseInt(keywordId))).limit(1);
+    
+    if (existingKeyword.length === 0) {
+      return res.status(404).json({ error: 'Keyword not found' });
     }
+    
+    if (existingKeyword[0].isDefault) {
+      return res.status(400).json({ error: 'Cannot remove default keywords' });
+    }
+
+    // Delete keyword from database
+    await db.delete(campaignKeywords).where(eq(campaignKeywords.id, parseInt(keywordId)));
+    
+    return res.json({ success: true });
 
     res.status(404).json({ error: 'Keyword not found' });
   } catch (error) {
