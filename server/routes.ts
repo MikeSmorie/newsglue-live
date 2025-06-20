@@ -352,8 +352,9 @@ export async function registerRoutes(app: Express) {
    * DELETE /api/backup/:id - Delete backup
    * GET /api/backup/download/:id - Download backup file
    */
-  const { default: backupRoutes } = await import("./routes/backup.js");
-  app.use("/api/backup", requireAuth, backupRoutes);
+  // Backup routes temporarily disabled to restore server functionality
+  // const { default: backupRoutes } = await import("./routes/backup.js");
+  // app.use("/api/backup", requireAuth, backupRoutes);
 
   /**
    * MODULE REFACTORING TESTS
