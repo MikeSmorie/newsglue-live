@@ -677,6 +677,8 @@ router.delete('/articles', requireAuth, async (req, res) => {
 
 // Get articles for campaign (persistent from database) - FORCE FRESH RESPONSE
 router.get('/articles/:campaignId', requireAuth, async (req, res) => {
+  console.log(`🚨 [GOOGLE-NEWS-SIMPLE] Route HIT - articles/${req.params.campaignId}`);
+  
   // Comprehensive cache disabling
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.set('Pragma', 'no-cache');
