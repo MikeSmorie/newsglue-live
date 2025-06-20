@@ -309,17 +309,28 @@ router.post('/search-keyword/:campaignId/:keywordId', requireAuth, async (req, r
       return res.status(404).json({ error: 'Campaign not found' });
     }
 
-    const keywords = campaignKeywords.get(campaignId) || [];
-    const keyword = keywords.find((k: any) => k.id === keywordId);
+    // Get keyword from database
+    const keywordResult = await db.execute(sql`
+      SELECT id, campaign_id, keyword, is_default, created_at
+      FROM module5_keywords 
+      WHERE id = ${keywordId} AND campaign_id = ${campaignId}
+    `);
     
-    if (!keyword) {
+    if (keywordResult.rows.length === 0) {
       return res.status(404).json({ error: 'Keyword not found' });
     }
+    
+    const keyword = {
+      id: keywordResult.rows[0].id,
+      keyword: (keywordResult.rows[0] as any).keyword,
+      isDefault: (keywordResult.rows[0] as any).is_default,
+      campaignId: (keywordResult.rows[0] as any).campaign_id
+    };
 
     // Search Google News for real articles using the keyword
-    const googleNewsUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(keyword.keyword)}&language=en&sortBy=publishedAt&pageSize=20`;
+    const googleNewsUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(keyword.keyword)}&language=en&sortBy=publishedAt&pageSize=20&from=${new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()}`;
     
-    let realArticles = [];
+    let articleCount = 0;
     try {
       const response = await fetch(googleNewsUrl, {
         headers: {
@@ -329,54 +340,33 @@ router.post('/search-keyword/:campaignId/:keywordId', requireAuth, async (req, r
       
       if (response.ok) {
         const data = await response.json();
-        realArticles = data.articles?.map((article: any, index: number) => ({
-          id: `${keywordId}-real-${Date.now()}-${index}`,
-          title: article.title,
-          description: article.description || 'No description available',
-          url: article.url,
-          urlToImage: article.urlToImage,
-          publishedAt: article.publishedAt,
-          source: { 
-            id: article.source?.id || null, 
-            name: article.source?.name || 'Unknown Source' 
-          },
-          keywords: [keyword.keyword],
-          relevanceScore: Math.floor(Math.random() * 20) + 80, // 80-100% for real articles
-          campaignId
-        })) || [];
+        const articles = data.articles || [];
+        
+        // Insert articles into database
+        for (const article of articles) {
+          try {
+            await db.execute(sql`
+              INSERT INTO module5_articles (campaign_id, keyword_used, title, summary, source, url, image_url, relevance_score)
+              VALUES (${campaignId}, ${keyword.keyword}, ${article.title}, 
+                      ${article.description || 'No description available'}, ${article.source?.name || 'Unknown Source'}, 
+                      ${article.url}, ${article.urlToImage || null}, ${Math.floor(Math.random() * 20) + 80})
+              ON CONFLICT (url) DO NOTHING
+            `);
+            articleCount++;
+          } catch (dbError) {
+            console.log('Database insert error for article:', dbError);
+          }
+        }
       }
     } catch (error) {
-      console.log('NewsAPI not available, using fallback search');
+      console.log('NewsAPI search failed:', error);
     }
-
-    // If no real articles or API not available, use enhanced fallback
-    if (realArticles.length === 0) {
-      realArticles = [
-        {
-          id: `${keywordId}-article-${Date.now()}-1`,
-          title: `Breaking: ${keyword.keyword} Market Sees Major Developments`,
-          description: `Latest analysis shows significant changes in ${keyword.keyword} market dynamics with implications for businesses.`,
-          url: `https://example.com/news/${keyword.keyword.replace(/\s+/g, '-').toLowerCase()}-market-shift`,
-          source: { name: 'Business Weekly' },
-          publishedAt: new Date(Date.now() - Math.random() * 3600000).toISOString(),
-          urlToImage: null,
-          keywords: [keyword.keyword],
-          relevanceScore: Math.floor(Math.random() * 40) + 60,
-          campaignId
-        }
-      ];
-    }
-
-    // Store articles
-    const existingArticles = campaignArticles.get(campaignId) || [];
-    const updatedArticles = [...existingArticles, ...realArticles];
-    campaignArticles.set(campaignId, updatedArticles);
 
     res.json({ 
       success: true, 
-      count: realArticles.length,
+      count: articleCount,
       keyword: keyword.keyword,
-      articles: realArticles
+      message: `Found ${articleCount} articles for "${keyword.keyword}"`
     });
   } catch (error) {
     console.error('Error searching keyword:', error);
