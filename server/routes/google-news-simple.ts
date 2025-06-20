@@ -476,32 +476,55 @@ router.post('/transfer/:campaignId', requireAuth, async (req, res) => {
     }
 
     for (const article of articlesToTransfer) {
-      const fullContent = `${article.title}\n\n${article.description}\n\nThis article from ${article.source.name} provides valuable insights that could be leveraged for NewsJacking opportunities. The content discusses current industry trends and developments that align with campaign objectives.`;
+      // Check if article already exists in Module 6 to prevent duplicates
+      const existingItem = await db.query.newsItems.findFirst({
+        where: and(
+          eq(newsItems.campaignId, campaignId),
+          eq(newsItems.sourceUrl, article.url)
+        )
+      });
 
+      if (existingItem) {
+        console.log(`Article already exists in Module 6: ${article.title}`);
+        continue;
+      }
+
+      // Create enhanced content for NewsJack generation
+      const fullContent = `${article.title}\n\n${article.description}\n\nSource: ${article.source.name}\nPublished: ${article.publishedAt}\nRelevance Score: ${article.relevanceScore}%\n\nThis article provides valuable NewsJacking opportunities aligned with your campaign objectives. The content discusses current industry trends and developments that can be leveraged for timely, relevant content creation.`;
+
+      // Insert using the same schema structure as Module 3 → Module 6 pathway
       await db.insert(newsItems).values({
         campaignId,
         headline: article.title,
         content: fullContent,
         sourceUrl: article.url,
         contentType: 'googlenews',
-        status: 'active',
-        metadataScore: article.relevanceScore || 80,
+        status: 'draft', // Start as draft for review
+        metadataScore: Math.min(article.relevanceScore || 80, 100),
         platformOutputs: JSON.stringify({
           source: article.source.name,
           publishedAt: article.publishedAt,
           relevanceScore: article.relevanceScore,
-          keywords: article.keywords,
-          imageUrl: article.urlToImage
-        })
+          keywords: article.keywords || [],
+          imageUrl: article.urlToImage,
+          transferredFrom: 'module5',
+          transferredAt: new Date().toISOString()
+        }),
+        indexable: true,
+        sitemapStatus: 'pending'
       });
+
+      console.log(`✅ Transferred article to Module 6: ${article.title}`);
     }
 
     const remainingArticles = articles.filter((article: any) => !articleIds.includes(article.id));
     campaignArticles.set(campaignId, remainingArticles);
 
     res.json({ 
+      success: true,
       count: articlesToTransfer.length,
-      transferred: articlesToTransfer.map((a: any) => ({ id: a.id, title: a.title }))
+      transferred: articlesToTransfer.map((a: any) => ({ id: a.id, title: a.title })),
+      message: `Successfully transferred ${articlesToTransfer.length} article(s) to Module 6`
     });
   } catch (error) {
     console.error('Error transferring articles:', error);

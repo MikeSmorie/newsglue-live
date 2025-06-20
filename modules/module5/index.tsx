@@ -284,12 +284,17 @@ export default function Module5GoogleNews() {
       queryClient.invalidateQueries({ queryKey: ['/api/google-news', activeCampaign?.id, 'articles'] });
       setSelectedArticles([]);
       toast({ 
-        title: "Articles transferred successfully", 
-        description: `${data.count} articles sent to Module 6` 
+        title: "Sent ✅", 
+        description: data.message || `${data.count} articles sent to Execution Module` 
       });
     },
-    onError: () => {
-      toast({ title: "Transfer failed", variant: "destructive" });
+    onError: (error: any) => {
+      const errorMessage = error.message || "Transfer failed";
+      toast({ 
+        title: "Transfer failed", 
+        description: errorMessage,
+        variant: "destructive" 
+      });
     },
   });
 
@@ -753,14 +758,25 @@ export default function Module5GoogleNews() {
                                 <ExternalLink className="h-3 w-3" />
                               </Button>
                               
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => transferArticlesMutation.mutate([article.id])}
-                                disabled={transferArticlesMutation.isPending}
-                              >
-                                <Send className="h-3 w-3" />
-                              </Button>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => transferArticlesMutation.mutate([article.id])}
+                                    disabled={transferArticlesMutation.isPending}
+                                  >
+                                    {transferArticlesMutation.isPending ? (
+                                      <Loader2 className="h-3 w-3 animate-spin" />
+                                    ) : (
+                                      <Send className="h-3 w-3" />
+                                    )}
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Send to Execution Module</p>
+                                </TooltipContent>
+                              </Tooltip>
                               
                               <Button
                                 variant="ghost"
