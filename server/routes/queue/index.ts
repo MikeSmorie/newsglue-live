@@ -173,8 +173,8 @@ router.post('/generate-newsjacks/:id', requireAuth, async (req, res) => {
     const platformOutputs: any = {};
     let totalTokens = 0;
 
-    // Generate content for each enabled platform
-    for (const platform of platforms) {
+    // Generate platform-specific content generation functions
+    const generatePlatformContent = async (platform: string) => {
       const platformConfig = socialSettings[platform];
       const newsRatio = platformConfig?.newsRatio || 50;
       const campaignRatio = 100 - newsRatio;
@@ -253,45 +253,61 @@ Respond with JSON in this format:
             metrics: { newsPercentage: 50, campaignPercentage: 50, estimatedEngagement: "medium" }
           };
         }
-        totalTokens += response.usage?.total_tokens || 0;
 
-        platformOutputs[platform] = {
+        const platformOutput = {
           ...generatedContent,
           generatedAt: new Date().toISOString(),
           platform,
-          config: platformConfig
+          config: platformConfig,
+          tokens: response.usage?.total_tokens || 0
         };
 
         // Reset landing page status for blog platform to allow republishing
         if (platform === 'blog') {
-          platformOutputs[platform] = {
-            ...platformOutputs[platform],
-            landingPageStatus: 'unpublished',
-            landingPageSlug: null,
-            landingPageUrl: null,
-            landingPagePublishedAt: null
-          };
+          platformOutput.landingPageStatus = 'unpublished';
+          platformOutput.landingPageSlug = null;
+          platformOutput.landingPageUrl = null;
+          platformOutput.landingPagePublishedAt = null;
         }
+
+        return { platform, content: platformOutput, tokens: response.usage?.total_tokens || 0 };
       } catch (error) {
         console.error(`Error generating content for ${platform}:`, error);
-        platformOutputs[platform] = {
+        const errorOutput = {
           error: 'Failed to generate content',
           platform,
-          config: platformConfig
+          config: platformConfig,
+          tokens: 0
         };
 
         // Reset landing page status even on error for blog platform
         if (platform === 'blog') {
-          platformOutputs[platform] = {
-            ...platformOutputs[platform],
-            landingPageStatus: 'unpublished',
-            landingPageSlug: null,
-            landingPageUrl: null,
-            landingPagePublishedAt: null
-          };
+          errorOutput.landingPageStatus = 'unpublished';
+          errorOutput.landingPageSlug = null;
+          errorOutput.landingPageUrl = null;
+          errorOutput.landingPagePublishedAt = null;
         }
+
+        return { platform, content: errorOutput, tokens: 0 };
       }
-    }
+    };
+
+    // Execute all platform generations in parallel
+    console.log(`[LATENCY] Starting parallel AI generation for platforms: ${platforms.join(', ')}`);
+    const parallelStartTime = Date.now();
+    
+    const platformResults = await Promise.all(
+      platforms.map(platform => generatePlatformContent(platform))
+    );
+    
+    const parallelEndTime = Date.now();
+    console.log(`[LATENCY] Parallel AI generation completed in ${parallelEndTime - parallelStartTime}ms`);
+
+    // Process results and build platform outputs
+    platformResults.forEach(result => {
+      platformOutputs[result.platform] = result.content;
+      totalTokens += result.tokens;
+    });
 
     // T4: AI response completed and returned to client
     const T4 = Date.now();
