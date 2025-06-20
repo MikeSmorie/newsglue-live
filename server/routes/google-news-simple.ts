@@ -31,26 +31,40 @@ router.get('/keywords/:campaignId', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Campaign not found' });
     }
 
-    let keywords = campaignKeywords.get(campaignId) || [];
+    // Fetch keywords from database
+    const dbKeywords = await db.execute(`SELECT * FROM campaign_keywords WHERE campaign_id = '${campaignId}' ORDER BY created_at ASC`);
     
-    // Only show campaign name as initial keyword, no raw text injection
+    let keywords = dbKeywords.map((row: any) => ({
+      id: row.id.toString(),
+      keyword: row.keyword,
+      isDefault: row.is_default,
+      campaignId: row.campaign_id,
+      source: row.source
+    }));
+
+    // Add default campaign name keyword if no keywords exist
     if (keywords.length === 0 && campaign.campaignName) {
-      // Extract clean keywords from campaign name only - no long-form text
       const campaignWords = campaign.campaignName
         .split(/\s+/)
-        .filter(word => word.length > 2 && word.length < 20) // Reasonable keyword length
-        .slice(0, 3); // Maximum 3 words from campaign name
+        .filter(word => word.length > 2 && word.length < 20)
+        .slice(0, 3);
 
       if (campaignWords.length > 0) {
+        const defaultKeyword = campaignWords.join(' ').trim();
+        
+        // Insert default keyword into database
+        const result = await db.query(
+          'INSERT INTO campaign_keywords (campaign_id, keyword, is_default, source) VALUES ($1, $2, $3, $4) RETURNING *',
+          [campaignId, defaultKeyword, true, 'campaign']
+        );
+        
         keywords = [{
-          id: 'default-0',
-          keyword: campaignWords.join(' ').trim(),
+          id: result.rows[0].id.toString(),
+          keyword: result.rows[0].keyword,
           isDefault: true,
           campaignId,
           source: 'campaign'
         }];
-
-        campaignKeywords.set(campaignId, keywords);
       }
     }
 
@@ -134,20 +148,16 @@ Output clean JSON format:
     const aiResponse = JSON.parse(response.choices[0].message.content || '{}');
     const suggestedKeywords = aiResponse.keywords || [];
 
-    // Clear existing AI-generated keywords and add fresh suggestions
-    const existingKeywords = campaignKeywords.get(campaignId) || [];
-    const nonAIKeywords = existingKeywords.filter((k: any) => k.source !== 'AI');
+    // Clear existing AI-generated keywords from database and add fresh suggestions
+    await db.query('DELETE FROM campaign_keywords WHERE campaign_id = $1 AND source = $2', [campaignId, 'AI']);
     
-    const newKeywords = suggestedKeywords.map((keyword: string, index: number) => ({
-      id: `ai-${Date.now()}-${index}`,
-      keyword: keyword.trim(),
-      isDefault: false,
-      source: 'AI',
-      campaignId
-    }));
-
-    const updatedKeywords = [...nonAIKeywords, ...newKeywords];
-    campaignKeywords.set(campaignId, updatedKeywords);
+    // Insert new AI keywords into database
+    for (const keyword of suggestedKeywords) {
+      await db.query(
+        'INSERT INTO campaign_keywords (campaign_id, keyword, is_default, source) VALUES ($1, $2, $3, $4)',
+        [campaignId, keyword.trim(), false, 'AI']
+      );
+    }
 
     res.json({ 
       count: newKeywords.length,
@@ -475,6 +485,7 @@ router.post('/transfer/:campaignId', requireAuth, async (req, res) => {
         sourceUrl: article.url,
         contentType: 'googlenews',
         status: 'active',
+        metadataScore: article.relevanceScore || 80,
         platformOutputs: JSON.stringify({
           source: article.source.name,
           publishedAt: article.publishedAt,
