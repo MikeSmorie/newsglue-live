@@ -554,7 +554,7 @@ router.post('/transfer/:campaignId', requireAuth, async (req, res) => {
         contentType: 'googlenews',
         status: 'draft', // Start as draft for review
         metadataScore: Math.min(article.relevanceScore || 80, 100),
-        platformOutputs: JSON.stringify({
+        platformOutputs: {
           source: article.source.name,
           publishedAt: article.publishedAt,
           relevanceScore: article.relevanceScore,
@@ -562,9 +562,8 @@ router.post('/transfer/:campaignId', requireAuth, async (req, res) => {
           imageUrl: article.urlToImage,
           transferredFrom: 'module5',
           transferredAt: new Date().toISOString()
-        }),
-        indexable: true,
-        sitemapStatus: 'pending'
+        },
+        indexable: true
       });
 
       console.log(`✅ Transferred article to Module 6: ${article.title}`);
