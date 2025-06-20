@@ -675,14 +675,21 @@ router.delete('/articles', requireAuth, async (req, res) => {
   }
 });
 
-// Get articles for campaign (persistent from database)
+// Get articles for campaign (persistent from database) - FORCE FRESH RESPONSE
 router.get('/articles/:campaignId', requireAuth, async (req, res) => {
+  // Disable all caching immediately
+  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  res.set('Last-Modified', new Date().toUTCString());
+  
   try {
     const { campaignId } = req.params;
     const userId = req.user!.id;
 
-    console.log(`🔍 [Module 5 Backend] Fetching articles for campaign ${campaignId}, user ${userId}`);
+    console.log(`🔍 [Module 5 Backend] FRESH REQUEST - Fetching articles for campaign ${campaignId}, user ${userId}`);
 
+    // Verify campaign exists
     const campaign = await db.query.campaigns.findFirst({
       where: and(eq(campaigns.id, campaignId), eq(campaigns.userId, userId))
     });
@@ -692,14 +699,16 @@ router.get('/articles/:campaignId', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Campaign not found' });
     }
 
-    // Get persistent articles from database
-    console.log(`🔍 [Module 5 Backend] Fetching articles for campaign ${campaignId}, user ${userId}`);
-    
+    // Force fresh database query 
     const dbArticles = await db.select().from(googleNewsArticles)
       .where(eq(googleNewsArticles.campaignId, campaignId))
       .orderBy(desc(googleNewsArticles.createdAt));
     
-    console.log(`✅ [Module 5 Backend] Found ${dbArticles.length} articles in database for campaign ${campaignId}`);
+    console.log(`✅ [Module 5 Backend] FRESH QUERY - Found ${dbArticles.length} articles for campaign ${campaignId}`);
+    
+    if (dbArticles.length > 0) {
+      console.log(`📄 [Module 5 Backend] Sample article: ${dbArticles[0].title}`);
+    }
     
     // Convert to frontend format
     const articles = dbArticles.map(article => ({
@@ -717,14 +726,9 @@ router.get('/articles/:campaignId', requireAuth, async (req, res) => {
       keywords: article.keywords || []
     }));
 
-    console.log(`✅ [Module 5 Backend] Returning ${articles.length} articles to frontend`);
+    console.log(`✅ [Module 5 Backend] RETURNING ${articles.length} articles to frontend - NO CACHE`);
     
-    // Prevent caching to ensure fresh results
-    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.set('Pragma', 'no-cache');
-    res.set('Expires', '0');
-    
-    res.json(articles);
+    return res.status(200).json(articles);
   } catch (error) {
     console.error('Error fetching articles:', error);
     res.status(500).json({ error: 'Failed to fetch articles' });
