@@ -701,12 +701,21 @@ router.get('/articles/:campaignId', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Campaign not found' });
     }
 
-    // Force fresh database query 
+    // Debug the campaign ID format
+    console.log(`🔍 [Module 5 Backend] Campaign ID type: ${typeof campaignId}, value: "${campaignId}"`);
+    
+    // Force fresh database query with explicit logging
     const dbArticles = await db.select().from(googleNewsArticles)
       .where(eq(googleNewsArticles.campaignId, campaignId))
       .orderBy(desc(googleNewsArticles.createdAt));
     
     console.log(`✅ [Module 5 Backend] FRESH QUERY - Found ${dbArticles.length} articles for campaign ${campaignId}`);
+    
+    // If no articles found, check what's actually in the database
+    if (dbArticles.length === 0) {
+      const allArticles = await db.select().from(googleNewsArticles).limit(5);
+      console.log(`🔍 [Module 5 Backend] No articles found for campaign. Sample DB records:`, allArticles.map(a => ({ id: a.id, campaignId: a.campaignId })));
+    }
     
     if (dbArticles.length > 0) {
       console.log(`📄 [Module 5 Backend] Sample article: ${dbArticles[0].title}`);
@@ -730,6 +739,8 @@ router.get('/articles/:campaignId', requireAuth, async (req, res) => {
 
     console.log(`✅ [Module 5 Backend] RETURNING ${articles.length} articles to frontend - NO CACHE`);
     console.log(`🔧 [Module 5 Backend] Cache headers set: no-store, no-cache, must-revalidate`);
+    console.log(`📊 [Module 5 Backend] Sample article data:`, articles.slice(0, 2));
+    console.log(`🔍 [Module 5 Backend] Full response structure:`, JSON.stringify(articles[0], null, 2));
     
     return res.status(200).json(articles);
   } catch (error) {

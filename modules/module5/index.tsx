@@ -94,6 +94,7 @@ export default function Module5GoogleNews() {
   const { data: articles = [], isLoading: articlesLoading, refetch: refetchArticles } = useQuery({
     queryKey: ['/api/google-news', activeCampaign?.id, 'articles'],
     queryFn: async () => {
+      console.log(`🔍 [Module 5 Frontend] Fetching articles for campaign: ${activeCampaign?.id}`);
       const response = await fetch(`/api/google-news/articles/${activeCampaign?.id}`, {
         method: 'GET',
         headers: {
@@ -102,7 +103,9 @@ export default function Module5GoogleNews() {
         cache: 'no-store' // Prevent browser from caching response
       });
       if (!response.ok) throw new Error('Failed to fetch articles');
-      return response.json();
+      const data = await response.json();
+      console.log(`📊 [Module 5 Frontend] Received ${data.length} articles:`, data);
+      return data;
     },
     enabled: !!activeCampaign?.id,
     staleTime: 0, // Always consider data stale
@@ -700,6 +703,7 @@ export default function Module5GoogleNews() {
             <div className="text-center py-8 text-muted-foreground">
               <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>No articles found. Click "Search All Keywords" to find relevant news.</p>
+              <p className="text-xs mt-2 text-red-500">DEBUG: Articles array length: {articles.length}</p>
             </div>
           ) : (
             <div className="space-y-4">
