@@ -1,0 +1,118 @@
+Prompt 24R of 30 — Restore Module 5 Article Flow: Database Persistence, Display, Transfer
+
+
+
+Execute only this prompt and don’t try to interpret or anticipate what comes next.
+
+Purpose:
+
+
+
+Fix Module 5 by restoring the fully working version that:
+
+Successfully stored Google News articles in the database
+
+Persisted and displayed them properly in the frontend
+
+Allowed seamless transfer to Module 6 for NewsJacking
+
+Key Issues to Resolve:
+
+Articles were being stored via google-news-simple.ts, but displayed through google-news.ts (in-memory route).
+
+Frontend is hitting the wrong route (cached/memory) leading to 0-article display.
+
+Transfer logic to Module 6 breaks due to schema mismatch or route targeting.
+
+Required Actions:
+
+
+
+✅ 1. Deduplicate & Correct Backend Route Registration
+
+Ensure only one route file is used — keep google-news-simple.ts
+
+Delete or disable google-news.ts entirely
+
+Confirm only google-news-simple.ts is registered in server/routes/index.ts
+
+// File: server/routes/index.ts
+import googleNewsSimple from './google-news-simple';
+// REMOVE: import googleNews from './google-news'; ❌
+// REMOVE: router.use('/api/module5', googleNews); ❌
+router.use('/api/module5', googleNewsSimple); ✅
+✅ 2. Ensure Article Storage Uses Database
+
+Verify articles are written to the module5Articles table
+
+Structure should include:
+
+{
+  id,
+  campaignId,
+  keywordUsed,
+  title,
+  summary,
+  source,
+  url,
+  imageUrl,
+  relevanceScore,
+  createdAt
+}
+✅ 3. Fix Display Route
+
+Confirm frontend fetch hits the correct route:
+
+// Correct fetch to database-backed route
+fetch('/api/module5/articles', {
+  method: 'GET',
+  headers: { 'Cache-Control': 'no-cache' },
+  cache: 'no-store'
+})
+Server response:
+
+// File: server/routes/google-news-simple.ts
+router.get('/articles', async (req, res) => {
+  console.log('✅ GOOGLE-NEWS-SIMPLE Route HIT');
+  const articles = await db.query.module5Articles.findMany({
+    where: eq(module5Articles.campaignId, req.session.campaignId),
+    orderBy: desc(module5Articles.createdAt)
+  });
+  res.status(200).json(articles);
+});
+✅ 4. Fix Transfer to Module 6
+
+Follow same structure used in Module 3:
+
+{
+  campaignId,
+  headline,
+  summary,
+  url,
+  imageUrl,
+  source,
+  timestamp,
+  relevanceScore
+}
+After transfer:
+
+Remove article from module5Articles
+
+Insert into newsjackQueue for Module 6
+
+✅ 5. Fix UI Logic
+
+Replace transfer failed with:
+
+✅ “Sent to Execution Module” confirmation on success
+
+❌ Specific failure toast if schema is invalid
+
+Restore icons and tooltips:
+
+External link → “Read full article”
+
+Send arrow → “Send to Execution Module”
+
+Bin → “Remove from search”
+
