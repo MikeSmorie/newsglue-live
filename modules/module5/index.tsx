@@ -352,8 +352,9 @@ export default function Module5GoogleNews() {
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
+    <TooltipProvider>
+      <div className="space-y-6">
+        <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Search className="h-5 w-5" />
@@ -667,16 +668,12 @@ export default function Module5GoogleNews() {
                             </div>
                             
                             <div className="flex items-center gap-2">
-                              <div className="flex items-center gap-1">
-                                <span className="text-xs">Relevance:</span>
-                                <div className="w-12 h-2 bg-muted rounded-full overflow-hidden">
-                                  <div 
-                                    className={`h-full ${getRelevanceColor(article.relevanceScore)}`}
-                                    style={{ width: `${article.relevanceScore}%` }}
-                                  />
-                                </div>
-                                <span className="text-xs font-medium">{article.relevanceScore}%</span>
-                              </div>
+                              <Badge 
+                                variant={getRelevanceBadgeVariant(article.relevanceScore)}
+                                className={`text-xs ${getRelevanceBadgeColor(article.relevanceScore)}`}
+                              >
+                                {article.relevanceScore}% match
+                              </Badge>
                               
                               <Button
                                 variant="ghost"
@@ -726,6 +723,7 @@ export default function Module5GoogleNews() {
         </CardContent>
       </Card>
       )}
-    </div>
+      </div>
+    </TooltipProvider>
   );
 }
