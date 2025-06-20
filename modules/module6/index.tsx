@@ -57,9 +57,13 @@ export default function Module6() {
   const [editingContent, setEditingContent] = useState<{platform: string; content: any} | null>(null);
   const [activeChannel, setActiveChannel] = useState<string>('twitter');
   const [bulkSelectMode, setBulkSelectMode] = useState(false);
+  const [latencyStats, setLatencyStats] = useState<any>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Check if debug mode is enabled via URL parameter
+  const isDebugMode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('debug') === 'true';
 
   // PDF Export handlers
   const handleNewsJackPDFExport = async (newsItemId: number, headline: string) => {
@@ -180,10 +184,26 @@ export default function Module6() {
   // Generate newsjack content mutation
   const generateContentMutation = useMutation({
     mutationFn: async (newsItemId: number) => {
+      // T1: Time when "Generate" is clicked
+      const T1 = Date.now();
+      console.time('NewsJack-Total-Latency');
+      console.log(`[LATENCY] T1: Generate clicked at ${T1} (${new Date(T1).toISOString()})`);
+      
+      // T2: Time request is sent to backend
+      const T2 = Date.now();
+      console.log(`[LATENCY] T2: Request sent at ${T2} (${new Date(T2).toISOString()}) - Frontend prep time: ${T2 - T1}ms`);
+      
       const res = await fetch(`/api/queue/generate-newsjacks/${newsItemId}`, {
         method: 'POST',
         credentials: 'include'
       });
+      
+      // T5: Time when response is received
+      const T5 = Date.now();
+      console.log(`[LATENCY] T5: Response received at ${T5} (${new Date(T5).toISOString()}) - Network + Processing time: ${T5 - T2}ms`);
+      console.timeEnd('NewsJack-Total-Latency');
+      console.log(`[LATENCY] TOTAL USER-PERCEIVED LATENCY: ${T5 - T1}ms`);
+      
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.error || 'Failed to generate content');
@@ -191,6 +211,10 @@ export default function Module6() {
       return res.json();
     },
     onSuccess: (data) => {
+      // T6: Frontend starts processing response
+      const T6 = Date.now();
+      console.log(`[LATENCY] T6: Frontend processing response at ${T6} (${new Date(T6).toISOString()})`);
+      
       toast({
         title: "Content Generated",
         description: "Newsjack content has been generated for all platforms.",
@@ -207,6 +231,20 @@ export default function Module6() {
       
       // Refresh the queue to get the latest data
       refetchQueue();
+      
+      // T7: Frontend rendering complete
+      const T7 = Date.now();
+      console.log(`[LATENCY] T7: Frontend rendering complete at ${T7} - Render time: ${T7 - T6}ms`);
+      
+      // Display comprehensive latency summary
+      if (data?.latencyBreakdown) {
+        console.log(`[LATENCY SUMMARY] Complete Generation Pipeline:`);
+        console.log(`• Frontend prep time: ${T6 - T5}ms`);
+        console.log(`• Network + Backend time: ${data.latencyBreakdown.totalBackendTime}ms`);
+        console.log(`• Average time per platform: ${data.latencyBreakdown.avgTimePerPlatform}ms`);
+        console.log(`• Frontend render time: ${T7 - T6}ms`);
+        console.log(`• TOTAL PIPELINE: ${T7 - T1}ms`);
+      }
     },
     onError: (error: Error) => {
       toast({

@@ -126,6 +126,11 @@ router.delete('/delete/:id', requireAuth, protectNewsItems, async (req, res) => 
 router.post('/generate-newsjacks/:id', requireAuth, async (req, res) => {
   try {
     const itemId = parseInt(req.params.id);
+    
+    // T3: API receives generate request
+    const T3 = Date.now();
+    console.log(`[LATENCY] T3: API received request at ${T3} (${new Date(T3).toISOString()}) for item ${itemId}`);
+    console.time(`NewsJack-Backend-Processing-${itemId}`);
 
     // Verify user owns the news item through campaign ownership
     const newsItem = await db.query.newsItems.findFirst({
@@ -140,7 +145,7 @@ router.post('/generate-newsjacks/:id', requireAuth, async (req, res) => {
     }
 
     const campaign = newsItem.campaign;
-    const startTime = Date.now();
+    const startTime = T3;
 
     // Get campaign's social settings or use defaults
     const socialSettings = campaign.socialSettings as any || {};
@@ -220,12 +225,20 @@ Respond with JSON in this format:
 }`;
 
       try {
+        // Start AI processing timer for this platform
+        const aiStartTime = Date.now();
+        console.log(`[LATENCY] AI Processing started for ${platform} at ${aiStartTime} (${new Date(aiStartTime).toISOString()})`);
+        
         const response = await openai.chat.completions.create({
           model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
           messages: [{ role: "user", content: prompt }],
           response_format: { type: "json_object" },
           max_tokens: platform === 'blog' ? 4000 : 1000
         });
+        
+        // End AI processing timer for this platform
+        const aiEndTime = Date.now();
+        console.log(`[LATENCY] AI Processing completed for ${platform} at ${aiEndTime} - Duration: ${aiEndTime - aiStartTime}ms`);
 
         let generatedContent;
         try {
@@ -280,14 +293,29 @@ Respond with JSON in this format:
       }
     }
 
-    // Calculate processing time
-    const processingEndTime = Date.now();
-    const processingTimeSeconds = Math.round((processingEndTime - processingStartTime) / 1000);
+    // T4: AI response completed and returned to client
+    const T4 = Date.now();
+    const processingTimeSeconds = Math.round((T4 - T3) / 1000);
+    
+    console.log(`[LATENCY] T4: AI processing completed at ${T4} (${new Date(T4).toISOString()})`);
+    console.log(`[LATENCY] Total Backend Processing Time: ${T4 - T3}ms`);
+    console.log(`[LATENCY] Database operations time: ${Date.now() - T4}ms`);
+    console.timeEnd(`NewsJack-Backend-Processing-${itemId}`);
+    
+    // Generate comprehensive latency breakdown
+    const latencyBreakdown = {
+      totalBackendTime: T4 - T3,
+      aiProcessingTime: T4 - T3, // Most of backend time is AI processing
+      platformsProcessed: platforms.length,
+      avgTimePerPlatform: Math.round((T4 - T3) / platforms.length),
+      timestamp: new Date().toISOString()
+    };
     
     const generationMetrics = {
       totalTokens,
-      generationTime: processingEndTime - processingStartTime,
+      generationTime: T4 - T3,
       platformsGenerated: platforms.length,
+      latencyBreakdown,
       timestamp: new Date().toISOString()
     };
 
@@ -303,11 +331,14 @@ Respond with JSON in this format:
       .where(eq(newsItems.id, itemId))
       .returning();
 
+    console.log(`[LATENCY] Database update completed - Total request duration: ${Date.now() - T3}ms`);
+
     res.json({
       success: true,
       newsItem: updatedItem,
       platformOutputs,
-      metrics: generationMetrics
+      metrics: generationMetrics,
+      latencyBreakdown
     });
   } catch (error) {
     console.error('Error generating newsjacks:', error);
