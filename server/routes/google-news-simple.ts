@@ -33,21 +33,25 @@ router.get('/keywords/:campaignId', requireAuth, async (req, res) => {
 
     let keywords = campaignKeywords.get(campaignId) || [];
     
-    if (keywords.length === 0) {
-      const defaultKeywords = [
-        campaign.campaignName,
-        campaign.emotionalObjective,
-        campaign.audiencePain
-      ].filter(k => k && k.trim()).map(k => k.trim());
+    // Only show campaign name as initial keyword, no raw text injection
+    if (keywords.length === 0 && campaign.campaignName) {
+      // Extract clean keywords from campaign name only - no long-form text
+      const campaignWords = campaign.campaignName
+        .split(/\s+/)
+        .filter(word => word.length > 2 && word.length < 20) // Reasonable keyword length
+        .slice(0, 3); // Maximum 3 words from campaign name
 
-      keywords = defaultKeywords.map((keyword, index) => ({
-        id: `default-${index}`,
-        keyword,
-        isDefault: true,
-        campaignId
-      }));
+      if (campaignWords.length > 0) {
+        keywords = [{
+          id: 'default-0',
+          keyword: campaignWords.join(' ').trim(),
+          isDefault: true,
+          campaignId,
+          source: 'campaign'
+        }];
 
-      campaignKeywords.set(campaignId, keywords);
+        campaignKeywords.set(campaignId, keywords);
+      }
     }
 
     res.json(keywords);
@@ -92,35 +96,32 @@ router.post('/suggest-keywords/:campaignId', requireAuth, async (req, res) => {
     }
 
     // Use OpenAI to suggest keywords with comprehensive campaign analysis
-    const prompt = `You are an expert keyword strategist for NewsJacking campaigns. Analyze ALL the campaign details below to generate strategic keywords that will surface relevant news articles for this specific brand and audience.
+    const prompt = `You are an expert keyword strategist for NewsJacking campaigns. Analyze the campaign context below to generate clean, search-optimized keywords that will find relevant breaking news for content opportunities.
 
-CAMPAIGN ANALYSIS:
-Campaign Name: ${campaign.campaignName}
-Website URL: ${campaign.websiteUrl || 'Not provided'}
-CTA URL: ${campaign.ctaUrl || 'Not specified'}
-Emotional Objective: ${campaign.emotionalObjective || 'Not specified'}
-Audience Pain Points: ${campaign.audiencePain || 'Not specified'}
-Website Analysis: ${campaign.websiteAnalysis || 'Not provided'}
-Additional Context: ${campaign.additionalData || 'Not provided'}
-Social Settings: ${campaign.socialSettings || 'Not specified'}
+CAMPAIGN CONTEXT:
+Campaign Name: "${campaign.campaignName}"
+Website: ${campaign.websiteUrl || 'Not provided'}
+Target Audience: ${campaign.emotionalObjective || 'Not specified'}
+Pain Points: ${campaign.audiencePain || 'Not specified'}
+Brand Context: ${campaign.websiteAnalysis ? campaign.websiteAnalysis.substring(0, 200) + '...' : 'Not provided'}
 
-KEYWORD STRATEGY RULES:
-1. Parse ALL campaign fields - do not make assumptions based on campaign name alone
-2. Infer themes from brand tone, product type, and audience pain points
+KEYWORD GENERATION RULES:
+1. Generate exactly 12-15 clean, searchable keywords
+2. Each keyword must be 2-4 words maximum
 3. Focus on NewsJacking opportunities (breaking news, trending topics, industry developments)
-4. Generate 12-15 diverse keywords covering different angles:
-   - Industry-specific terms
-   - Audience pain point related topics
-   - Geographic/regional terms (if specified)
-   - Trending themes relevant to the brand
-   - Regulatory/policy changes affecting the industry
-5. Each keyword should be 2-4 words maximum
-6. Avoid generic terms like "business", "news", "company", "industry"
-7. Ensure high relevance diversity - different topic angles
+4. Create diverse keyword categories:
+   - Core industry terms
+   - Trending market topics
+   - Regulatory/policy keywords
+   - Technology advancement terms
+   - Consumer behavior shifts
+5. NO generic terms: avoid "business", "news", "company", "industry", "update"
+6. NO raw campaign text: generate fresh, search-optimized terms
+7. Prioritize terms that surface breaking news relevant to the brand
 
-Respond with JSON in this format:
+Output clean JSON format:
 {
-  "keywords": ["keyword1", "keyword2", "keyword3"]
+  "keywords": ["bitcoin price", "crypto regulation", "digital currency", "blockchain adoption"]
 }`;
 
     const response = await openai.chat.completions.create({
@@ -133,8 +134,10 @@ Respond with JSON in this format:
     const aiResponse = JSON.parse(response.choices[0].message.content || '{}');
     const suggestedKeywords = aiResponse.keywords || [];
 
-    // Add suggested keywords to campaign
-    const keywords = campaignKeywords.get(campaignId) || [];
+    // Clear existing AI-generated keywords and add fresh suggestions
+    const existingKeywords = campaignKeywords.get(campaignId) || [];
+    const nonAIKeywords = existingKeywords.filter((k: any) => k.source !== 'AI');
+    
     const newKeywords = suggestedKeywords.map((keyword: string, index: number) => ({
       id: `ai-${Date.now()}-${index}`,
       keyword: keyword.trim(),
@@ -143,7 +146,7 @@ Respond with JSON in this format:
       campaignId
     }));
 
-    const updatedKeywords = [...keywords, ...newKeywords];
+    const updatedKeywords = [...nonAIKeywords, ...newKeywords];
     campaignKeywords.set(campaignId, updatedKeywords);
 
     res.json({ 
