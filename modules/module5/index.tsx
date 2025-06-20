@@ -284,8 +284,8 @@ export default function Module5GoogleNews() {
       queryClient.invalidateQueries({ queryKey: ['/api/google-news', activeCampaign?.id, 'articles'] });
       setSelectedArticles([]);
       toast({ 
-        title: "Articles transferred successfully", 
-        description: `${data.count} articles sent to Module 6` 
+        title: "Sent to Execution Module", 
+        description: `${data.count} articles transferred successfully` 
       });
     },
     onError: () => {

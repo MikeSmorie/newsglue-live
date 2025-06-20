@@ -494,12 +494,18 @@ router.post('/transfer/:campaignId', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Campaign not found' });
     }
 
-    const articles = await db.execute(sql`
-      SELECT id, campaign_id, keyword_used, title, summary, source, url, image_url, relevance_score, created_at
-      FROM module5_articles 
-      WHERE campaign_id = ${campaignId} AND id = ANY(${articleIds})
-    `);
-    const articlesToTransfer = articles.rows;
+    // Get articles to transfer by iterating through each ID
+    const articlesToTransfer: any[] = [];
+    for (const articleId of articleIds) {
+      const result = await db.execute(sql`
+        SELECT id, campaign_id, keyword_used, title, summary, source, url, image_url, relevance_score, created_at
+        FROM module5_articles 
+        WHERE campaign_id = ${campaignId} AND id = ${articleId}
+      `);
+      if (result.rows.length > 0) {
+        articlesToTransfer.push(result.rows[0]);
+      }
+    }
 
     if (articlesToTransfer.length === 0) {
       return res.status(400).json({ error: 'No articles found to transfer' });
@@ -531,6 +537,8 @@ router.post('/transfer/:campaignId', requireAuth, async (req, res) => {
     }
 
     res.json({ 
+      success: true,
+      message: "Articles transferred to Execution Module successfully",
       count: articlesToTransfer.length,
       transferred: articlesToTransfer.map((a: any) => ({ id: a.id, title: a.title }))
     });
