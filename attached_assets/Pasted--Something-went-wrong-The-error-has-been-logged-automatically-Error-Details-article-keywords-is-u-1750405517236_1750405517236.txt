@@ -1,0 +1,21 @@
+
+Something went wrong. The error has been logged automatically.
+Error Details
+
+article.keywords is undefined
+Stack Trace (Development)
+
+Module5GoogleNews/<.children<.children<.children<.children<.children<@https://3e959d37-4cb4-4cfb-86cc-6cc671dce2fe-00-1gweqp9tfzcnp.riker.replit.dev/@fs/home/runner/workspace/modules/module5/index.tsx:1220:15
+Module5GoogleNews@https://3e959d37-4cb4-4cfb-86cc-6cc671dce2fe-00-1gweqp9tfzcnp.riker.replit.dev/@fs/home/runner/workspace/modules/module5/index.tsx:1041:18
+renderWithHooks@https://3e959d37-4cb4-4cfb-86cc-6cc671dce2fe-00-1gweqp9tfzcnp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=b180f2a1:11548:35
+updateFunctionComponent@https://3e959d37-4cb4-4cfb-86cc-6cc671dce2fe-00-1gweqp9tfzcnp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=b180f2a1:14582:28
+beginWork@https://3e959d37-4cb4-4cfb-86cc-6cc671dce2fe-00-1gweqp9tfzcnp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=b180f2a1:15924:22
+beginWork$1@https://3e959d37-4cb4-4cfb-86cc-6cc671dce2fe-00-1gweqp9tfzcnp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=b180f2a1:19753:22
+performUnitOfWork@https://3e959d37-4cb4-4cfb-86cc-6cc671dce2fe-00-1gweqp9tfzcnp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=b180f2a1:19198:20
+workLoopSync@https://3e959d37-4cb4-4cfb-86cc-6cc671dce2fe-00-1gweqp9tfzcnp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=b180f2a1:19137:30
+renderRootSync@https://3e959d37-4cb4-4cfb-86cc-6cc671dce2fe-00-1gweqp9tfzcnp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=b180f2a1:19116:15
+recoverFromConcurrentError@https://3e959d37-4cb4-4cfb-86cc-6cc671dce2fe-00-1gweqp9tfzcnp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=b180f2a1:18736:42
+performSyncWorkOnRoot@https://3e959d37-4cb4-4cfb-86cc-6cc671dce2fe-00-1gweqp9tfzcnp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=b180f2a1:18879:28
+flushSyncCallbacks@https://3e959d37-4cb4-4cfb-86cc-6cc671dce2fe-00-1gweqp9tfzcnp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=b180f2a1:9119:30
+node_modules/react-dom/cjs/react-dom.development.js/ensureRootIsScheduled/<@https://3e959d37-4cb4-4cfb-86cc-6cc671dce2fe-00-1gweqp9tfzcnp.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=b180f2a1:18627:21
+

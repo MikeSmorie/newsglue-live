@@ -773,7 +773,7 @@ export default function Module5GoogleNews() {
                             </div>
                           </div>
                           
-                          {article.keywords.length > 0 && (
+                          {article.keywords && article.keywords.length > 0 && (
                             <div className="flex flex-wrap gap-1">
                               {article.keywords.map((keyword, idx) => (
                                 <Badge key={idx} variant="outline" className="text-xs">
