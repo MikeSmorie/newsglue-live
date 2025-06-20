@@ -692,33 +692,29 @@ router.get('/articles/:campaignId', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Campaign not found' });
     }
 
-    // Get persistent articles from database using direct SQL query
+    // Get persistent articles from database
     console.log(`🔍 [Module 5 Backend] Fetching articles for campaign ${campaignId}, user ${userId}`);
     
-    const dbArticles = await db.execute(sql`
-      SELECT id, title, description, url, url_to_image, published_at, 
-             source_name, source_id, relevance_score, keywords
-      FROM google_news_articles 
-      WHERE campaign_id = ${campaignId} 
-      ORDER BY created_at DESC
-    `);
+    const dbArticles = await db.select().from(googleNewsArticles)
+      .where(eq(googleNewsArticles.campaignId, campaignId))
+      .orderBy(desc(googleNewsArticles.createdAt));
     
-    console.log(`✅ [Module 5 Backend] Found ${dbArticles.rows.length} articles in database for campaign ${campaignId}`);
+    console.log(`✅ [Module 5 Backend] Found ${dbArticles.length} articles in database for campaign ${campaignId}`);
     
-    // Convert to frontend format (mapping from snake_case SQL columns)
-    const articles = dbArticles.rows.map((row: any) => ({
-      id: row.id,
-      title: row.title,
-      description: row.description,
-      url: row.url,
-      urlToImage: row.url_to_image,
-      publishedAt: row.published_at,
+    // Convert to frontend format
+    const articles = dbArticles.map(article => ({
+      id: article.id,
+      title: article.title,
+      description: article.description,
+      url: article.url,
+      urlToImage: article.urlToImage,
+      publishedAt: article.publishedAt,
       source: {
-        id: row.source_id,
-        name: row.source_name
+        id: article.sourceId,
+        name: article.sourceName
       },
-      relevanceScore: row.relevance_score,
-      keywords: row.keywords || []
+      relevanceScore: article.relevanceScore,
+      keywords: article.keywords || []
     }));
 
     console.log(`✅ [Module 5 Backend] Returning ${articles.length} articles to frontend`);
