@@ -22,7 +22,9 @@ import {
   ExternalLink,
   AlertCircle,
   CheckCircle2,
-  Loader2
+  Loader2,
+  Grid3X3,
+  Brain
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -46,6 +48,7 @@ interface SearchKeyword {
   id: string;
   keyword: string;
   isDefault: boolean;
+  source?: 'user' | 'campaign' | 'AI';
 }
 
 export default function Module5GoogleNews() {
@@ -55,8 +58,9 @@ export default function Module5GoogleNews() {
   
   const [newKeyword, setNewKeyword] = useState("");
   const [selectedArticles, setSelectedArticles] = useState<string[]>([]);
-  const [isKeywordPanelOpen, setIsKeywordPanelOpen] = useState(false);
+  const [activePanel, setActivePanel] = useState<'search' | 'results'>('search');
   const [isSearching, setIsSearching] = useState(false);
+  const [isSuggestingKeywords, setIsSuggestingKeywords] = useState(false);
 
   // Fetch campaign keywords
   const { data: keywords = [], isLoading: keywordsLoading } = useQuery({
@@ -98,6 +102,30 @@ export default function Module5GoogleNews() {
     },
     onError: () => {
       toast({ title: "Failed to add keyword", variant: "destructive" });
+    },
+  });
+
+  // Suggest keywords mutation
+  const suggestKeywordsMutation = useMutation({
+    mutationFn: async () => {
+      setIsSuggestingKeywords(true);
+      const response = await fetch(`/api/google-news/suggest-keywords/${activeCampaign?.id}`, {
+        method: 'POST',
+      });
+      if (!response.ok) throw new Error('Failed to suggest keywords');
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/campaigns', activeCampaign?.id, 'keywords'] });
+      toast({ 
+        title: "Keywords suggested successfully", 
+        description: `Added ${data.count} AI-suggested keywords`
+      });
+      setIsSuggestingKeywords(false);
+    },
+    onError: () => {
+      toast({ title: "Failed to suggest keywords", variant: "destructive" });
+      setIsSuggestingKeywords(false);
     },
   });
 
@@ -250,88 +278,127 @@ export default function Module5GoogleNews() {
         </CardHeader>
       </Card>
 
-      {/* Keywords Panel */}
-      <Card>
-        <Collapsible open={isKeywordPanelOpen} onOpenChange={setIsKeywordPanelOpen}>
-          <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer hover:bg-muted/50">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">Search Keywords</CardTitle>
-                {isKeywordPanelOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-              </div>
-            </CardHeader>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <CardContent className="space-y-4">
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Add new keyword..."
-                  value={newKeyword}
-                  onChange={(e) => setNewKeyword(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleAddKeyword()}
-                />
-                <Button 
-                  onClick={handleAddKeyword}
-                  disabled={!newKeyword.trim() || addKeywordMutation.isPending}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-              
-              <div className="flex flex-wrap gap-2">
-                {keywordsLoading ? (
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-sm text-muted-foreground">Loading keywords...</span>
-                  </div>
-                ) : (
-                  keywords.map((keyword: SearchKeyword) => (
-                    <Badge 
-                      key={keyword.id}
-                      variant={keyword.isDefault ? "default" : "secondary"}
-                      className="flex items-center gap-1"
-                    >
-                      {keyword.keyword}
-                      {!keyword.isDefault && (
-                        <button
-                          onClick={() => removeKeywordMutation.mutate(keyword.id)}
-                          className="ml-1 hover:bg-destructive/20 rounded-sm p-0.5"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </button>
-                      )}
-                    </Badge>
-                  ))
-                )}
-              </div>
-              
+      {/* Toggle Panel Bar */}
+      <Card className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2">
+            <Button
+              variant={activePanel === 'search' ? 'default' : 'outline'}
+              onClick={() => setActivePanel('search')}
+              className="flex-1"
+            >
+              <Search className="mr-2 h-4 w-4" />
+              Search Panel
+            </Button>
+            <Button
+              variant={activePanel === 'results' ? 'default' : 'outline'}
+              onClick={() => setActivePanel('results')}
+              className="flex-1"
+            >
+              <Grid3X3 className="mr-2 h-4 w-4" />
+              Search Results
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Keywords Panel - Only show when Search Panel is active */}
+      {activePanel === 'search' && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">Search Keywords</CardTitle>
               <Button
-                onClick={() => searchArticlesMutation.mutate()}
-                disabled={isSearching || searchArticlesMutation.isPending}
-                className="w-full"
+                onClick={() => suggestKeywordsMutation.mutate()}
+                disabled={isSuggestingKeywords || suggestKeywordsMutation.isPending}
+                variant="outline"
+                className="flex items-center gap-2"
               >
-                {isSearching ? (
+                {isSuggestingKeywords ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Searching All Keywords...
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Suggesting...
                   </>
                 ) : (
                   <>
-                    <Search className="mr-2 h-4 w-4" />
-                    Search All Keywords
+                    <Brain className="h-4 w-4" />
+                    Suggest Keywords
                   </>
                 )}
               </Button>
-            </CardContent>
-          </CollapsibleContent>
-        </Collapsible>
-      </Card>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Add new keyword..."
+                value={newKeyword}
+                onChange={(e) => setNewKeyword(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleAddKeyword()}
+              />
+              <Button 
+                onClick={handleAddKeyword}
+                disabled={!newKeyword.trim() || addKeywordMutation.isPending}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <div className="flex flex-wrap gap-2">
+              {keywordsLoading ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-sm text-muted-foreground">Loading keywords...</span>
+                </div>
+              ) : (
+                keywords.map((keyword: SearchKeyword) => (
+                  <Badge 
+                    key={keyword.id}
+                    variant={keyword.source === 'AI' ? "default" : keyword.isDefault ? "outline" : "secondary"}
+                    className="flex items-center gap-1"
+                  >
+                    {keyword.source === 'AI' && <Brain className="h-3 w-3" />}
+                    {keyword.keyword}
+                    {!keyword.isDefault && (
+                      <button
+                        onClick={() => removeKeywordMutation.mutate(keyword.id)}
+                        className="ml-1 hover:bg-destructive/20 rounded-sm p-0.5"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    )}
+                  </Badge>
+                ))
+              )}
+            </div>
+            
+            <Button
+              onClick={() => searchArticlesMutation.mutate()}
+              disabled={isSearching || searchArticlesMutation.isPending}
+              className="w-full"
+            >
+              {isSearching ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Searching All Keywords...
+                </>
+              ) : (
+                <>
+                  <Search className="mr-2 h-4 w-4" />
+                  Search All Keywords
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Articles Results */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Search Results</CardTitle>
+      {/* Articles Results - Only show when Results Panel is active */}
+      {activePanel === 'results' && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">Search Results</CardTitle>
             <div className="flex items-center gap-2">
               <Badge variant="outline">{articles.length} articles</Badge>
               {selectedArticles.length > 0 && (
@@ -487,6 +554,7 @@ export default function Module5GoogleNews() {
           )}
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }

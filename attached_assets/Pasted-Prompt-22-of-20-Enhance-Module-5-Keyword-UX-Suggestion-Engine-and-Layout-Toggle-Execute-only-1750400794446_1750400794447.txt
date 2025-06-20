@@ -1,0 +1,63 @@
+Prompt 22 of 20 — Enhance Module 5: Keyword UX, Suggestion Engine, and Layout Toggle
+
+
+
+Execute only this prompt and don’t try to interpret or anticipate what comes next.
+
+### PROMPT 22 of 20 – Enhance Module 5: Suggest Keywords + UX Toggle for Search vs Results
+
+🎯 Purpose:
+Upgrade Module 5 interface and intelligence to improve usability, clarity, and discoverability. Add AI-powered keyword suggestion logic and overhaul layout to separate keyword search and result views cleanly.
+
+📌 New Features to Implement:
+
+1. 🧠 Suggest Keywords (AI Feature)
+- Add prominent "Suggest Keywords" button
+- Button triggers API call to OpenAI
+- Input: Campaign description + product/service (from Module 1)
+- Output: 5–15 keywords likely to yield news relevant to campaign
+- Keywords are editable and deletable
+- Suggested keywords are stored in local state and session DB
+
+2. 🧭 Search vs. Results Toggle
+- Create two persistent toggle buttons at the top:
+    • [ Search Panel ]
+    • [ Search Results ]
+- Toggle state determines whether the keyword field or article stack is shown
+- Default state on load = “Search Panel”
+- Toggle bar must always remain fixed/sticky at top of Module 5 viewport
+
+3. ✅ Maintain:
+- Search results sorted by freshness (newest on top)
+- Transfer button removes from Module 5 and sends to Module 6
+- Bulk deletion, select-all, and “delete selected” controls for keyword list
+- Result cards retain relevance score and freshness tag
+
+📁 Files Modified:
+- `client/src/modules/5-google-news/index.tsx`
+- `components/KeywordSuggestPanel.tsx`
+- `components/TogglePanelBar.tsx`
+- `server/routes/keyword-ai.ts` (new)
+- `server/services/openai-keywords.ts`
+
+🎨 UX:
+- Toggle buttons styled as large tabs
+- Search results box expands to full width when active
+- Keep scroll position remembered between toggles
+- Keywords rendered with delete ✖ icon and optional search 🔍 icon
+- Suggested keywords visually tagged (e.g. AI icon or “Suggested” badge)
+
+🧠 AI Prompt to Use (OpenAI):
+You are an expert keyword strategist for digital campaigns. Given the following campaign description and product/service, suggest 10–15 high-value Google News keywords likely to surface recent, relevant articles that resonate with the campaign’s audience.
+
+📌 Output Formatting:
+- Filter duplicates
+- Trim to 2–4 words per keyword
+- Reject low-information keywords like “business,” “news,” etc.
+
+💾 Database Note:
+- Store keywords per campaign
+- Suggested keywords are marked with `source: "AI"`
+- Enable overwrite vs append control in future version (flag as TODO)
+
+
