@@ -448,13 +448,31 @@ router.get('/articles/:campaignId', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Campaign not found' });
     }
 
-    const articles = campaignArticles.get(campaignId) || [];
+    const articles = await db.execute(sql`
+      SELECT id, campaign_id, keyword_used, title, summary, source, url, image_url, relevance_score, created_at
+      FROM module5_articles 
+      WHERE campaign_id = ${campaignId}
+      ORDER BY created_at DESC
+    `);
     
-    articles.sort((a: any, b: any) => 
-      new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-    );
-
-    res.json(articles);
+    // Map database format to frontend expected format
+    const mappedArticles = articles.rows.map((article: any) => ({
+      id: article.id,
+      title: article.title,
+      description: article.summary,
+      url: article.url,
+      urlToImage: article.image_url,
+      publishedAt: article.created_at,
+      source: {
+        id: null,
+        name: article.source
+      },
+      relevanceScore: article.relevance_score,
+      keywords: [article.keyword_used],
+      campaignId: article.campaign_id
+    }));
+    
+    res.json(mappedArticles);
   } catch (error) {
     console.error('Error fetching articles:', error);
     res.status(500).json({ error: 'Failed to fetch articles' });
@@ -476,36 +494,41 @@ router.post('/transfer/:campaignId', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Campaign not found' });
     }
 
-    const articles = campaignArticles.get(campaignId) || [];
-    const articlesToTransfer = articles.filter((article: any) => articleIds.includes(article.id));
+    const articles = await db.execute(sql`
+      SELECT id, campaign_id, keyword_used, title, summary, source, url, image_url, relevance_score, created_at
+      FROM module5_articles 
+      WHERE campaign_id = ${campaignId} AND id = ANY(${articleIds})
+    `);
+    const articlesToTransfer = articles.rows;
 
     if (articlesToTransfer.length === 0) {
       return res.status(400).json({ error: 'No articles found to transfer' });
     }
 
     for (const article of articlesToTransfer) {
-      const fullContent = `${article.title}\n\n${article.description}\n\nThis article from ${article.source.name} provides valuable insights that could be leveraged for NewsJacking opportunities. The content discusses current industry trends and developments that align with campaign objectives.`;
+      const fullContent = `${article.title}\n\n${article.summary}\n\nThis article from ${article.source} provides valuable insights that could be leveraged for NewsJacking opportunities. The content discusses current industry trends and developments that align with campaign objectives.`;
 
       await db.insert(newsItems).values({
-        campaignId,
-        headline: article.title,
+        campaignId: campaignId,
+        headline: String(article.title),
         content: fullContent,
-        sourceUrl: article.url,
+        sourceUrl: String(article.url),
         contentType: 'googlenews',
         status: 'active',
-        metadataScore: article.relevanceScore || 80,
-        platformOutputs: JSON.stringify({
-          source: article.source.name,
-          publishedAt: article.publishedAt,
-          relevanceScore: article.relevanceScore,
-          keywords: article.keywords,
-          imageUrl: article.urlToImage
-        })
+        metadataScore: Number(article.relevance_score) || 80,
+        platformOutputs: {
+          source: String(article.source),
+          timestamp: article.created_at,
+          relevanceScore: Number(article.relevance_score),
+          imageUrl: String(article.image_url || '')
+        }
       });
-    }
 
-    const remainingArticles = articles.filter((article: any) => !articleIds.includes(article.id));
-    campaignArticles.set(campaignId, remainingArticles);
+      // Remove transferred article from module5_articles
+      await db.execute(sql`
+        DELETE FROM module5_articles WHERE id = ${article.id}
+      `);
+    }
 
     res.json({ 
       count: articlesToTransfer.length,
