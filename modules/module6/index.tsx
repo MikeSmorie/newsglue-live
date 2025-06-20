@@ -208,7 +208,20 @@ export default function Module6() {
         const error = await res.json();
         throw new Error(error.error || 'Failed to generate content');
       }
-      return res.json();
+      
+      const result = await res.json();
+      
+      // Store timing data for potential debug display
+      const timingData = {
+        T1, T2, T5,
+        frontendPrepTime: T2 - T1,
+        networkProcessingTime: T5 - T2,
+        totalLatency: T5 - T1,
+        backendBreakdown: result.latencyBreakdown
+      };
+      setLatencyStats(timingData);
+      
+      return result;
     },
     onSuccess: (data) => {
       // T6: Frontend starts processing response
@@ -239,11 +252,12 @@ export default function Module6() {
       // Display comprehensive latency summary
       if (data?.latencyBreakdown) {
         console.log(`[LATENCY SUMMARY] Complete Generation Pipeline:`);
-        console.log(`• Frontend prep time: ${T6 - T5}ms`);
         console.log(`• Network + Backend time: ${data.latencyBreakdown.totalBackendTime}ms`);
         console.log(`• Average time per platform: ${data.latencyBreakdown.avgTimePerPlatform}ms`);
         console.log(`• Frontend render time: ${T7 - T6}ms`);
-        console.log(`• TOTAL PIPELINE: ${T7 - T1}ms`);
+        
+        // Update latency stats with final render time
+        setLatencyStats((prev: any) => prev ? {...prev, renderTime: T7 - T6, totalPipeline: prev.totalLatency + (T7 - T6)} : null);
       }
     },
     onError: (error: Error) => {
