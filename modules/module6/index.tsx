@@ -657,6 +657,17 @@ export default function Module6() {
                           />
                         )}
                         <StatusBadge status={item.status} />
+                        
+                        {/* NewsJack Status Indicator */}
+                        {getGeneratedPlatforms(item).length > 0 ? (
+                          <div className="px-2 py-0.5 text-xs font-bold rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-sm">
+                            {getGeneratedPlatforms(item).length}xNJ
+                          </div>
+                        ) : (
+                          <div className="px-2 py-0.5 text-xs font-bold rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-sm animate-pulse">
+                            0xNJ
+                          </div>
+                        )}
                       </div>
                       
                       {/* Inline Actions */}
