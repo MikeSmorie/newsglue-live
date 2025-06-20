@@ -57,6 +57,75 @@ router.get('/keywords/:campaignId', requireAuth, async (req, res) => {
   }
 });
 
+// Suggest keywords using AI
+router.post('/suggest-keywords/:campaignId', requireAuth, async (req, res) => {
+  try {
+    const { campaignId } = req.params;
+    const userId = req.user!.id;
+
+    const campaign = await db.query.campaigns.findFirst({
+      where: and(eq(campaigns.id, campaignId), eq(campaigns.userId, userId))
+    });
+
+    if (!campaign) {
+      return res.status(404).json({ error: 'Campaign not found' });
+    }
+
+    // Use OpenAI to suggest keywords
+    const prompt = `You are an expert keyword strategist for digital campaigns. Given the following campaign description and product/service, suggest 10-15 high-value Google News keywords likely to surface recent, relevant articles that resonate with the campaign's audience.
+
+Campaign Name: ${campaign.campaignName}
+Website URL: ${campaign.websiteUrl || 'Not provided'}
+Emotional Objective: ${campaign.emotionalObjective || 'Not specified'}
+Audience Pain: ${campaign.audiencePain || 'Not specified'}
+Additional Data: ${campaign.additionalData || 'Not provided'}
+
+Rules:
+- Filter duplicates
+- Trim to 2-4 words per keyword
+- Reject low-information keywords like "business," "news," etc.
+- Focus on keywords that would find NewsJacking opportunities
+- Include industry-specific terms and trending topics
+
+Respond with JSON in this format:
+{
+  "keywords": ["keyword1", "keyword2", "keyword3"]
+}`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" },
+      max_tokens: 500
+    });
+
+    const aiResponse = JSON.parse(response.choices[0].message.content || '{}');
+    const suggestedKeywords = aiResponse.keywords || [];
+
+    // Add suggested keywords to campaign
+    const keywords = campaignKeywords.get(campaignId) || [];
+    const newKeywords = suggestedKeywords.map((keyword: string, index: number) => ({
+      id: `ai-${Date.now()}-${index}`,
+      keyword: keyword.trim(),
+      isDefault: false,
+      source: 'AI',
+      campaignId
+    }));
+
+    const updatedKeywords = [...keywords, ...newKeywords];
+    campaignKeywords.set(campaignId, updatedKeywords);
+
+    res.json({ 
+      count: newKeywords.length,
+      keywords: newKeywords,
+      total: updatedKeywords.length
+    });
+  } catch (error) {
+    console.error('Error suggesting keywords:', error);
+    res.status(500).json({ error: 'Failed to suggest keywords' });
+  }
+});
+
 // Add keyword
 router.post('/keywords/:campaignId', requireAuth, async (req, res) => {
   try {
