@@ -563,21 +563,17 @@ router.post('/transfer/:campaignId', requireAuth, async (req, res) => {
     for (const article of articlesToTransfer) {
       const fullContent = `${article.title}\n\n${article.summary}\n\nThis article from ${article.source} provides valuable insights that could be leveraged for NewsJacking opportunities. The content discusses current industry trends and developments that align with campaign objectives.`;
 
-      await db.insert(newsItems).values({
-        campaignId: campaignId,
-        headline: String(article.title),
-        content: fullContent,
-        sourceUrl: String(article.url),
-        contentType: 'googlenews',
-        status: 'active',
-        metadataScore: Number(article.relevance_score) || 80,
-        platformOutputs: {
-          source: String(article.source),
-          timestamp: article.created_at,
-          relevanceScore: Number(article.relevance_score),
-          imageUrl: String(article.image_url || '')
-        }
-      });
+      await db.execute(sql`
+        INSERT INTO news_items (campaign_id, headline, content, source_url, content_type, status, metadata_score, platform_outputs)
+        VALUES (${campaignId}, ${String(article.title)}, ${fullContent}, ${String(article.url)}, 
+                'googlenews', 'active', ${Number(article.relevance_score) || 80}, 
+                ${JSON.stringify({
+                  source: String(article.source),
+                  timestamp: article.created_at,
+                  relevanceScore: Number(article.relevance_score),
+                  imageUrl: String(article.image_url || '')
+                })})
+      `);
 
       // Remove transferred article from module5_articles
       await db.execute(sql`
