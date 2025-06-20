@@ -161,9 +161,9 @@ router.post('/generate-newsjacks/:id', requireAuth, async (req, res) => {
       platforms = [...platforms, ...enabledChannels];
       console.log('Using configured platforms:', platforms);
     } else {
-      // If no channels configured, use defaults
-      platforms = ['blog', 'twitter', 'linkedin', 'instagram', 'facebook'];
-      console.log('No platforms configured, using defaults:', platforms);
+      // If no channels configured, use all 7 platforms including YouTube and TikTok
+      platforms = ['blog', 'twitter', 'linkedin', 'instagram', 'facebook', 'youtube', 'tiktok'];
+      console.log('No platforms configured, using all 7 defaults:', platforms);
     }
     
     // Always ensure blog is included if not already present

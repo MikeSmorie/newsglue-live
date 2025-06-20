@@ -69,7 +69,14 @@ export default function Module6() {
   // Helper function to get generated platforms for a news item
   const getGeneratedPlatforms = (item: NewsItem) => {
     if (!item.platformOutputs) return [];
-    return Object.keys(item.platformOutputs);
+    // Only count platforms that have actual NewsJack content (not just source data)
+    return Object.keys(item.platformOutputs).filter(platform => {
+      const content = item.platformOutputs[platform];
+      // Check if this is actual generated content, not just source metadata
+      return content && typeof content === 'object' && 
+             (content.content || content.text || content.body) &&
+             !(content.source && content.imageUrl && !content.content); // Exclude source-only data
+    });
   };
 
 
@@ -663,9 +670,9 @@ export default function Module6() {
                         <StatusBadge status={item.status} />
                         
                         {/* NewsJack Status Indicator - VERY OBVIOUS VISUAL DISTINCTION */}
-                        {item.platformOutputs && Object.keys(item.platformOutputs).length > 0 ? (
+                        {getGeneratedPlatforms(item).length > 0 ? (
                           <div className="px-3 py-1 text-xs font-extrabold rounded-full bg-green-500 text-white shadow-xl border-2 border-green-300 ring-2 ring-green-200">
-                            ✅ {Object.keys(item.platformOutputs).length}xNJ
+                            ✅ {getGeneratedPlatforms(item).length}xNJ
                           </div>
                         ) : (
                           <div className="px-3 py-1 text-xs font-extrabold rounded-full bg-red-600 text-white shadow-xl border-2 border-yellow-300 ring-2 ring-red-200 animate-pulse">
