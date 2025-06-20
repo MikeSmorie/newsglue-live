@@ -224,7 +224,19 @@ Respond with JSON in this format:
           max_tokens: platform === 'blog' ? 4000 : 1000
         });
 
-        const generatedContent = JSON.parse(response.choices[0].message.content || '{}');
+        let generatedContent;
+        try {
+          generatedContent = JSON.parse(response.choices[0].message.content || '{}');
+        } catch (parseError) {
+          console.error(`Error parsing JSON for ${platform}:`, parseError);
+          // Fallback content if JSON parsing fails
+          generatedContent = {
+            content: response.choices[0].message.content || `Error generating ${platform} content`,
+            hashtags: [],
+            cta: "Learn more about our solution",
+            metrics: { newsPercentage: 50, campaignPercentage: 50, estimatedEngagement: "medium" }
+          };
+        }
         totalTokens += response.usage?.total_tokens || 0;
 
         platformOutputs[platform] = {

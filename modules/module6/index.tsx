@@ -700,7 +700,7 @@ export default function Module6() {
                   
                   {/* Action Buttons */}
                   <div className="flex gap-2 ml-4">
-                    {!selectedNewsItem.platformOutputs || Object.keys(selectedNewsItem.platformOutputs).length === 0 || !Object.values(selectedNewsItem.platformOutputs).some((output: any) => output.content) ? (
+                    {!selectedNewsItem.platformOutputs || Object.keys(selectedNewsItem.platformOutputs).length === 0 ? (
                       <Button
                         onClick={() => generateContentMutation.mutate(selectedNewsItem.id)}
                         disabled={generateContentMutation.isPending}

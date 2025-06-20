@@ -1,0 +1,52 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[DEBUG] Registering module: testModule
+[DATA INTEGRITY] Starting continuous data monitoring...
+11:13:43 AM [express] serving on port 5000
+[DATA INTEGRITY] News items: 3, Last backup: Fri Jun 20 2025 11:05:03 GMT+0000 (Coordinated Universal Time)
+[DATA INTEGRITY] Structure validation failed: error: invalid input syntax for type uuid: ""
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async DataIntegrityMonitor.validateDataStructure (/home/runner/workspace/server/middleware/dataIntegrityMonitor.ts:113:30)
+    at async DataIntegrityMonitor.performIntegrityCheck (/home/runner/workspace/server/middleware/dataIntegrityMonitor.ts:54:7) {
+  length: 100,
+  severity: 'ERROR',
+  code: '22P02',
+  detail: undefined,
+  hint: undefined,
+  position: '157',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'uuid.c',
+  line: '133',
+  routine: 'string_to_uuid'
+}
+Browserslist: browsers data (caniuse-lite) is 8 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+11:13:47 AM [express] GET /api/user 401 in 4ms :: {"message":"Not logged in"}
+11:13:52 AM [express] GET /api/user 401 in 1ms :: {"message":"Not logged in"}
+[DEBUG] Login attempt: { username: 'NG-Omv9', email: 'NG-Omv9l@WirelessAlert.co.za' }
+[DEBUG] Password comparison: provided='#NG-Omv9*', stored='#NG-Omv9*', match=true
+11:14:58 AM [express] POST /api/login 200 in 2529ms :: {"message":"Login successful","user":{"id":13,…
+11:14:58 AM [express] GET /api/user 200 in 28ms :: {"id":13,"username":"NG-Omv9","email":"NG-Omv9l@Wi…
+11:14:59 AM [express] GET /api/2fa/status 304 in 725ms :: {"enabled":false}
+11:15:02 AM [express] GET /api/campaigns 304 in 116ms :: [{"id":"72ffe0cc-c0af-43b9-883f-6b564878f1c0…
+11:15:10 AM [express] GET /api/user 304 in 26ms :: {"id":13,"username":"NG-Omv9","email":"NG-Omv9l@Wi…
+11:15:11 AM [express] GET /api/2fa/status 304 in 240ms :: {"enabled":false}
+11:15:12 AM [express] GET /api/campaigns 304 in 66ms :: [{"id":"72ffe0cc-c0af-43b9-883f-6b564878f1c0"…
+11:15:13 AM [express] GET /api/queue/fetch/72ffe0cc-c0af-43b9-883f-6b564878f1c0 304 in 102ms :: {"suc…
+No platforms configured, using defaults: [ 'blog', 'twitter', 'linkedin', 'instagram', 'facebook' ]
+Error generating content for linkedin: SyntaxError: Unterminated string in JSON at position 3232
+    at JSON.parse (<anonymous>)
+    at <anonymous> (/home/runner/workspace/server/routes/queue/index.ts:227:39)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+11:16:30 AM [express] POST /api/queue/generate-newsjacks/5 200 in 62910ms :: {"success":true,"newsIte…
+11:16:31 AM [express] GET /api/queue/fetch/72ffe0cc-c0af-43b9-883f-6b564878f1c0 200 in 90ms :: {"succ…
