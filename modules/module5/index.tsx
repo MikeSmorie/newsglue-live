@@ -224,7 +224,7 @@ export default function Module5GoogleNews() {
     return { text: "Stale", color: "text-gray-500" };
   };
 
-  if (!selectedCampaign) {
+  if (!activeCampaign) {
     return (
       <Card>
         <CardContent className="pt-6">

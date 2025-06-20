@@ -2,8 +2,13 @@ import { Router } from 'express';
 import { db } from '../../db/index.js';
 import { newsItems, campaigns } from '../../db/schema.js';
 import { eq, and, desc, inArray } from 'drizzle-orm';
-import { requireAuth } from '../middleware/auth.js';
 import OpenAI from 'openai';
+
+// Simple auth check using passport
+const requireAuth = (req: any, res: any, next: any) => {
+  if (req.isAuthenticated()) return next();
+  res.status(401).json({ message: "Not authenticated" });
+};
 
 const router = Router();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -70,15 +75,16 @@ router.get('/keywords/:campaignId', requireAuth, async (req, res) => {
     if (keywords.length === 0) {
       // Create default keywords from campaign data
       const defaultKeywords = [
-        campaign.companyName,
-        campaign.targetAudience,
-        campaign.valueProposition,
-        ...campaign.keywords.split(',').map(k => k.trim()).filter(Boolean)
+        campaign.campaignName,
+        campaign.emotionalObjective,
+        campaign.audiencePain,
+        // Extract keywords from additional data if available
+        ...(campaign.additionalData || '').split(',').map((k: string) => k.trim()).filter(Boolean)
       ].filter(Boolean);
 
       keywords = defaultKeywords.map((keyword, index) => ({
         id: `default-${index}`,
-        keyword,
+        keyword: keyword || '',
         isDefault: true,
         campaignId
       }));
@@ -226,9 +232,9 @@ router.post('/search/:campaignId', requireAuth, async (req, res) => {
         // Use AI to calculate relevance score
         const prompt = `
 Analyze the relevance of this news article to a campaign with these details:
-Campaign: ${campaign.companyName}
-Target Audience: ${campaign.targetAudience}
-Value Proposition: ${campaign.valueProposition}
+Campaign: ${campaign.campaignName}
+Emotional Objective: ${campaign.emotionalObjective || 'Not specified'}
+Audience Pain: ${campaign.audiencePain || 'Not specified'}
 Keywords: ${keywords.map(k => k.keyword).join(', ')}
 
 Article Title: ${article.title}

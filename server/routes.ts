@@ -43,6 +43,7 @@ import landingPageRouter from "./routes/landing-page.js";
 import aiSitemapRouter from "./routes/ai-sitemap.js";
 import proposalRouter from "./routes/proposal";
 import aiDiscoverabilityRouter from "./routes/ai-discoverability";
+import googleNewsRouter from "./routes/google-news";
 import { db } from "../db";
 import { users } from "../db/schema";
 import { eq, and, or, desc, asc, sql } from "drizzle-orm";
@@ -290,6 +291,20 @@ export async function registerRoutes(app: Express) {
    * POST /api/discoverability/export/csv - Export metadata validation
    */
   app.use("/api/discoverability", requireAuth, aiDiscoverabilityRouter);
+
+  /**
+   * GOOGLE NEWS SEARCH API (Module 5)
+   * Auth: Required
+   * Role: User/Admin/Supergod
+   * GET /api/google-news/keywords/:campaignId - Get search keywords for campaign
+   * POST /api/google-news/keywords/:campaignId - Add keyword to campaign
+   * DELETE /api/google-news/keywords/:keywordId - Remove keyword from campaign
+   * POST /api/google-news/search/:campaignId - Search Google News for articles
+   * GET /api/google-news/articles/:campaignId - Get stored articles for campaign
+   * POST /api/google-news/transfer/:campaignId - Transfer articles to Module 6
+   * DELETE /api/google-news/articles - Delete articles from storage
+   */
+  app.use("/api/google-news", requireAuth, googleNewsRouter);
 
   /**
    * LANDING PAGE STATIC SERVING
