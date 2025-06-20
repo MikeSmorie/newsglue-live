@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { useCampaignContext } from "@/hooks/use-campaign-context";
 import { 
@@ -175,6 +176,61 @@ export default function Module5GoogleNews() {
     },
   });
 
+  // Clear all keywords mutation
+  const clearAllKeywordsMutation = useMutation({
+    mutationFn: async () => {
+      const userKeywords = keywords.filter((k: SearchKeyword) => !k.isDefault);
+      await Promise.all(
+        userKeywords.map((keyword: SearchKeyword) =>
+          fetch(`/api/google-news/keywords/${keyword.id}`, { method: 'DELETE' })
+        )
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/campaigns', activeCampaign?.id, 'keywords'] });
+      toast({
+        title: "Success",
+        description: "All keywords cleared successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to clear keywords",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Edit keyword mutation
+  const editKeywordMutation = useMutation({
+    mutationFn: async ({ keywordId, newText }: { keywordId: string; newText: string }) => {
+      const response = await fetch(`/api/google-news/keywords/${keywordId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keyword: newText }),
+      });
+      if (!response.ok) throw new Error('Failed to edit keyword');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/campaigns', activeCampaign?.id, 'keywords'] });
+      setEditingKeyword(null);
+      setEditKeywordText("");
+      toast({
+        title: "Success",
+        description: "Keyword updated successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to edit keyword",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Transfer articles mutation
   const transferArticlesMutation = useMutation({
     mutationFn: async (articleIds: string[]) => {
@@ -224,6 +280,33 @@ export default function Module5GoogleNews() {
     if (newKeyword.trim()) {
       addKeywordMutation.mutate(newKeyword.trim());
     }
+  };
+
+  // Helper function to format article freshness
+  const formatFreshness = (publishedTime: string) => {
+    const now = new Date();
+    const published = new Date(publishedTime);
+    const diffMs = now.getTime() - published.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    
+    if (diffMins < 60) return `${diffMins} mins ago`;
+    if (diffHours < 24) return `${diffHours} hours ago`;
+    return `${Math.floor(diffHours / 24)} days ago`;
+  };
+
+  // Helper function to get relevance badge variant
+  const getRelevanceBadgeVariant = (relevance: number) => {
+    if (relevance >= 80) return "default"; // Green
+    if (relevance >= 60) return "secondary"; // Amber
+    return "destructive"; // Red
+  };
+
+  // Helper function to get relevance badge color
+  const getRelevanceBadgeColor = (relevance: number) => {
+    if (relevance >= 80) return "bg-green-500 text-white";
+    if (relevance >= 60) return "bg-amber-500 text-white";
+    return "bg-red-500 text-white";
   };
 
   const handleSelectAll = () => {
@@ -348,7 +431,31 @@ export default function Module5GoogleNews() {
               </Button>
             </div>
             
-            <div className="flex flex-wrap gap-2">
+            {/* Clear All Keywords Button */}
+            {keywords.some((k: SearchKeyword) => !k.isDefault) && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => clearAllKeywordsMutation.mutate()}
+                disabled={clearAllKeywordsMutation.isPending}
+                className="w-full mb-2"
+              >
+                {clearAllKeywordsMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                    Clearing Keywords...
+                  </>
+                ) : (
+                  <>
+                    <X className="mr-2 h-3 w-3" />
+                    Clear All Keywords
+                  </>
+                )}
+              </Button>
+            )}
+
+            {/* Keywords List */}
+            <div className="space-y-2">
               {keywordsLoading ? (
                 <div className="flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -356,22 +463,82 @@ export default function Module5GoogleNews() {
                 </div>
               ) : (
                 keywords.map((keyword: SearchKeyword) => (
-                  <Badge 
+                  <div 
                     key={keyword.id}
-                    variant={keyword.source === 'AI' ? "default" : keyword.isDefault ? "outline" : "secondary"}
-                    className="flex items-center gap-1"
+                    className="flex items-center gap-2 p-2 border rounded-lg bg-background"
                   >
-                    {keyword.source === 'AI' && <Brain className="h-3 w-3" />}
-                    {keyword.keyword}
-                    {!keyword.isDefault && (
-                      <button
-                        onClick={() => removeKeywordMutation.mutate(keyword.id)}
-                        className="ml-1 hover:bg-destructive/20 rounded-sm p-0.5"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
+                    {keyword.source === 'AI' && <Brain className="h-3 w-3 text-blue-500 flex-shrink-0" />}
+                    
+                    {editingKeyword === keyword.id ? (
+                      <div className="flex items-center gap-2 flex-1">
+                        <Input
+                          value={editKeywordText}
+                          onChange={(e) => setEditKeywordText(e.target.value)}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              editKeywordMutation.mutate({ keywordId: keyword.id, newText: editKeywordText });
+                            }
+                            if (e.key === 'Escape') {
+                              setEditingKeyword(null);
+                              setEditKeywordText("");
+                            }
+                          }}
+                          className="text-sm"
+                          autoFocus
+                        />
+                        <Button
+                          size="sm"
+                          onClick={() => editKeywordMutation.mutate({ keywordId: keyword.id, newText: editKeywordText })}
+                          disabled={editKeywordMutation.isPending || !editKeywordText.trim()}
+                        >
+                          <CheckCircle2 className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditingKeyword(null);
+                            setEditKeywordText("");
+                          }}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 flex-1">
+                        <Badge 
+                          variant={keyword.source === 'AI' ? "default" : keyword.isDefault ? "outline" : "secondary"}
+                          className="flex-1 justify-start"
+                        >
+                          {keyword.keyword}
+                        </Badge>
+                        
+                        {!keyword.isDefault && (
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setEditingKeyword(keyword.id);
+                                setEditKeywordText(keyword.keyword);
+                              }}
+                              className="h-6 w-6 p-0"
+                            >
+                              <Edit2 className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeKeywordMutation.mutate(keyword.id)}
+                              className="h-6 w-6 p-0 hover:bg-destructive/20"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                     )}
-                  </Badge>
+                  </div>
                 ))
               )}
             </div>
