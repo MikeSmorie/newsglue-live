@@ -1117,28 +1117,61 @@ export default function Module6() {
 
                           {/* Performance Benchmarks */}
                           <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 rounded-lg">
-                            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Performance Benchmarks</h4>
+                            <div className="flex items-center gap-2 mb-3">
+                              <div className="text-lg">📈</div>
+                              <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Performance Benchmarks</h4>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                                    <div className="w-4 h-4 rounded-full border border-current flex items-center justify-center text-xs">?</div>
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="max-w-xs">
+                                    Benchmarks for creating content across all 5 platforms (Twitter, LinkedIn, Instagram, Blog, Facebook).
+                                    Human baseline: 45 min total. Human+AI: 8 min total.
+                                  </p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </div>
                             <div className="space-y-3">
                               <div className="flex justify-between text-sm">
-                                <span className="text-gray-600 dark:text-gray-300">AI Processing Time:</span>
-                                <span className="font-medium text-blue-600 dark:text-blue-400">{selectedNewsItem.generationMetrics?.generationTime || '3.2s'}</span>
+                                <span className="text-gray-600 dark:text-gray-300">NewsGlue Processing (All 5 Platforms):</span>
+                                <Badge variant="default" className="bg-green-600 text-white">
+                                  {selectedNewsItem.processingTimeSeconds ? 
+                                    formatTime(selectedNewsItem.processingTimeSeconds) : 
+                                    (selectedNewsItem.generationMetrics?.generationTime ? 
+                                      `${Math.round(selectedNewsItem.generationMetrics.generationTime / 1000)}s` : 
+                                      '45s'
+                                    )
+                                  }
+                                </Badge>
                               </div>
                               <div className="flex justify-between text-sm">
-                                <span className="text-gray-600 dark:text-gray-300">Human Time:</span>
-                                <span className="font-medium text-gray-600 dark:text-gray-400">~45min</span>
+                                <span className="text-gray-600 dark:text-gray-300">Est. Human Time (All 5 Platforms):</span>
+                                <span className="font-medium text-gray-600 dark:text-gray-400">45min</span>
                               </div>
                               <div className="flex justify-between text-sm">
-                                <span className="text-gray-600 dark:text-gray-300">Human + AI Time:</span>
-                                <span className="font-medium text-green-600 dark:text-green-400">~8min</span>
-                              </div>
-                              <div className="flex justify-between text-sm">
-                                <span className="text-gray-600 dark:text-gray-300">NewsGlue Time:</span>
-                                <span className="font-medium text-blue-600 dark:text-blue-400">{selectedNewsItem.generationMetrics?.generationTime || '3.2s'}</span>
+                                <span className="text-gray-600 dark:text-gray-300">Est. Human + AI Time (All 5 Platforms):</span>
+                                <span className="font-medium text-orange-600 dark:text-orange-400">8min</span>
                               </div>
                               <div className="pt-2 border-t border-gray-300 dark:border-gray-600">
                                 <div className="flex justify-between text-sm font-medium">
-                                  <span className="text-gray-700 dark:text-gray-300">Time Savings:</span>
-                                  <span className="text-emerald-600 dark:text-emerald-400">82% vs Human | 60% vs Human+AI</span>
+                                  <span className="text-gray-700 dark:text-gray-300">Speed Improvement:</span>
+                                  <div className="flex gap-2">
+                                    <Badge variant="outline" className="text-emerald-600 border-emerald-600">
+                                      {selectedNewsItem.processingTimeSeconds ? 
+                                        `${Math.round((45 * 60) / selectedNewsItem.processingTimeSeconds)}X vs Human` :
+                                        '60X vs Human'
+                                      }
+                                    </Badge>
+                                    <Badge variant="outline" className="text-blue-600 border-blue-600">
+                                      {selectedNewsItem.processingTimeSeconds ? 
+                                        `${Math.round((8 * 60) / selectedNewsItem.processingTimeSeconds)}X vs Human+AI` :
+                                        '11X vs Human+AI'
+                                      }
+                                    </Badge>
+                                  </div>
                                 </div>
                               </div>
                             </div>
