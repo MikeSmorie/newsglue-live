@@ -435,31 +435,31 @@ export default function Module6() {
             {/* Status Filter Buttons */}
             <div className="flex flex-wrap gap-1">
               <button 
-                className={`px-2 py-1 text-xs rounded ${statusFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'}`}
+                className={`px-2 py-1 text-xs rounded ${statusFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600'}`}
                 onClick={() => setStatusFilter('all')}
               >
                 All
               </button>
               <button 
-                className={`px-2 py-1 text-xs rounded ${statusFilter === 'draft' ? 'bg-yellow-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'}`}
+                className={`px-2 py-1 text-xs rounded ${statusFilter === 'draft' ? 'bg-yellow-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600'}`}
                 onClick={() => setStatusFilter('draft')}
               >
                 Draft
               </button>
               <button 
-                className={`px-2 py-1 text-xs rounded ${statusFilter === 'active' ? 'bg-green-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'}`}
+                className={`px-2 py-1 text-xs rounded ${statusFilter === 'active' ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600'}`}
                 onClick={() => setStatusFilter('active')}
               >
                 Active
               </button>
               <button 
-                className={`px-2 py-1 text-xs rounded ${statusFilter === 'archived' ? 'bg-gray-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'}`}
+                className={`px-2 py-1 text-xs rounded ${statusFilter === 'archived' ? 'bg-gray-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600'}`}
                 onClick={() => setStatusFilter('archived')}
               >
                 Archive
               </button>
               <button 
-                className={`px-2 py-1 text-xs rounded ${statusFilter === 'bin' ? 'bg-red-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'}`}
+                className={`px-2 py-1 text-xs rounded ${statusFilter === 'bin' ? 'bg-red-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600'}`}
                 onClick={() => setStatusFilter('bin')}
               >
                 Bin
@@ -543,7 +543,7 @@ export default function Module6() {
                               href={item.sourceUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="p-1 text-gray-400 hover:text-blue-600"
+                              className="p-1 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
                               onClick={(e) => e.stopPropagation()}
                             >
                               <ExternalLink className="h-3 w-3" />
@@ -555,7 +555,7 @@ export default function Module6() {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <button
-                              className="p-1 text-gray-400 hover:text-green-600"
+                              className="p-1 text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleNewsJackPDFExport(item.id, item.headline);
@@ -585,7 +585,7 @@ export default function Module6() {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <button
-                              className="p-1 text-gray-400 hover:text-gray-600"
+                              className="p-1 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 updateStatusMutation.mutate({ id: item.id, status: 'archived' });
@@ -600,7 +600,7 @@ export default function Module6() {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <button
-                              className="p-1 text-gray-400 hover:text-red-600"
+                              className="p-1 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 deleteItemMutation.mutate(item.id);
