@@ -256,7 +256,8 @@ const generateCampaignDossierHTML = (campaign: any, newsItemsData: any[], channe
             ${Object.entries(platformOutputs).map(([platform, contentData]: [string, any]) => {
               if (contentData && typeof contentData === 'object') {
                 const content = contentData.content || contentData;
-                const wordCount = content.split(' ').length;
+                const contentString = typeof content === 'string' ? content : JSON.stringify(content);
+                const wordCount = contentString.split(' ').length;
                 const cta = contentData.cta || 'Not specified';
                 const ctaUrl = contentData.ctaUrl || 'Not specified';
                 
@@ -266,7 +267,7 @@ const generateCampaignDossierHTML = (campaign: any, newsItemsData: any[], channe
                       <strong>${platform.charAt(0).toUpperCase() + platform.slice(1)} Content</strong>
                       <span class="word-count">${wordCount} words</span>
                     </div>
-                    <div class="content-text">${content}</div>
+                    <div class="content-text">${contentString}</div>
                     <div class="cta-info">
                       <strong>CTA:</strong> ${cta}<br>
                       <strong>CTA URL:</strong> ${ctaUrl}
