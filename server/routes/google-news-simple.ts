@@ -677,11 +677,13 @@ router.delete('/articles', requireAuth, async (req, res) => {
 
 // Get articles for campaign (persistent from database) - FORCE FRESH RESPONSE
 router.get('/articles/:campaignId', requireAuth, async (req, res) => {
-  // Disable all caching immediately
-  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  // Comprehensive cache disabling
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.set('Pragma', 'no-cache');
   res.set('Expires', '0');
+  res.set('Surrogate-Control', 'no-store');
   res.set('Last-Modified', new Date().toUTCString());
+  res.set('ETag', 'no-cache');
   
   try {
     const { campaignId } = req.params;
@@ -727,6 +729,7 @@ router.get('/articles/:campaignId', requireAuth, async (req, res) => {
     }));
 
     console.log(`✅ [Module 5 Backend] RETURNING ${articles.length} articles to frontend - NO CACHE`);
+    console.log(`🔧 [Module 5 Backend] Cache headers set: no-store, no-cache, must-revalidate`);
     
     return res.status(200).json(articles);
   } catch (error) {

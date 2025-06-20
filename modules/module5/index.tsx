@@ -90,15 +90,24 @@ export default function Module5GoogleNews() {
     enabled: !!activeCampaign?.id,
   });
 
-  // Fetch news articles
+  // Fetch news articles with cache-busting
   const { data: articles = [], isLoading: articlesLoading, refetch: refetchArticles } = useQuery({
     queryKey: ['/api/google-news', activeCampaign?.id, 'articles'],
     queryFn: async () => {
-      const response = await fetch(`/api/google-news/articles/${activeCampaign?.id}`);
+      const response = await fetch(`/api/google-news/articles/${activeCampaign?.id}`, {
+        method: 'GET',
+        headers: {
+          'Cache-Control': 'no-cache'
+        },
+        cache: 'no-store' // Prevent browser from caching response
+      });
       if (!response.ok) throw new Error('Failed to fetch articles');
       return response.json();
     },
-    enabled: !!activeCampaign?.id
+    enabled: !!activeCampaign?.id,
+    staleTime: 0, // Always consider data stale
+    refetchOnMount: true,
+    refetchOnWindowFocus: true
   });
 
   // Add keyword mutation
@@ -253,14 +262,14 @@ export default function Module5GoogleNews() {
       return response.json();
     },
     onSuccess: (data) => {
-      // Force refresh of articles with cache invalidation
+      // Comprehensive cache invalidation and fresh data fetch
+      queryClient.removeQueries({ queryKey: ['/api/google-news', activeCampaign?.id, 'articles'] });
       queryClient.invalidateQueries({ queryKey: ['/api/google-news', activeCampaign?.id, 'articles'] });
-      queryClient.refetchQueries({ queryKey: ['/api/google-news', activeCampaign?.id, 'articles'] });
       
-      // Force refetch articles after small delay to ensure database write completed
+      // Force immediate refetch with no cache
       setTimeout(() => {
         refetchArticles();
-      }, 500);
+      }, 100);
       
       toast({
         title: "Keyword search completed",
