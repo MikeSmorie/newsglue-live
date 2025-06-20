@@ -253,7 +253,15 @@ export default function Module5GoogleNews() {
       return response.json();
     },
     onSuccess: (data) => {
+      // Force refresh of articles with cache invalidation
       queryClient.invalidateQueries({ queryKey: ['/api/google-news', activeCampaign?.id, 'articles'] });
+      queryClient.refetchQueries({ queryKey: ['/api/google-news', activeCampaign?.id, 'articles'] });
+      
+      // Force refetch articles after small delay to ensure database write completed
+      setTimeout(() => {
+        refetchArticles();
+      }, 500);
+      
       toast({
         title: "Keyword search completed",
         description: `Found ${data.count} articles for "${data.keyword}"`,

@@ -691,6 +691,7 @@ router.get('/articles/:campaignId', requireAuth, async (req, res) => {
 
     // Get persistent articles from database
     const dbArticles = await db.select().from(googleNewsArticles).where(eq(googleNewsArticles.campaignId, campaignId)).orderBy(desc(googleNewsArticles.createdAt));
+    console.log(`✅ [Module 5] Found ${dbArticles.length} articles in database for campaign ${campaignId}`);
     
     // Convert to frontend format
     const articles = dbArticles.map(article => ({
@@ -708,6 +709,7 @@ router.get('/articles/:campaignId', requireAuth, async (req, res) => {
       keywords: article.keywords
     }));
 
+    console.log(`✅ [Module 5] Returning ${articles.length} articles to frontend`);
     res.json(articles);
   } catch (error) {
     console.error('Error fetching articles:', error);
