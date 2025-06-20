@@ -824,7 +824,7 @@ export default function Module6() {
                                 ? 'text-base whitespace-pre-wrap font-serif max-h-96 overflow-y-auto' 
                                 : 'text-sm whitespace-pre-wrap font-mono'
                             }`}>
-                              {selectedNewsItem.platformOutputs[activeChannel].content}
+                              {selectedNewsItem.platformOutputs?.[activeChannel]?.content || 'No content generated yet'}
                             </div>
                           </div>
                         </div>
@@ -834,9 +834,13 @@ export default function Module6() {
                           <Button
                             variant="default"
                             onClick={() => {
-                              const content = selectedNewsItem.platformOutputs[activeChannel];
-                              const fullContent = `${content.content}\n\nSource: ${selectedNewsItem.sourceUrl}\nCampaign: ${selectedCampaign?.campaignName}${content.hashtags ? '\n\nHashtags: ' + content.hashtags.map((tag: string) => '#' + tag).join(' ') : ''}${content.cta ? '\n\nCTA: ' + content.cta : ''}`;
-                              handleCopyToClipboard(fullContent);
+                              const content = selectedNewsItem.platformOutputs?.[activeChannel];
+                              if (content?.content) {
+                                const fullContent = `${content.content}\n\nSource: ${selectedNewsItem.sourceUrl}\nCampaign: ${selectedCampaign?.campaignName}${content.hashtags ? '\n\nHashtags: ' + content.hashtags.map((tag: string) => '#' + tag).join(' ') : ''}${content.cta ? '\n\nCTA: ' + content.cta : ''}`;
+                                handleCopyToClipboard(fullContent);
+                              } else {
+                                toast({ title: "No content", description: "Generate content first to copy it.", variant: "destructive" });
+                              }
                             }}
                           >
                             <Copy className="mr-2 h-4 w-4" />
@@ -883,7 +887,7 @@ export default function Module6() {
                             variant="outline"
                             onClick={() => setEditingContent({ 
                               platform: activeChannel, 
-                              content: selectedNewsItem.platformOutputs[activeChannel] 
+                              content: selectedNewsItem.platformOutputs?.[activeChannel] || {}
                             })}
                           >
                             <Edit className="mr-2 h-4 w-4" />
@@ -1006,25 +1010,25 @@ export default function Module6() {
                             <div className="grid grid-cols-2 gap-6">
                               <div className="text-center bg-white dark:bg-gray-800 p-4 rounded-lg border border-orange-200 dark:border-orange-700">
                                 <div className="text-3xl font-bold text-orange-600 dark:text-orange-300 mb-1">
-                                  {selectedNewsItem.platformOutputs[activeChannel].metrics.newsPercentage}%
+                                  {selectedNewsItem.platformOutputs?.[activeChannel]?.metrics?.newsPercentage || 0}%
                                 </div>
                                 <div className="text-sm text-gray-700 dark:text-gray-200 font-medium">News Focus</div>
                                 <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3 mt-2">
                                   <div 
                                     className="bg-orange-500 dark:bg-orange-400 h-3 rounded-full transition-all" 
-                                    style={{ width: `${selectedNewsItem.platformOutputs[activeChannel].metrics.newsPercentage}%` }}
+                                    style={{ width: `${selectedNewsItem.platformOutputs?.[activeChannel]?.metrics?.newsPercentage || 0}%` }}
                                   ></div>
                                 </div>
                               </div>
                               <div className="text-center bg-white dark:bg-gray-800 p-4 rounded-lg border border-purple-200 dark:border-purple-700">
                                 <div className="text-3xl font-bold text-purple-600 dark:text-purple-300 mb-1">
-                                  {selectedNewsItem.platformOutputs[activeChannel].metrics.campaignPercentage}%
+                                  {selectedNewsItem.platformOutputs?.[activeChannel]?.metrics?.campaignPercentage || 0}%
                                 </div>
                                 <div className="text-sm text-gray-700 dark:text-gray-200 font-medium">Campaign Focus</div>
                                 <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3 mt-2">
                                   <div 
                                     className="bg-purple-500 dark:bg-purple-400 h-3 rounded-full transition-all" 
-                                    style={{ width: `${selectedNewsItem.platformOutputs[activeChannel].metrics.campaignPercentage}%` }}
+                                    style={{ width: `${selectedNewsItem.platformOutputs?.[activeChannel]?.metrics?.campaignPercentage || 0}%` }}
                                   ></div>
                                 </div>
                               </div>
