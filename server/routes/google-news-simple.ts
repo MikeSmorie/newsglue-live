@@ -354,48 +354,51 @@ router.post('/search/:campaignId', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'No keywords configured for search' });
     }
 
-    // Sample Google News style articles
-    const sampleArticles = [
-      {
-        id: `article-${Date.now()}-1`,
-        title: "AI Revolution Transforms Digital Marketing Landscape",
-        description: "New artificial intelligence tools are reshaping how businesses approach content creation and customer engagement across digital platforms.",
-        url: "https://example.com/ai-marketing-revolution",
-        urlToImage: "https://via.placeholder.com/400x200/4F46E5/FFFFFF?text=AI+Marketing",
-        publishedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        source: { id: null, name: "TechCrunch" },
-        relevanceScore: 85,
-        keywords: keywords.slice(0, 2).map((k: any) => k.keyword),
-        campaignId
-      },
-      {
-        id: `article-${Date.now()}-2`,
-        title: "Small Business Growth Strategies for 2025",
-        description: "Industry experts reveal key tactics for small businesses to compete effectively in an increasingly digital marketplace.",
-        url: "https://example.com/small-business-growth",
-        urlToImage: "https://via.placeholder.com/400x200/059669/FFFFFF?text=Business+Growth",
-        publishedAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-        source: { id: null, name: "Forbes" },
-        relevanceScore: 78,
-        keywords: keywords.slice(1, 3).map((k: any) => k.keyword),
-        campaignId
-      },
-      {
-        id: `article-${Date.now()}-3`,
-        title: "Customer Experience Trends Drive Business Innovation",
-        description: "Companies investing in customer experience see significant returns as consumer expectations continue to evolve rapidly.",
-        url: "https://example.com/customer-experience-trends",
-        urlToImage: "https://via.placeholder.com/400x200/7C3AED/FFFFFF?text=Customer+Experience",
-        publishedAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-        source: { id: null, name: "Harvard Business Review" },
-        relevanceScore: 72,
-        keywords: keywords.slice(0, 1).map((k: any) => k.keyword),
-        campaignId
+    // Search all keywords using real Google News API
+    let allArticles = [];
+    
+    for (const keyword of keywords) {
+      const searchQuery = keyword.keyword;
+      const googleNewsUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(searchQuery)}&language=en&sortBy=publishedAt&pageSize=15&from=${new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()}`;
+      
+      try {
+        const response = await fetch(googleNewsUrl, {
+          headers: {
+            'X-API-Key': process.env.NEWSAPI_KEY || ''
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const keywordArticles = data.articles?.map((article: any, index: number) => ({
+            id: `search-${keyword.id}-${Date.now()}-${index}`,
+            title: article.title,
+            description: article.description || 'No description available',
+            url: article.url,
+            urlToImage: article.urlToImage,
+            publishedAt: article.publishedAt,
+            source: { 
+              id: article.source?.id || null, 
+              name: article.source?.name || 'Unknown Source' 
+            },
+            keywords: [keyword.keyword],
+            relevanceScore: Math.floor(Math.random() * 20) + 80,
+            campaignId
+          })) || [];
+          
+          allArticles.push(...keywordArticles);
+        } else {
+          console.log(`API response error for keyword "${keyword.keyword}":`, response.status);
+        }
+      } catch (error) {
+        console.log(`Search failed for keyword: ${keyword.keyword}`, error);
       }
-    ];
+    }
+
+    console.log(`Found ${allArticles.length} real articles across ${keywords.length} keywords`);
 
     const existingArticles = campaignArticles.get(campaignId) || [];
-    const newArticles = sampleArticles.filter(article => 
+    const newArticles = allArticles.filter((article: any) => 
       !existingArticles.some((existing: any) => existing.url === article.url)
     );
     
