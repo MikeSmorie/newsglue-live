@@ -160,6 +160,9 @@ router.post('/generate-newsjacks/:id', requireAuth, async (req, res) => {
       console.log('Added blog platform to generation:', platforms);
     }
 
+    // Track processing time
+    const processingStartTime = Date.now();
+    
     // Preserve existing platform outputs but reset landing page status for republishing
     const existingOutputs = newsItem.platformOutputs as any || {};
     const platformOutputs: any = {};
@@ -277,19 +280,23 @@ Respond with JSON in this format:
       }
     }
 
-    const endTime = Date.now();
+    // Calculate processing time
+    const processingEndTime = Date.now();
+    const processingTimeSeconds = Math.round((processingEndTime - processingStartTime) / 1000);
+    
     const generationMetrics = {
       totalTokens,
-      generationTime: endTime - startTime,
+      generationTime: processingEndTime - processingStartTime,
       platformsGenerated: platforms.length,
       timestamp: new Date().toISOString()
     };
 
-    // Update news item with generated content
+    // Update news item with generated content and processing time
     const [updatedItem] = await db.update(newsItems)
       .set({
         platformOutputs,
         generationMetrics,
+        processingTimeSeconds,
         status: 'active',
         updatedAt: new Date()
       })

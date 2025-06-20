@@ -94,6 +94,28 @@ export default function Module6() {
     }
   };
 
+  // Format time utility function
+  const formatTime = (seconds: number): string => {
+    if (seconds < 60) return `${seconds}s`;
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    if (remainingSeconds === 0) return `${minutes}m`;
+    return `${minutes}m ${remainingSeconds}s`;
+  };
+
+  // Calculate time savings
+  const calculateTimeSavings = (processingTime: number) => {
+    const humanTime = 45 * 60; // 45 minutes in seconds (2700 seconds)
+    const humanAiTime = 8 * 60; // 8 minutes in seconds (480 seconds)
+    
+    return {
+      humanTimeSaved: humanTime - processingTime,
+      humanAiTimeSaved: humanAiTime - processingTime,
+      humanTime,
+      humanAiTime
+    };
+  };
+
   const handleCampaignDossierPDFExport = async () => {
     if (!selectedCampaign) return;
     
@@ -970,6 +992,70 @@ export default function Module6() {
                                   #{tag}
                                 </Badge>
                               ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Performance Metrics */}
+                        {selectedNewsItem.processingTimeSeconds && (
+                          <div className="bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800 dark:to-blue-900 border border-gray-200 dark:border-gray-700 p-4 rounded-lg">
+                            <div className="flex items-center gap-2 mb-3">
+                              <div className="text-lg">📈</div>
+                              <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Performance Benchmarks</h4>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                                    <div className="w-4 h-4 rounded-full border border-current flex items-center justify-center text-xs">?</div>
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  Benchmarks based on industry research and prior NewsGlue human-assisted runs
+                                </TooltipContent>
+                              </Tooltip>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                              <div className="space-y-2">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600 dark:text-gray-400">NG Processing Time:</span>
+                                  <Badge variant="default" className="bg-green-600 text-white">
+                                    {formatTime(selectedNewsItem.processingTimeSeconds)}
+                                  </Badge>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600 dark:text-gray-400">Est. Human Time:</span>
+                                  <span className="font-medium text-gray-900 dark:text-white">
+                                    {formatTime(calculateTimeSavings(selectedNewsItem.processingTimeSeconds).humanTime)}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600 dark:text-gray-400">Est. Human + AI Time:</span>
+                                  <span className="font-medium text-gray-900 dark:text-white">
+                                    {formatTime(calculateTimeSavings(selectedNewsItem.processingTimeSeconds).humanAiTime)}
+                                  </span>
+                                </div>
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600 dark:text-gray-400">Time Saved (vs Human):</span>
+                                  <Badge variant="default" className="bg-blue-600 text-white">
+                                    {formatTime(calculateTimeSavings(selectedNewsItem.processingTimeSeconds).humanTimeSaved)}
+                                  </Badge>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600 dark:text-gray-400">Time Saved (vs Human+AI):</span>
+                                  <Badge variant="default" className="bg-purple-600 text-white">
+                                    {formatTime(calculateTimeSavings(selectedNewsItem.processingTimeSeconds).humanAiTimeSaved)}
+                                  </Badge>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600 dark:text-gray-400">Efficiency Gain:</span>
+                                  <Badge variant="default" className="bg-orange-600 text-white">
+                                    {Math.round((calculateTimeSavings(selectedNewsItem.processingTimeSeconds).humanTimeSaved / calculateTimeSavings(selectedNewsItem.processingTimeSeconds).humanTime) * 100)}%
+                                  </Badge>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         )}

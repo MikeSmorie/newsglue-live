@@ -303,6 +303,7 @@ export const newsItems = pgTable("news_items", {
   status: text("status").notNull().default("draft"), // 'draft' | 'active' | 'archived' | 'bin'
   platformOutputs: jsonb("platform_outputs"), // Store generated content per platform
   generationMetrics: jsonb("generation_metrics"), // Store performance metrics
+  processingTimeSeconds: integer("processing_time_seconds"), // NG processing time in seconds
   lastAICrawlAt: timestamp("last_ai_crawl_at"), // Last AI indexing ping
   metadataScore: integer("metadata_score").default(0), // 0-5 metadata completeness score
   sitemapStatus: text("sitemap_status").default("pending"), // 'pending' | 'included' | 'excluded'
