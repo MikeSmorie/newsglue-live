@@ -292,16 +292,37 @@ Respond with JSON in this format:
       }
     };
 
+    // Store progress tracking in memory for this generation
+    const generationProgress = {};
+    platforms.forEach(platform => {
+      generationProgress[platform] = false;
+    });
+    
+    // Store progress globally for polling endpoint
+    global[`generation_progress_${itemId}`] = generationProgress;
+    
+    // Enhanced platform content generation with progress tracking
+    const generatePlatformContentWithProgress = async (platform: string) => {
+      const result = await generatePlatformContent(platform);
+      // Mark platform as completed
+      generationProgress[platform] = true;
+      global[`generation_progress_${itemId}`] = {...generationProgress};
+      return result;
+    };
+
     // Execute all platform generations in parallel
     console.log(`[LATENCY] Starting parallel AI generation for platforms: ${platforms.join(', ')}`);
     const parallelStartTime = Date.now();
     
     const platformResults = await Promise.all(
-      platforms.map(platform => generatePlatformContent(platform))
+      platforms.map(platform => generatePlatformContentWithProgress(platform))
     );
     
     const parallelEndTime = Date.now();
     console.log(`[LATENCY] Parallel AI generation completed in ${parallelEndTime - parallelStartTime}ms`);
+    
+    // Clean up progress tracking
+    delete global[`generation_progress_${itemId}`];
 
     // Process results and build platform outputs
     platformResults.forEach(result => {
@@ -358,6 +379,22 @@ Respond with JSON in this format:
     });
   } catch (error) {
     console.error('Error generating newsjacks:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/queue/generation-progress/:id - Get real-time generation progress
+router.get('/generation-progress/:id', requireAuth, async (req, res) => {
+  try {
+    const itemId = parseInt(req.params.id);
+    const progress = global[`generation_progress_${itemId}`] || {};
+    
+    res.json({
+      success: true,
+      progress
+    });
+  } catch (error) {
+    console.error('Error fetching generation progress:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

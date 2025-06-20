@@ -58,6 +58,7 @@ export default function Module6() {
   const [activeChannel, setActiveChannel] = useState<string>('twitter');
   const [bulkSelectMode, setBulkSelectMode] = useState(false);
   const [latencyStats, setLatencyStats] = useState<any>(null);
+  const [generationProgress, setGenerationProgress] = useState<{[key: string]: boolean}>({});
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -184,6 +185,15 @@ export default function Module6() {
   // Generate newsjack content mutation
   const generateContentMutation = useMutation({
     mutationFn: async (newsItemId: number) => {
+      // Initialize progress tracking
+      setGenerationProgress({
+        blog: false,
+        twitter: false,
+        linkedin: false,
+        instagram: false,
+        facebook: false
+      });
+      
       // T1: Time when "Generate" is clicked
       const T1 = Date.now();
       console.time('NewsJack-Total-Latency');
@@ -193,10 +203,29 @@ export default function Module6() {
       const T2 = Date.now();
       console.log(`[LATENCY] T2: Request sent at ${T2} (${new Date(T2).toISOString()}) - Frontend prep time: ${T2 - T1}ms`);
       
+      // Set up progress monitoring via polling
+      const progressInterval = setInterval(async () => {
+        try {
+          const progressRes = await fetch(`/api/queue/generation-progress/${newsItemId}`, {
+            credentials: 'include'
+          });
+          if (progressRes.ok) {
+            const progressData = await progressRes.json();
+            if (progressData.progress) {
+              setGenerationProgress(progressData.progress);
+            }
+          }
+        } catch (error) {
+          // Ignore polling errors
+        }
+      }, 1000);
+      
       const res = await fetch(`/api/queue/generate-newsjacks/${newsItemId}`, {
         method: 'POST',
         credentials: 'include'
       });
+      
+      clearInterval(progressInterval);
       
       // T5: Time when response is received
       const T5 = Date.now();
@@ -210,6 +239,15 @@ export default function Module6() {
       }
       
       const result = await res.json();
+      
+      // Final progress update
+      setGenerationProgress({
+        blog: true,
+        twitter: true,
+        linkedin: true,
+        instagram: true,
+        facebook: true
+      });
       
       // Store timing data for potential debug display
       const timingData = {
@@ -790,13 +828,37 @@ export default function Module6() {
                       onClick={() => generateContentMutation.mutate(selectedNewsItem.id)}
                       disabled={generateContentMutation.isPending}
                       size="lg"
-                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 font-bold text-lg shadow-lg"
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 font-bold text-lg shadow-lg min-h-[3.5rem]"
                     >
                       {generateContentMutation.isPending ? (
-                        <>
-                          <RefreshCw className="mr-3 h-5 w-5 animate-spin" />
-                          Generating NewsJacks...
-                        </>
+                        <div className="flex flex-col gap-2 w-full">
+                          <div className="flex items-center justify-center gap-3">
+                            <RefreshCw className="h-5 w-5 animate-spin" />
+                            <span>Generating NewsJacks...</span>
+                          </div>
+                          {Object.keys(generationProgress).length > 0 && (
+                            <div className="w-full space-y-1">
+                              <div className="flex justify-between text-xs text-white/80">
+                                <span>Progress</span>
+                                <span>{Math.round((Object.values(generationProgress).filter(Boolean).length / 5) * 100)}%</span>
+                              </div>
+                              <div className="w-full bg-white/20 rounded-full h-1.5">
+                                <div 
+                                  className="bg-white h-1.5 rounded-full transition-all duration-500"
+                                  style={{ width: `${(Object.values(generationProgress).filter(Boolean).length / 5) * 100}%` }}
+                                ></div>
+                              </div>
+                              <div className="flex justify-between text-xs text-white/70">
+                                {Object.entries(generationProgress).map(([platform, completed]) => (
+                                  <span key={platform} className={completed ? 'text-green-300 font-semibold' : 'text-white/50'}>
+                                    {platform.charAt(0).toUpperCase() + platform.slice(1)}
+                                    {completed ? ' ✓' : '...'}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       ) : (
                         <>
                           <Zap className="mr-3 h-5 w-5" />
