@@ -1,0 +1,75 @@
+✅ Thank you for the clarification — and you’re absolutely right.
+
+The current implementation in Replit is a first-time build in this instance, even though we (you and I) have built it before in another generation.
+
+That does change the tone and preamble slightly to avoid misleading Replit.
+
+Here is the corrected and final version of Prompt 21:
+
+⸻
+
+🧠 Prompt 21 of 20 – Build Module 5: Google News/Keyword Search
+
+Execute only this prompt and don’t try to interpret or anticipate what comes next.
+
+### PROMPT 21 of 20 – Build Module 5: Google News/Keyword Search (First-time Build from Prior Blueprint)
+
+🧱 Purpose:
+Build Module 5 from scratch based on a previously validated blueprint. This module allows AI-curated Google News and Keyword-based search to source news items for potential NewsJacking.
+
+🎯 Core Functions:
+- Search Google News using campaign-defined and user-defined keywords
+- Display results sorted by newest-first
+- Use AI to assign relevance scores aligned with campaign goals
+- Allow one-click transfer of selected news items to Module 6
+- Remove transferred items from Module 5 permanently
+
+🗝️ Notes:
+- Although built before, this is a clean implementation in this Replit instance
+- Required APIs are already in `secrets` as from prior setup
+- Full article content must be scraped via the news URL before passing to Module 6
+- Final object passed to Module 6 must match the existing schema used by Module 3’s input pipeline
+
+⚙️ Module 5 UI Requirements:
+- Keywords auto-loaded from Module 1’s campaign setup
+- Manual addition/removal of keywords supported
+- Button: "Search All Keywords"
+- Results stack sorted by publish time descending
+- Relevance score visible (color bar or badge)
+- "Send to Module 6" button: destructively transfers and removes from view
+- "Delete" button for manual purging
+- Checkboxes and "Select All / Delete Selected" for bulk management
+
+📥 Transfer Path:
+- On transfer, article content is scraped via existing service (reuse Module 3 scraper)
+- Metadata acquired: headline, summary, source, publish date, image URL, article URL
+- Sent to Module 6 via the same route and schema used by Module 3 pastes
+- Transferred items are instantly removed from Module 5 database
+
+🧱 Architecture:
+- No campaign dropdown — this module obeys the campaign silo
+- Store retrieved items locally per campaign in case of page refresh
+- Avoid duplicate transfers of the same URL (store `sourceUrl` hash)
+
+📁 File Layout:
+- `client/src/modules/5-google-news/`
+- `components/GoogleNewsCard.tsx`, `SearchKeywordPanel.tsx`
+- `server/routes/google-news.ts`
+- `server/services/scraper.ts` (reuse scraper from Module 3 if present)
+
+📊 UX Enhancements (optional):
+- Color-coded article "age" indicator (red = fresh, gray = stale)
+- Tabs or toggle: collapse/expand keyword input block
+- Show estimated read time
+- Intelligent duplicate detection via slug/hash
+
+📌 Final Deliverables:
+- Fully working Module 5 with Google News integration
+- Search, filter, rank, delete, and transfer functions
+- Seamless transfer of properly scraped article data to Module 6
+- Intuitive, professional interface with real-time responsiveness
+
+###
+
+✅ You may now load this prompt into Replit safely.
+Let me know when you’re ready to move on to Module 4 (Prompt 22).
