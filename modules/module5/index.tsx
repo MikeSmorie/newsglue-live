@@ -745,31 +745,52 @@ export default function Module5GoogleNews() {
                                 {article.relevanceScore}% match
                               </Badge>
                               
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => window.open(article.url, '_blank')}
-                              >
-                                <ExternalLink className="h-3 w-3" />
-                              </Button>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => window.open(article.url, '_blank')}
+                                  >
+                                    <ExternalLink className="h-3 w-3" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Read full article</p>
+                                </TooltipContent>
+                              </Tooltip>
                               
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => transferArticlesMutation.mutate([article.id])}
-                                disabled={transferArticlesMutation.isPending}
-                              >
-                                <Send className="h-3 w-3" />
-                              </Button>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => transferArticlesMutation.mutate([article.id])}
+                                    disabled={transferArticlesMutation.isPending}
+                                  >
+                                    <Send className="h-3 w-3" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Send to Execution Module</p>
+                                </TooltipContent>
+                              </Tooltip>
                               
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => deleteArticlesMutation.mutate([article.id])}
-                                disabled={deleteArticlesMutation.isPending}
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => deleteArticlesMutation.mutate([article.id])}
+                                    disabled={deleteArticlesMutation.isPending}
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Remove from search</p>
+                                </TooltipContent>
+                              </Tooltip>
                             </div>
                           </div>
                           

@@ -220,8 +220,9 @@ router.put('/keywords/:keywordId', requireAuth, async (req, res) => {
     }
 
     // Find and update in all campaigns
-    for (const [campaignId, keywords] of campaignKeywords.entries()) {
-      const keywordIndex = keywords.findIndex(k => k.id === keywordId);
+    const campaignEntries = Array.from(campaignKeywords.entries());
+    for (const [campaignId, keywords] of campaignEntries) {
+      const keywordIndex = keywords.findIndex((k: any) => k.id === keywordId);
       if (keywordIndex !== -1) {
         keywords[keywordIndex].keyword = newKeyword.trim();
         campaignKeywords.set(campaignId, keywords);
@@ -277,7 +278,7 @@ router.post('/search-keyword/:campaignId/:keywordId', requireAuth, async (req, r
     }
 
     const keywords = campaignKeywords.get(campaignId) || [];
-    const keyword = keywords.find(k => k.id === keywordId);
+    const keyword = keywords.find((k: any) => k.id === keywordId);
     
     if (!keyword) {
       return res.status(404).json({ error: 'Keyword not found' });
@@ -559,13 +560,13 @@ router.delete('/articles', requireAuth, async (req, res) => {
 
     let deletedCount = 0;
 
-    for (const [campaignId, articles] of Array.from(campaignArticles.entries())) {
-      const originalLength = articles.length;
-      const remainingArticles = articles.filter((article: any) => !articleIds.includes(article.id));
-      
-      if (remainingArticles.length < originalLength) {
-        campaignArticles.set(campaignId, remainingArticles);
-        deletedCount += originalLength - remainingArticles.length;
+    // Delete articles from database
+    for (const articleId of articleIds) {
+      const result = await db.execute(sql`
+        DELETE FROM module5_articles WHERE id = ${articleId}
+      `);
+      if (result.rowCount && result.rowCount > 0) {
+        deletedCount++;
       }
     }
 
