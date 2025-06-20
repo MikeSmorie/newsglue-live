@@ -190,11 +190,22 @@ export default function Module6() {
       }
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: "Content Generated",
         description: "Newsjack content has been generated for all platforms.",
       });
+      
+      // Update the selected news item immediately with the new data
+      if (data?.newsItem && selectedNewsItem?.id === data.newsItem.id) {
+        setSelectedNewsItem(data.newsItem);
+      }
+      
+      // Force invalidate all related queries to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/queue'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/campaigns'] });
+      
+      // Refresh the queue to get the latest data
       refetchQueue();
     },
     onError: (error: Error) => {
