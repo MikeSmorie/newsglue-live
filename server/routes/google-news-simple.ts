@@ -528,19 +528,30 @@ router.get('/articles/:campaignId', requireAuth, async (req, res) => {
   }
 });
 
-// Transfer articles to Module 6
+// Transfer articles to Module 6 (mirroring Module 3 protocol)
 router.post('/transfer/:campaignId', requireAuth, async (req, res) => {
   try {
     const { campaignId } = req.params;
     const { articleIds } = req.body;
     const userId = req.user!.id;
 
+    // Fail-safe: prevent transfer if campaign ID is missing
+    if (!campaignId) {
+      return res.status(400).json({ error: 'Campaign ID is required' });
+    }
+
+    // Verify campaign exists AND user owns it (critical security check)
     const campaign = await db.query.campaigns.findFirst({
-      where: and(eq(campaigns.id, campaignId), eq(campaigns.userId, userId))
+      where: and(
+        eq(campaigns.id, campaignId),
+        eq(campaigns.userId, userId)
+      )
     });
 
     if (!campaign) {
-      return res.status(404).json({ error: 'Campaign not found' });
+      return res.status(404).json({ 
+        error: 'Campaign not found or access denied' 
+      });
     }
 
     // Get articles from database for transfer
@@ -551,60 +562,87 @@ router.post('/transfer/:campaignId', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'No articles found to transfer' });
     }
 
+    const transferredItems = [];
+
     for (const article of articlesToTransfer) {
-      // Check if article already exists in Module 6 to prevent duplicates
-      const existingItem = await db.query.newsItems.findFirst({
-        where: and(
-          eq(newsItems.campaignId, campaignId),
-          eq(newsItems.sourceUrl, article.url)
-        )
-      });
+      try {
+        // Check if article already exists in Module 6 to prevent duplicates
+        const existingItem = await db.query.newsItems.findFirst({
+          where: and(
+            eq(newsItems.campaignId, campaignId),
+            eq(newsItems.sourceUrl, article.url)
+          )
+        });
 
-      if (existingItem) {
-        console.log(`Article already exists in Module 6: ${article.title}`);
-        continue;
-      }
-
-      // Create enhanced content for NewsJack generation
-      const fullContent = `${article.title}\n\n${article.description}\n\nSource: ${article.sourceName}\nPublished: ${article.publishedAt}\nRelevance Score: ${article.relevanceScore}%\n\nThis article provides valuable NewsJacking opportunities aligned with your campaign objectives. The content discusses current industry trends and developments that can be leveraged for timely, relevant content creation.`;
-
-      // Insert using actual database schema structure
-      await db.insert(newsItems).values({
-        campaignId,
-        headline: article.title,
-        content: fullContent,
-        sourceUrl: article.url,
-        contentType: 'googlenews',
-        status: 'draft',
-        metadataScore: Math.min(article.relevanceScore || 80, 100),
-        platformOutputs: {
-          source: article.sourceName,
-          publishedAt: article.publishedAt,
-          relevanceScore: article.relevanceScore,
-          keywords: article.keywords || [],
-          imageUrl: article.urlToImage,
-          transferredFrom: 'module5',
-          transferredAt: new Date().toISOString()
+        if (existingItem) {
+          console.log(`[Module 5→6] Article already exists in Module 6: ${article.title}`);
+          continue;
         }
-      });
 
-      console.log(`✅ Transferred article to Module 6: ${article.title}`);
+        // Create enhanced content following Module 3 format
+        const fullContent = `${article.title}
+
+${article.description}
+
+This article was published by ${article.sourceName} and discusses important industry developments that could be relevant for NewsJacking opportunities. The content provides insights into current market trends and could serve as a foundation for creating timely, relevant content that connects your brand to breaking news.
+
+Key takeaways from this article include strategic implications for businesses in the digital marketing space, potential opportunities for thought leadership, and emerging trends that savvy marketers should monitor for NewsJacking potential.
+
+Source: ${article.sourceName}
+Published: ${article.publishedAt}
+Relevance Score: ${article.relevanceScore}%`;
+
+        // Insert into news items (Module 6 format) - exact same schema as Module 3
+        const [newNewsItem] = await db.insert(newsItems).values({
+          campaignId,
+          headline: article.title,
+          content: fullContent,
+          sourceUrl: article.url,
+          contentType: 'googlenews',
+          status: 'draft',
+          metadataScore: Math.min(article.relevanceScore || 80, 100),
+          platformOutputs: {
+            source: article.sourceName,
+            publishedAt: article.publishedAt,
+            relevanceScore: article.relevanceScore,
+            keywords: article.keywords || [],
+            imageUrl: article.urlToImage,
+            transferredFrom: 'module5',
+            transferredAt: new Date().toISOString()
+          }
+        }).returning();
+
+        transferredItems.push({
+          id: article.id,
+          title: article.title,
+          newId: newNewsItem.id
+        });
+
+        console.log(`✅ [Module 5→6] Transferred article to Module 6: ${article.title}`);
+
+      } catch (transferError) {
+        console.error(`❌ [Module 5→6] Failed to transfer article ${article.id}:`, transferError);
+      }
     }
 
-    // Remove transferred articles from database
+    // Remove transferred articles from Module 5 database
     for (const articleId of articleIds) {
       await db.delete(googleNewsArticles).where(eq(googleNewsArticles.id, articleId));
     }
 
-    res.json({ 
+    return res.status(200).json({ 
       success: true,
-      count: articlesToTransfer.length,
-      transferred: articlesToTransfer.map((a: any) => ({ id: a.id, title: a.title })),
-      message: `Successfully transferred ${articlesToTransfer.length} article(s) to Module 6`
+      count: transferredItems.length,
+      transferred: transferredItems,
+      message: `Successfully transferred ${transferredItems.length} article(s) to Module 6`
     });
+
   } catch (error) {
-    console.error('Error transferring articles:', error);
-    res.status(500).json({ error: 'Failed to transfer articles' });
+    console.error('❌ [Module 5→6] Error transferring articles:', error);
+    res.status(500).json({ 
+      error: 'Failed to transfer articles',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
 
