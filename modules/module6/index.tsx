@@ -29,6 +29,7 @@ interface NewsItem {
   status: 'draft' | 'active' | 'archived' | 'bin';
   platformOutputs?: any;
   generationMetrics?: any;
+  processingTimeSeconds?: number;
   createdAt: string;
   updatedAt: string;
 }
