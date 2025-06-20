@@ -1,0 +1,66 @@
+Acknowledged — all your observations have been noted and integrated into the next execution prompt.
+
+Here is your updated instruction set:
+
+⸻
+
+🧠 Prompt 22 of 30 — Refine Module 5: Keyword Search, Results Relevance, and UX Polish
+
+Execute only this prompt and don’t try to interpret or anticipate what comes next.
+
+⸻
+
+Purpose:
+Improve keyword suggestion accuracy, keyword list presentation, and news result usability in Module 5.
+
+⸻
+
+Scope:
+
+✅ Keyword Suggestions (Accuracy & Presentation)
+	•	Refactor the AI prompt for keyword suggestion to:
+	•	Parse all campaign details from Module 1, not just campaign title.
+	•	Infer themes from brand tone, product type, and audience pain points.
+	•	Avoid assumptions (e.g. “In Code We Trust” ≠ software coding).
+	•	Increase relevance diversity with better NLP-based prompt crafting.
+	•	Present each keyword on its own line with padding for legibility.
+	•	Add edit icon next to each keyword to allow in-place editing.
+	•	Show a brain icon next to AI-suggested keywords (as before).
+	•	Add bulk “Clear All Keywords” button at the top of the panel.
+
+⸻
+
+✅ Search Execution Improvements
+	•	Ensure all campaign keywords are searched — not just the first few.
+	•	Validate that the API loop is not exiting prematurely.
+	•	Introduce staggered throttling (if needed) for keyword batches.
+
+⸻
+
+✅ Search Result UI Polish
+	•	Each action icon in results should have:
+	•	Hover tooltips with descriptions:
+	•	Open in new tab → “Open Article”
+	•	Send to Module 6 → “Send to Execution Module”
+	•	Delete → “Remove from Search Results”
+	•	Add an article freshness badge (“X mins ago”, “Y hours ago”).
+	•	Add visual ranking logic:
+	•	Articles with relevance 80%+ show green badge.
+	•	Articles 60-79% show amber badge.
+	•	Articles below 60% show red badge.
+
+⸻
+
+Notes:
+	•	Ensure all work remains topic-agnostic and campaign-driven.
+	•	Never hard-code examples from current campaigns (e.g., Bitcoin, finance).
+	•	System must dynamically adapt to any campaign vertical via Module 1 analysis.
+
+⸻
+
+When done, await Prompt 23 of 30.
+Do not proceed to Module 4 implementation until instructed.
+
+⸻
+
+Proceed to Replit with this SOP-compliant execution.

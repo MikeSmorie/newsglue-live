@@ -71,21 +71,32 @@ router.post('/suggest-keywords/:campaignId', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Campaign not found' });
     }
 
-    // Use OpenAI to suggest keywords
-    const prompt = `You are an expert keyword strategist for digital campaigns. Given the following campaign description and product/service, suggest 10-15 high-value Google News keywords likely to surface recent, relevant articles that resonate with the campaign's audience.
+    // Use OpenAI to suggest keywords with comprehensive campaign analysis
+    const prompt = `You are an expert keyword strategist for NewsJacking campaigns. Analyze ALL the campaign details below to generate strategic keywords that will surface relevant news articles for this specific brand and audience.
 
+CAMPAIGN ANALYSIS:
 Campaign Name: ${campaign.campaignName}
 Website URL: ${campaign.websiteUrl || 'Not provided'}
+CTA URL: ${campaign.ctaUrl || 'Not specified'}
 Emotional Objective: ${campaign.emotionalObjective || 'Not specified'}
-Audience Pain: ${campaign.audiencePain || 'Not specified'}
-Additional Data: ${campaign.additionalData || 'Not provided'}
+Audience Pain Points: ${campaign.audiencePain || 'Not specified'}
+Website Analysis: ${campaign.websiteAnalysis || 'Not provided'}
+Additional Context: ${campaign.additionalData || 'Not provided'}
+Social Settings: ${campaign.socialSettings || 'Not specified'}
 
-Rules:
-- Filter duplicates
-- Trim to 2-4 words per keyword
-- Reject low-information keywords like "business," "news," etc.
-- Focus on keywords that would find NewsJacking opportunities
-- Include industry-specific terms and trending topics
+KEYWORD STRATEGY RULES:
+1. Parse ALL campaign fields - do not make assumptions based on campaign name alone
+2. Infer themes from brand tone, product type, and audience pain points
+3. Focus on NewsJacking opportunities (breaking news, trending topics, industry developments)
+4. Generate 12-15 diverse keywords covering different angles:
+   - Industry-specific terms
+   - Audience pain point related topics
+   - Geographic/regional terms (if specified)
+   - Trending themes relevant to the brand
+   - Regulatory/policy changes affecting the industry
+5. Each keyword should be 2-4 words maximum
+6. Avoid generic terms like "business", "news", "company", "industry"
+7. Ensure high relevance diversity - different topic angles
 
 Respond with JSON in this format:
 {
@@ -156,6 +167,33 @@ router.post('/keywords/:campaignId', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Error adding keyword:', error);
     res.status(500).json({ error: 'Failed to add keyword' });
+  }
+});
+
+// Edit keyword
+router.put('/keywords/:keywordId', requireAuth, async (req, res) => {
+  try {
+    const { keywordId } = req.params;
+    const { keyword: newKeyword } = req.body;
+    
+    if (!newKeyword?.trim()) {
+      return res.status(400).json({ error: 'Keyword text is required' });
+    }
+
+    // Find and update in all campaigns
+    for (const [campaignId, keywords] of campaignKeywords.entries()) {
+      const keywordIndex = keywords.findIndex(k => k.id === keywordId);
+      if (keywordIndex !== -1) {
+        keywords[keywordIndex].keyword = newKeyword.trim();
+        campaignKeywords.set(campaignId, keywords);
+        return res.json({ success: true, keyword: keywords[keywordIndex] });
+      }
+    }
+
+    res.status(404).json({ error: 'Keyword not found' });
+  } catch (error) {
+    console.error('Error editing keyword:', error);
+    res.status(500).json({ error: 'Failed to edit keyword' });
   }
 });
 

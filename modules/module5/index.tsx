@@ -24,7 +24,9 @@ import {
   CheckCircle2,
   Loader2,
   Grid3X3,
-  Brain
+  Brain,
+  Edit2,
+  X
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -61,6 +63,8 @@ export default function Module5GoogleNews() {
   const [activePanel, setActivePanel] = useState<'search' | 'results'>('search');
   const [isSearching, setIsSearching] = useState(false);
   const [isSuggestingKeywords, setIsSuggestingKeywords] = useState(false);
+  const [editingKeyword, setEditingKeyword] = useState<string | null>(null);
+  const [editKeywordText, setEditKeywordText] = useState("");
 
   // Fetch campaign keywords
   const { data: keywords = [], isLoading: keywordsLoading } = useQuery({
