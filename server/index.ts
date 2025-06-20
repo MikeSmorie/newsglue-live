@@ -7,6 +7,8 @@ import { setupVite, serveStatic, log } from "./vite";
 import { ModuleManager } from "./moduleManager";
 import { generateNewsjackContent } from "./routes/newsjack-exec";
 import { initializeDataIntegrityMonitoring } from "./middleware/dataIntegrityMonitor";
+import { dataBackup, scheduledBackup } from "./middleware/dataBackup";
+import { protectBeforeChanges } from "./middleware/preChangeProtection";
 
 interface IModule {
   name: string;
@@ -120,8 +122,27 @@ app.get("/api/module/test", async (req, res) => {
     serveStatic(app); // Production: Static file serving
   }
 
-  // Initialize data integrity monitoring
+  // Initialize data protection systems
   initializeDataIntegrityMonitoring();
+
+  // Schedule automatic backups every 4 hours
+  setInterval(async () => {
+    try {
+      await scheduledBackup();
+    } catch (error) {
+      console.error('[DATA PROTECTION] Scheduled backup failed:', error);
+    }
+  }, 4 * 60 * 60 * 1000);
+
+  // Create initial backup on startup
+  setTimeout(async () => {
+    try {
+      await dataBackup.createFullBackup('startup');
+      console.log('[DATA PROTECTION] Startup backup completed');
+    } catch (error) {
+      console.error('[DATA PROTECTION] Startup backup failed:', error);
+    }
+  }, 10000);
 
   // Start server on port 5000
   const PORT = 5000;
