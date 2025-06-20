@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { db } from '../../db/index.js';
 import { newsItems, campaigns, campaignKeywords, googleNewsArticles } from '../../db/schema.js';
-import { eq, and, asc, desc } from 'drizzle-orm';
+import { eq, and, asc, desc, sql } from 'drizzle-orm';
 import OpenAI from 'openai';
 
 const router = Router();
@@ -692,25 +692,33 @@ router.get('/articles/:campaignId', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Campaign not found' });
     }
 
-    // Get persistent articles from database  
-    const dbArticles = await db.select().from(googleNewsArticles).where(eq(googleNewsArticles.campaignId, campaignId)).orderBy(desc(googleNewsArticles.createdAt));
-    console.log(`✅ [Module 5 Backend] Found ${dbArticles.length} articles in database for campaign ${campaignId}`);
-    console.log(`🔍 [Module 5 Backend] Sample article data:`, dbArticles.length > 0 ? JSON.stringify(dbArticles[0], null, 2) : 'No articles');
+    // Get persistent articles from database using direct SQL query
+    console.log(`🔍 [Module 5 Backend] Fetching articles for campaign ${campaignId}, user ${userId}`);
     
-    // Convert to frontend format
-    const articles = dbArticles.map(article => ({
-      id: article.id,
-      title: article.title,
-      description: article.description,
-      url: article.url,
-      urlToImage: article.urlToImage,
-      publishedAt: article.publishedAt,
+    const dbArticles = await db.execute(sql`
+      SELECT id, title, description, url, url_to_image, published_at, 
+             source_name, source_id, relevance_score, keywords
+      FROM google_news_articles 
+      WHERE campaign_id = ${campaignId} 
+      ORDER BY created_at DESC
+    `);
+    
+    console.log(`✅ [Module 5 Backend] Found ${dbArticles.rows.length} articles in database for campaign ${campaignId}`);
+    
+    // Convert to frontend format (mapping from snake_case SQL columns)
+    const articles = dbArticles.rows.map((row: any) => ({
+      id: row.id,
+      title: row.title,
+      description: row.description,
+      url: row.url,
+      urlToImage: row.url_to_image,
+      publishedAt: row.published_at,
       source: {
-        id: article.sourceId,
-        name: article.sourceName
+        id: row.source_id,
+        name: row.source_name
       },
-      relevanceScore: article.relevanceScore,
-      keywords: article.keywords
+      relevanceScore: row.relevance_score,
+      keywords: row.keywords || []
     }));
 
     console.log(`✅ [Module 5 Backend] Returning ${articles.length} articles to frontend`);
