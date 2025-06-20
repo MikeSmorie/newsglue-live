@@ -1,7 +1,7 @@
 import express from 'express';
 import { db } from '../../../db/index.js';
 import { newsItems, campaigns } from '../../../db/schema.js';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import OpenAI from 'openai';
 import { protectNewsItems } from '../../middleware/dataProtection';
@@ -106,6 +106,9 @@ router.delete('/delete/:id', requireAuth, protectNewsItems, async (req, res) => 
       return res.status(404).json({ error: 'News item not found or access denied' });
     }
 
+    // Delete related records first to avoid foreign key constraint issues
+    await db.execute(sql`DELETE FROM output_metrics WHERE news_item_id = ${itemId}`);
+    
     // Delete news item
     await db.delete(newsItems).where(eq(newsItems.id, itemId));
 

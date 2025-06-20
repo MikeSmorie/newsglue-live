@@ -750,8 +750,11 @@ export default function Module6() {
                       <Sparkles className="mx-auto h-16 w-16 text-blue-500 mb-6" />
                       <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-3">Generate NewsJack Content</h3>
                       <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
-                        Create AI-powered content for all social platforms using the NewsJack methodology: 
-                        Start with news, frame tension, introduce campaign, drive urgency.
+                        Transform news into strategic content using NewsJack methodology:
+                        1. Start with current news events
+                        2. Frame tension and urgency
+                        3. Bridge to your campaign solution
+                        4. Drive immediate action
                       </p>
                       <Button
                         onClick={() => generateContentMutation.mutate(selectedNewsItem.id)}
@@ -1004,7 +1007,7 @@ export default function Module6() {
                         </div>
 
                         {/* NewsJack Quality Metrics */}
-                        {selectedNewsItem.platformOutputs[activeChannel].metrics && (
+                        {selectedNewsItem.platformOutputs?.[activeChannel]?.metrics && (
                           <div className="bg-purple-50 dark:bg-purple-900/50 border border-purple-200 dark:border-purple-600 p-4 rounded-lg">
                             <h4 className="text-sm font-semibold text-purple-900 dark:text-purple-100 mb-3">NewsJack Quality Analysis</h4>
                             <div className="grid grid-cols-2 gap-6">
