@@ -66,6 +66,13 @@ export default function Module6() {
   // Check if debug mode is enabled via URL parameter
   const isDebugMode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('debug') === 'true';
 
+  // Helper function to get generated platforms for a news item
+  const getGeneratedPlatforms = (item: NewsItem) => {
+    if (!item.platformOutputs) return [];
+    return Object.keys(item.platformOutputs);
+  };
+
+
   // PDF Export handlers
   const handleNewsJackPDFExport = async (newsItemId: number, headline: string) => {
     try {
@@ -413,10 +420,7 @@ export default function Module6() {
     }
   };
 
-  const getGeneratedPlatforms = (item: NewsItem) => {
-    if (!item.platformOutputs) return [];
-    return Object.keys(item.platformOutputs);
-  };
+
 
   // PDF download functions
   const handleDownloadNewsJackPDF = async (newsItemId: number) => {
