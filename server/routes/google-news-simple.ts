@@ -57,19 +57,15 @@ router.get('/keywords/:campaignId', requireAuth, async (req, res) => {
       if (campaignWords.length > 0) {
         const defaultKeyword = campaignWords.join(' ').trim();
         
-        // Insert default keyword into database
-        const result = await db.query(
-          'INSERT INTO campaign_keywords (campaign_id, keyword, is_default, source) VALUES ($1, $2, $3, $4) RETURNING *',
-          [campaignId, defaultKeyword, true, 'campaign']
-        );
-        
         keywords = [{
-          id: result.rows[0].id.toString(),
-          keyword: result.rows[0].keyword,
+          id: 'default-0',
+          keyword: defaultKeyword,
           isDefault: true,
           campaignId,
           source: 'campaign'
         }];
+        
+        campaignKeywords.set(campaignId, keywords);
       }
     }
 
@@ -153,16 +149,20 @@ Output clean JSON format:
     const aiResponse = JSON.parse(response.choices[0].message.content || '{}');
     const suggestedKeywords = aiResponse.keywords || [];
 
-    // Clear existing AI-generated keywords from database and add fresh suggestions
-    await db.query('DELETE FROM campaign_keywords WHERE campaign_id = $1 AND source = $2', [campaignId, 'AI']);
+    // Clear existing AI-generated keywords and add fresh suggestions
+    const existingKeywords = campaignKeywords.get(campaignId) || [];
+    const nonAIKeywords = existingKeywords.filter((k: any) => k.source !== 'AI');
     
-    // Insert new AI keywords into database
-    for (const keyword of suggestedKeywords) {
-      await db.query(
-        'INSERT INTO campaign_keywords (campaign_id, keyword, is_default, source) VALUES ($1, $2, $3, $4)',
-        [campaignId, keyword.trim(), false, 'AI']
-      );
-    }
+    const newKeywords = suggestedKeywords.map((keyword: string, index: number) => ({
+      id: `ai-${Date.now()}-${index}`,
+      keyword: keyword.trim(),
+      isDefault: false,
+      source: 'AI',
+      campaignId
+    }));
+
+    const updatedKeywords = [...nonAIKeywords, ...newKeywords];
+    campaignKeywords.set(campaignId, updatedKeywords);
 
     res.json({ 
       count: newKeywords.length,
@@ -195,6 +195,7 @@ router.post('/keywords/:campaignId', requireAuth, async (req, res) => {
       id: `user-${Date.now()}`,
       keyword: keyword.trim(),
       isDefault: false,
+      source: 'user',
       campaignId
     };
 
