@@ -280,8 +280,6 @@ router.delete('/keywords/:keywordId', requireAuth, async (req, res) => {
     await db.delete(campaignKeywords).where(eq(campaignKeywords.id, parseInt(keywordId)));
     
     return res.json({ success: true });
-
-    res.status(404).json({ error: 'Keyword not found' });
   } catch (error) {
     console.error('Error removing keyword:', error);
     res.status(500).json({ error: 'Failed to remove keyword' });
@@ -302,12 +300,25 @@ router.post('/search-keyword/:campaignId/:keywordId', requireAuth, async (req, r
       return res.status(404).json({ error: 'Campaign not found' });
     }
 
-    const keywords = campaignKeywords.get(campaignId) || [];
-    const keyword = keywords.find(k => k.id === keywordId);
+    // Get keyword from database
+    const keywordResult = await db.select().from(campaignKeywords).where(
+      and(
+        eq(campaignKeywords.campaignId, campaignId),
+        eq(campaignKeywords.id, parseInt(keywordId))
+      )
+    ).limit(1);
     
-    if (!keyword) {
+    if (keywordResult.length === 0) {
       return res.status(404).json({ error: 'Keyword not found' });
     }
+    
+    const keyword = {
+      id: keywordResult[0].id.toString(),
+      keyword: keywordResult[0].keyword,
+      isDefault: keywordResult[0].isDefault,
+      campaignId: keywordResult[0].campaignId,
+      source: keywordResult[0].source
+    };
 
     // Search Google News for real articles using the keyword
     const googleNewsUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(keyword.keyword)}&language=en&sortBy=publishedAt&pageSize=20`;
@@ -391,10 +402,20 @@ router.post('/search/:campaignId', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Campaign not found' });
     }
 
-    const keywords = campaignKeywords.get(campaignId) || [];
-    if (keywords.length === 0) {
+    // Get keywords from database
+    const dbKeywords = await db.select().from(campaignKeywords).where(eq(campaignKeywords.campaignId, campaignId));
+    
+    if (dbKeywords.length === 0) {
       return res.status(400).json({ error: 'No keywords configured for search' });
     }
+    
+    const keywords = dbKeywords.map((row) => ({
+      id: row.id.toString(),
+      keyword: row.keyword,
+      isDefault: row.isDefault,
+      campaignId: row.campaignId,
+      source: row.source
+    }));
 
     // Search all keywords using real Google News API
     let allArticles = [];
