@@ -1,0 +1,105 @@
+
+Prompt 26 of 30 — Audit & Repair Module 5 News Retrieval & Keyword Persistence
+
+
+
+Execute only this prompt and don’t try to interpret or anticipate what comes next.
+
+🧩 Purpose:
+
+
+
+Audit and repair the data flow of Module 5 to restore:
+
+Persistent keyword storage and recall
+
+Proper news search → storage → display loop
+
+🔍 Problems Identified:
+
+✅ AI-suggested keywords generate properly but fail to persist
+
+✅ Manual keywords like “Saylor” say “added” but do not appear
+
+✅ System claims “20 articles found” but shows 0 in UI
+
+✅ Previously working display logic now fails after backend changes
+
+✅ Logs indicate route collisions and UUID structure validation failure
+
+🛠️ Scope of Work:
+
+
+
+1. ✅ Audit All Relevant Backend Files:
+
+server/routes/google-news.ts
+
+server/routes/google-news-simple.ts
+
+server/db/schema/googleNewsArticles.ts
+
+server/db/schema/googleNewsKeywords.ts
+
+client/src/modules/module5/index.tsx
+
+client/src/components/KeywordPanel.tsx
+
+client/src/components/NewsResultsPanel.tsx
+
+
+
+Focus:
+
+Confirm the correct DB-backed route (google-news-simple.ts) is the one registered
+
+Eliminate route conflicts — only 1 handler must control /api/google-news/articles/...
+
+
+
+2. ✅ Fix Keyword Persistence
+
+Confirm user-added and AI-generated keywords write to database
+
+Ensure correct campaign ID is attached and retrieved on load
+
+Display should reflect stored keywords with appropriate tools (🖊️ edit, 🔍 search, 🗑️ delete)
+
+
+
+3. ✅ Fix Article Retrieval & Display
+
+Confirm search results are saved to database and retrieved from DB (not memory)
+
+Refactor article GET handler:
+
+res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+Confirm campaignId is passed and respected in both store and retrieve functions
+
+Fix race condition where articles are stored before component mounts
+
+
+
+4. ✅ Logs & Debug Flags
+
+Add console log: MODULE5: Loading articles for campaign: ${campaignId}
+
+On frontend: console.log('Rendering articles:', articles.length)
+
+Add error log if campaign ID is missing or malformed (root cause of invalid UUID error)
+
+🧪 Test & Confirm:
+
+
+
+✅ Suggest keywords → persist
+
+✅ Add manual keyword “Saylor” → shows in panel
+
+✅ Click “Search All” → shows loading → returns articles
+
+✅ “20 articles found” → 20 articles display visibly
+
+✅ No more UUID errors in backend logs
+
+Let me know when you’ve verified — then we’ll proceed to Prompt 27.

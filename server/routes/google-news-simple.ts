@@ -31,21 +31,22 @@ router.get('/keywords/:campaignId', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Campaign not found' });
     }
 
-    // Get existing keywords from memory or use database fallback
-    let keywords = campaignKeywords.get(campaignId) || [];
+    console.log('MODULE5: Loading keywords for campaign:', campaignId);
+
+    // Get keywords from database
+    const keywordResults = await db.execute(sql`
+      SELECT id, campaign_id, keyword, is_default, created_at
+      FROM module5_keywords 
+      WHERE campaign_id = ${campaignId}
+      ORDER BY created_at ASC
+    `);
     
-    if (keywords.length === 0) {
-      try {
-        // Skip database fetch for now, using memory storage for keywords
-        keywords = [];
-        
-        if (keywords.length > 0) {
-          campaignKeywords.set(campaignId, keywords);
-        }
-      } catch (error) {
-        console.log('Database fallback for keywords, using memory storage');
-      }
-    }
+    let keywords = keywordResults.rows.map((row: any) => ({
+      id: row.id.toString(),
+      keyword: row.keyword,
+      isDefault: row.is_default,
+      campaignId: row.campaign_id
+    }));
 
     // Add default campaign name keyword if no keywords exist
     if (keywords.length === 0 && campaign.campaignName) {
@@ -57,15 +58,27 @@ router.get('/keywords/:campaignId', requireAuth, async (req, res) => {
       if (campaignWords.length > 0) {
         const defaultKeyword = campaignWords.join(' ').trim();
         
-        keywords = [{
-          id: 'default-0',
-          keyword: defaultKeyword,
-          isDefault: true,
-          campaignId,
-          source: 'campaign'
-        }];
+        // Insert default keyword into database
+        await db.execute(sql`
+          INSERT INTO module5_keywords (campaign_id, keyword, is_default)
+          VALUES (${campaignId}, ${defaultKeyword}, true)
+          ON CONFLICT (campaign_id, keyword) DO NOTHING
+        `);
         
-        campaignKeywords.set(campaignId, keywords);
+        // Refresh keywords from database after insertion
+        const refreshResults = await db.execute(sql`
+          SELECT id, campaign_id, keyword, is_default, created_at
+          FROM module5_keywords 
+          WHERE campaign_id = ${campaignId}
+          ORDER BY created_at ASC
+        `);
+        
+        keywords = refreshResults.rows.map((row: any) => ({
+          id: row.id.toString(),
+          keyword: row.keyword,
+          isDefault: row.is_default,
+          campaignId: row.campaign_id
+        }));
       }
     }
 
@@ -149,25 +162,24 @@ Output clean JSON format:
     const aiResponse = JSON.parse(response.choices[0].message.content || '{}');
     const suggestedKeywords = aiResponse.keywords || [];
 
-    // Clear existing AI-generated keywords and add fresh suggestions
-    const existingKeywords = campaignKeywords.get(campaignId) || [];
-    const nonAIKeywords = existingKeywords.filter((k: any) => k.source !== 'AI');
+    // Clear existing AI-generated keywords from database
+    await db.execute(sql`
+      DELETE FROM module5_keywords 
+      WHERE campaign_id = ${campaignId} AND is_default = false
+    `);
     
-    const newKeywords = suggestedKeywords.map((keyword: string, index: number) => ({
-      id: `ai-${Date.now()}-${index}`,
-      keyword: keyword.trim(),
-      isDefault: false,
-      source: 'AI',
-      campaignId
-    }));
-
-    const updatedKeywords = [...nonAIKeywords, ...newKeywords];
-    campaignKeywords.set(campaignId, updatedKeywords);
+    // Insert new AI-generated keywords into database
+    for (const keyword of suggestedKeywords) {
+      await db.execute(sql`
+        INSERT INTO module5_keywords (campaign_id, keyword, is_default)
+        VALUES (${campaignId}, ${keyword.trim()}, false)
+        ON CONFLICT (campaign_id, keyword) DO NOTHING
+      `);
+    }
 
     res.json({ 
-      count: newKeywords.length,
-      keywords: newKeywords,
-      total: updatedKeywords.length
+      count: suggestedKeywords.length,
+      message: 'Keywords generated successfully'
     });
   } catch (error) {
     console.error('Error suggesting keywords:', error);
