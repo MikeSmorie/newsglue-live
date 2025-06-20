@@ -57,18 +57,38 @@ router.get('/keywords/:campaignId', requireAuth, async (req, res) => {
   }
 });
 
-// Suggest keywords using AI
+// Suggest keywords using AI with campaign context resilience
 router.post('/suggest-keywords/:campaignId', requireAuth, async (req, res) => {
   try {
     const { campaignId } = req.params;
     const userId = req.user!.id;
 
+    // Fetch complete campaign data for context resilience
     const campaign = await db.query.campaigns.findFirst({
       where: and(eq(campaigns.id, campaignId), eq(campaigns.userId, userId))
     });
 
     if (!campaign) {
       return res.status(404).json({ error: 'Campaign not found' });
+    }
+
+    // Validate essential campaign fields for AI generation
+    const requiredFields = {
+      campaignName: campaign.campaignName,
+      websiteUrl: campaign.websiteUrl,
+      emotionalObjective: campaign.emotionalObjective,
+      audiencePain: campaign.audiencePain
+    };
+    const missingFields = Object.entries(requiredFields)
+      .filter(([key, value]) => !value)
+      .map(([key]) => key);
+    
+    if (missingFields.length > 0) {
+      return res.status(400).json({ 
+        error: 'Incomplete campaign data', 
+        missingFields,
+        message: 'Please complete campaign setup before generating keywords'
+      });
     }
 
     // Use OpenAI to suggest keywords with comprehensive campaign analysis
@@ -220,6 +240,72 @@ router.delete('/keywords/:keywordId', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Error removing keyword:', error);
     res.status(500).json({ error: 'Failed to remove keyword' });
+  }
+});
+
+// Search single keyword
+router.post('/search-keyword/:campaignId/:keywordId', requireAuth, async (req, res) => {
+  try {
+    const { campaignId, keywordId } = req.params;
+    const userId = req.user!.id;
+
+    const campaign = await db.query.campaigns.findFirst({
+      where: and(eq(campaigns.id, campaignId), eq(campaigns.userId, userId))
+    });
+
+    if (!campaign) {
+      return res.status(404).json({ error: 'Campaign not found' });
+    }
+
+    const keywords = campaignKeywords.get(campaignId) || [];
+    const keyword = keywords.find(k => k.id === keywordId);
+    
+    if (!keyword) {
+      return res.status(404).json({ error: 'Keyword not found' });
+    }
+
+    // Generate sample articles for the specific keyword
+    const sampleArticles = [
+      {
+        id: `${keywordId}-article-${Date.now()}-1`,
+        title: `Breaking: ${keyword.keyword} Market Sees Major Shift in Consumer Behavior`,
+        description: `Latest analysis shows significant changes in ${keyword.keyword} market dynamics with implications for businesses.`,
+        url: `https://example.com/news/${keyword.keyword.replace(/\s+/g, '-').toLowerCase()}-market-shift`,
+        source: { name: 'Business Weekly' },
+        publishedAt: new Date(Date.now() - Math.random() * 3600000).toISOString(),
+        urlToImage: null,
+        keyword: keyword.keyword,
+        relevanceScore: Math.floor(Math.random() * 40) + 60, // 60-100%
+        campaignId
+      },
+      {
+        id: `${keywordId}-article-${Date.now()}-2`,
+        title: `Industry Leaders Respond to ${keyword.keyword} Regulatory Changes`,
+        description: `Key stakeholders share insights on recent ${keyword.keyword} policy updates and their business impact.`,
+        url: `https://example.com/news/${keyword.keyword.replace(/\s+/g, '-').toLowerCase()}-regulatory-response`,
+        source: { name: 'Industry Today' },
+        publishedAt: new Date(Date.now() - Math.random() * 7200000).toISOString(),
+        urlToImage: null,
+        keyword: keyword.keyword,
+        relevanceScore: Math.floor(Math.random() * 30) + 70, // 70-100%
+        campaignId
+      }
+    ];
+
+    // Store articles
+    const existingArticles = campaignArticles.get(campaignId) || [];
+    const updatedArticles = [...existingArticles, ...sampleArticles];
+    campaignArticles.set(campaignId, updatedArticles);
+
+    res.json({ 
+      success: true, 
+      count: sampleArticles.length,
+      keyword: keyword.keyword,
+      articles: sampleArticles
+    });
+  } catch (error) {
+    console.error('Error searching keyword:', error);
+    res.status(500).json({ error: 'Failed to search keyword' });
   }
 });
 

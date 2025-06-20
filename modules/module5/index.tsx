@@ -27,7 +27,8 @@ import {
   Grid3X3,
   Brain,
   Edit2,
-  X
+  X,
+  Eye
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -66,6 +67,17 @@ export default function Module5GoogleNews() {
   const [isSuggestingKeywords, setIsSuggestingKeywords] = useState(false);
   const [editingKeyword, setEditingKeyword] = useState<string | null>(null);
   const [editKeywordText, setEditKeywordText] = useState("");
+
+  // Fetch full campaign data for resilience
+  const { data: fullCampaignData } = useQuery({
+    queryKey: ['/api/campaigns', activeCampaign?.id, 'full'],
+    queryFn: async () => {
+      const response = await fetch(`/api/campaigns/${activeCampaign?.id}`);
+      if (!response.ok) throw new Error('Failed to fetch campaign');
+      return response.json();
+    },
+    enabled: !!activeCampaign?.id,
+  });
 
   // Fetch campaign keywords
   const { data: keywords = [], isLoading: keywordsLoading } = useQuery({
@@ -226,6 +238,32 @@ export default function Module5GoogleNews() {
       toast({
         title: "Error",
         description: "Failed to edit keyword",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Search single keyword mutation
+  const searchKeywordMutation = useMutation({
+    mutationFn: async (keywordId: string) => {
+      const response = await fetch(`/api/google-news/search-keyword/${activeCampaign?.id}/${keywordId}`, {
+        method: 'POST',
+      });
+      if (!response.ok) throw new Error('Failed to search keyword');
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/google-news', activeCampaign?.id, 'articles'] });
+      toast({
+        title: "Keyword search completed",
+        description: `Found ${data.count} articles for "${data.keyword}"`,
+      });
+      setActivePanel('results'); // Switch to results panel
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to search keyword",
         variant: "destructive",
       });
     },
@@ -516,25 +554,57 @@ export default function Module5GoogleNews() {
                         
                         {!keyword.isDefault && (
                           <div className="flex gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setEditingKeyword(keyword.id);
-                                setEditKeywordText(keyword.keyword);
-                              }}
-                              className="h-6 w-6 p-0"
-                            >
-                              <Edit2 className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeKeywordMutation.mutate(keyword.id)}
-                              className="h-6 w-6 p-0 hover:bg-destructive/20"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setEditingKeyword(keyword.id);
+                                    setEditKeywordText(keyword.keyword);
+                                  }}
+                                  className="h-6 w-6 p-0"
+                                >
+                                  <Edit2 className="h-3 w-3" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Edit</p>
+                              </TooltipContent>
+                            </Tooltip>
+                            
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => searchKeywordMutation.mutate(keyword.id)}
+                                  disabled={searchKeywordMutation.isPending}
+                                  className="h-6 w-6 p-0"
+                                >
+                                  <Search className="h-3 w-3" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Search</p>
+                              </TooltipContent>
+                            </Tooltip>
+                            
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => removeKeywordMutation.mutate(keyword.id)}
+                                  className="h-6 w-6 p-0 hover:bg-destructive/20"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Delete</p>
+                              </TooltipContent>
+                            </Tooltip>
                           </div>
                         )}
                       </div>
