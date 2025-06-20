@@ -700,35 +700,35 @@ export default function Module6() {
                   
                   {/* Action Buttons */}
                   <div className="flex gap-2 ml-4">
-                    {!selectedNewsItem.platformOutputs || Object.keys(selectedNewsItem.platformOutputs).length === 0 ? (
-                      <Button
-                        onClick={() => generateContentMutation.mutate(selectedNewsItem.id)}
-                        disabled={generateContentMutation.isPending}
-                        size="lg"
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 font-semibold"
-                      >
-                        {generateContentMutation.isPending ? (
-                          <>
-                            <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                            Generating...
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="mr-2 h-4 w-4" />
-                            Generate NewsJack Content
-                          </>
-                        )}
-                      </Button>
-                    ) : (
+                    <Button
+                      onClick={() => generateContentMutation.mutate(selectedNewsItem.id)}
+                      disabled={generateContentMutation.isPending}
+                      size="lg"
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 font-bold text-lg shadow-lg"
+                    >
+                      {generateContentMutation.isPending ? (
+                        <>
+                          <RefreshCw className="mr-3 h-5 w-5 animate-spin" />
+                          Generating NewsJacks...
+                        </>
+                      ) : (
+                        <>
+                          <Zap className="mr-3 h-5 w-5" />
+                          NewsJack Now
+                        </>
+                      )}
+                    </Button>
+                    
+                    {selectedNewsItem.platformOutputs && Object.keys(selectedNewsItem.platformOutputs).length > 0 && (
                       <Button
                         onClick={() => generateContentMutation.mutate(selectedNewsItem.id)}
                         disabled={generateContentMutation.isPending}
                         variant="outline"
-                        size="sm"
-                        className="flex items-center gap-2"
+                        size="lg"
+                        className="flex items-center gap-2 border-2"
                       >
                         <RefreshCw className="h-4 w-4" />
-                        Regenerate
+                        Regenerate All
                       </Button>
                     )}
                     
@@ -778,48 +778,57 @@ export default function Module6() {
               <div className="flex-1 p-6 overflow-y-auto">
                 {!selectedNewsItem.platformOutputs || Object.keys(selectedNewsItem.platformOutputs).length === 0 ? (
                   <div className="flex-1 flex items-center justify-center">
-                    <div className="text-center max-w-lg">
-                      <Sparkles className="mx-auto h-16 w-16 text-blue-500 mb-6" />
-                      <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-3">Generate NewsJack Content</h3>
-                      <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
-                        Transform news into strategic content using NewsJack methodology:
-                        1. Start with current news events
-                        2. Frame tension and urgency
-                        3. Bridge to your campaign solution
-                        4. Drive immediate action
-                      </p>
-                      <Button
-                        onClick={() => generateContentMutation.mutate(selectedNewsItem.id)}
-                        disabled={generateContentMutation.isPending}
-                        size="lg"
-                        className="px-8 py-3"
-                      >
-                        {generateContentMutation.isPending ? (
-                          <>
-                            <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                            Generating Content...
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="mr-2 h-4 w-4" />
-                            Generate Content
-                          </>
+                    <div className="text-center max-w-2xl">
+                      <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-2xl p-12 border border-blue-200 dark:border-blue-800">
+                        <Zap className="mx-auto h-20 w-20 text-blue-600 dark:text-blue-400 mb-8" />
+                        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Ready to NewsJack</h2>
+                        <h3 className="text-xl font-medium text-gray-700 dark:text-gray-300 mb-6">Transform Breaking News Into Strategic Content</h3>
+                        <p className="text-gray-600 dark:text-gray-400 mb-8 leading-relaxed text-lg">
+                          Apply NewsJack methodology to turn current events into compelling content that drives engagement and conversions across all platforms.
+                        </p>
+                        
+                        <Button
+                          onClick={() => generateContentMutation.mutate(selectedNewsItem.id)}
+                          disabled={generateContentMutation.isPending}
+                          size="lg"
+                          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-12 py-4 font-bold text-xl shadow-xl rounded-xl"
+                        >
+                          {generateContentMutation.isPending ? (
+                            <>
+                              <RefreshCw className="mr-3 h-6 w-6 animate-spin" />
+                              Generating NewsJacks...
+                            </>
+                          ) : (
+                            <>
+                              <Zap className="mr-3 h-6 w-6" />
+                              NewsJack Now
+                            </>
+                          )}
+                        </Button>
+                        
+                        {generateContentMutation.isPending && (
+                          <div className="mt-8 p-6 bg-white/50 dark:bg-black/20 rounded-xl border border-blue-300 dark:border-blue-700">
+                            <div className="flex items-center justify-center gap-2 mb-4">
+                              <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                              <span className="font-semibold text-blue-600 dark:text-blue-400">Processing: 30-60 seconds</span>
+                            </div>
+                            <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                                <span>Analyzing news context and relevance...</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
+                                <span>Applying NewsJack methodology framework...</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                <span>Generating platform-optimized content...</span>
+                              </div>
+                            </div>
+                          </div>
                         )}
-                      </Button>
-                      
-                      {generateContentMutation.isPending && (
-                        <div className="mt-6 text-sm text-gray-500 dark:text-gray-400">
-                          <div className="flex items-center justify-center gap-2 mb-3">
-                            <Clock className="h-4 w-4" />
-                            Estimated time: 15-30 seconds
-                          </div>
-                          <div className="text-left space-y-1 max-w-xs mx-auto">
-                            <p>• Analyzing news context and audience pain points...</p>
-                            <p>• Applying NewsJack methodology framework...</p>
-                            <p>• Generating platform-optimized content...</p>
-                          </div>
-                        </div>
-                      )}
+                      </div>
                     </div>
                   </div>
                 ) : (
