@@ -132,11 +132,15 @@ router.post('/generate-newsjacks/:id', requireAuth, async (req, res) => {
     console.log(`[LATENCY] T3: API received request at ${T3} (${new Date(T3).toISOString()}) for item ${itemId}`);
     console.time(`NewsJack-Backend-Processing-${itemId}`);
 
-    // Verify user owns the news item through campaign ownership
+    // Verify user owns the news item through campaign ownership and get channels
     const newsItem = await db.query.newsItems.findFirst({
       where: eq(newsItems.id, itemId),
       with: {
-        campaign: true
+        campaign: {
+          with: {
+            channels: true
+          }
+        }
       }
     });
 
@@ -147,14 +151,17 @@ router.post('/generate-newsjacks/:id', requireAuth, async (req, res) => {
     const campaign = newsItem.campaign;
     const startTime = T3;
 
-    // Get campaign's social settings or use defaults
-    const socialSettings = campaign.socialSettings as any || {};
-    let platforms = Object.keys(socialSettings).filter(platform => 
-      socialSettings[platform]?.enabled
-    );
-
-    // If no platforms configured, use defaults including blog
-    if (platforms.length === 0) {
+    // Get enabled platforms from campaign channels, always include blog
+    let platforms = ['blog']; // Always include blog for NewsJack methodology
+    
+    if (campaign.channels && campaign.channels.length > 0) {
+      const enabledChannels = campaign.channels
+        .filter(channel => channel.enabled)
+        .map(channel => channel.platform);
+      platforms = [...platforms, ...enabledChannels];
+      console.log('Using configured platforms:', platforms);
+    } else {
+      // If no channels configured, use defaults
       platforms = ['blog', 'twitter', 'linkedin', 'instagram', 'facebook'];
       console.log('No platforms configured, using defaults:', platforms);
     }
@@ -173,11 +180,28 @@ router.post('/generate-newsjacks/:id', requireAuth, async (req, res) => {
     const platformOutputs: any = {};
     let totalTokens = 0;
 
+    // Get social settings from campaign
+    const socialSettings = campaign.socialSettings as any || {};
+    
     // Generate platform-specific content generation functions
     const generatePlatformContent = async (platform: string) => {
-      const platformConfig = socialSettings[platform];
-      const newsRatio = platformConfig?.newsRatio || 50;
+      const platformConfig = socialSettings.channelConfig?.[platform] || {};
+      const newsRatio = 50; // Default news ratio
       const campaignRatio = 100 - newsRatio;
+
+      // Get platform-specific character/word limits
+      const getPlatformLimit = (platform: string) => {
+        switch (platform) {
+          case 'blog': return '1200-2000 words (comprehensive article)';
+          case 'twitter': return '280 characters';
+          case 'linkedin': return '3000 characters';
+          case 'instagram': return '2200 characters';
+          case 'facebook': return '63206 characters';
+          case 'youtube': return '5000 characters (description)';
+          case 'tiktok': return '150 characters (caption)';
+          default: return '1000 characters';
+        }
+      };
 
       const prompt = `You are a NewsJack content strategist. Generate compelling ${platform} content that follows this methodology:
 
@@ -197,7 +221,7 @@ Audience Pain: ${campaign.audiencePain || 'Not provided'}
 
 PLATFORM REQUIREMENTS:
 - Platform: ${platform}
-- Target Length: ${platform === 'blog' ? '1200-2000 words (comprehensive article)' : platform === 'twitter' ? '280 characters' : platform === 'linkedin' ? '3000 characters' : platform === 'instagram' ? '2200 characters' : '1000 characters'}
+- Target Length: ${getPlatformLimit(platform)}
 - News/Campaign Ratio: ${newsRatio}% news focus, ${campaignRatio}% campaign focus
 - Tone: ${platformConfig?.tone || 'Professional'}
 
