@@ -1,0 +1,65 @@
+🧠 Prompt 28 of 30 — Build Module 4: News Aggregator Search (Clone of Module 5)
+
+Execute only this prompt and don’t try to interpret or anticipate what comes next.
+
+Purpose:
+Create Module 4 by duplicating the proven structure of Module 5 (Google Keyword Search) with API integration using the existing News Aggregator key already stored in secrets. This module will support campaign-aligned news discovery via alternate channels.
+
+Scope:
+
+✅ CLONE: Full Module 5 architecture — both frontend and backend — renamed and scoped to Module 4 (News Aggregator)
+
+✅ BACKEND ROUTES (use /api/news-aggregator/...):
+
+• GET /keywords/:campaignId
+• POST /keywords/:campaignId
+• DELETE /keywords/:keywordId
+• PUT /keywords/:keywordId
+• POST /suggest-keywords/:campaignId
+• POST /search/:campaignId
+• POST /search-keyword/:campaignId/:keywordId
+• GET /articles/:campaignId
+• POST /transfer/:campaignId
+• DELETE /articles
+
+✅ DATABASE SCHEMA (module4_keywords, module4_articles):
+
+• Exact clone of module5_keywords and module5_articles
+• Scoped to campaign_id
+• Unique constraint on (campaign_id, keyword) and (url)
+
+✅ FRONTEND STRUCTURE:
+
+• Mirror the same two-panel layout: Search Panel / Search Results
+• Include: keyword list with edit/delete/search buttons
+• Include: Suggest Keywords via OpenAI using Module 1 context
+• Include: transfer to Module 6 with confirmation and article removal
+• Include: relevance scoring, age badges, image preview
+
+✅ FUNCTIONAL INTEGRATION:
+
+• All keywords and articles must persist to database
+• Reuse transfer-to-Module-6 handler from Module 5
+• Campaign context must be passed and enforced
+• Disable caching on all fetches
+
+✅ VISUAL:
+
+• Include tooltips for all icons
+• Ensure all UI affordances match Module 5
+• Tooltip legend:
+  - 📎 Edit keyword
+  - 🔍 Search keyword
+  - 🗑️ Delete keyword
+  - 🡆 Send to Module 6
+  - 🔗 Open source article
+
+✅ TEST CASE:
+
+• Add sample keyword
+• Run search
+• Verify article appears
+• Transfer article to Module 6
+• Confirm article disappears from 4 and appears in 6
+
+Let me know when complete, and I’ll prepare Prompt 29.

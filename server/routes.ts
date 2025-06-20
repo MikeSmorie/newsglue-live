@@ -307,6 +307,21 @@ export async function registerRoutes(app: Express) {
   app.use("/api/google-news", requireAuth, googleNewsRouter);
 
   /**
+   * NEWS AGGREGATOR SEARCH API (Module 4)
+   * Auth: Required
+   * Role: User/Admin/Supergod
+   * GET /api/news-aggregator/keywords/:campaignId - Get search keywords for campaign
+   * POST /api/news-aggregator/keywords/:campaignId - Add keyword to campaign
+   * DELETE /api/news-aggregator/keywords/:keywordId - Remove keyword from campaign
+   * POST /api/news-aggregator/search/:campaignId - Search News Aggregator for articles
+   * GET /api/news-aggregator/articles/:campaignId - Get stored articles for campaign
+   * POST /api/news-aggregator/transfer/:campaignId - Transfer articles to Module 6
+   * DELETE /api/news-aggregator/articles - Delete articles from storage
+   */
+  const { default: newsAggregatorRouter } = await import("./routes/news-aggregator.js");
+  app.use("/api/news-aggregator", requireAuth, newsAggregatorRouter);
+
+  /**
    * LANDING PAGE STATIC SERVING
    * Auth: Public
    * GET /news/:slug - Serve static landing page HTML files
