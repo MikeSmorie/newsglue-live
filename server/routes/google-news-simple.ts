@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { db } from '../../db/index.js';
-import { newsItems, campaigns } from '../../db/schema.js';
-import { eq, and } from 'drizzle-orm';
+import { newsItems, campaigns, campaignKeywords } from '../../db/schema.js';
+import { eq, and, asc, desc } from 'drizzle-orm';
 import OpenAI from 'openai';
 
 const router = Router();
@@ -32,13 +32,13 @@ router.get('/keywords/:campaignId', requireAuth, async (req, res) => {
     }
 
     // Fetch keywords from database
-    const dbKeywords = await db.execute(`SELECT * FROM campaign_keywords WHERE campaign_id = '${campaignId}' ORDER BY created_at ASC`);
+    const dbKeywords = await db.select().from(campaignKeywords).where(eq(campaignKeywords.campaignId, campaignId)).orderBy(asc(campaignKeywords.createdAt));
     
-    let keywords = dbKeywords.map((row: any) => ({
+    let keywords = dbKeywords.map((row) => ({
       id: row.id.toString(),
       keyword: row.keyword,
-      isDefault: row.is_default,
-      campaignId: row.campaign_id,
+      isDefault: row.isDefault,
+      campaignId: row.campaignId,
       source: row.source
     }));
 

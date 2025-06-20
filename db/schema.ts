@@ -762,6 +762,16 @@ export const campaignChannels = pgTable("campaign_channels", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Campaign keywords table for Module 5 keyword management
+export const campaignKeywords = pgTable("campaign_keywords", {
+  id: serial("id").primaryKey(),
+  campaignId: uuid("campaign_id").notNull().references(() => campaigns.id, { onDelete: "cascade" }),
+  keyword: text("keyword").notNull(),
+  isDefault: boolean("is_default").default(false),
+  source: text("source").default("user"), // 'user', 'AI', 'campaign'
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Campaigns relations
 export const campaignsRelations = relations(campaigns, ({ one, many }) => ({
   user: one(users, {
@@ -769,12 +779,21 @@ export const campaignsRelations = relations(campaigns, ({ one, many }) => ({
     references: [users.id],
   }),
   channels: many(campaignChannels),
+  keywords: many(campaignKeywords),
 }));
 
 // Campaign channels relations
 export const campaignChannelsRelations = relations(campaignChannels, ({ one }) => ({
   campaign: one(campaigns, {
     fields: [campaignChannels.campaignId],
+    references: [campaigns.id],
+  }),
+}));
+
+// Campaign keywords relations
+export const campaignKeywordsRelations = relations(campaignKeywords, ({ one }) => ({
+  campaign: one(campaigns, {
+    fields: [campaignKeywords.campaignId],
     references: [campaigns.id],
   }),
 }));
