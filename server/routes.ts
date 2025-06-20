@@ -43,7 +43,7 @@ import landingPageRouter from "./routes/landing-page.js";
 import aiSitemapRouter from "./routes/ai-sitemap.js";
 import proposalRouter from "./routes/proposal";
 import aiDiscoverabilityRouter from "./routes/ai-discoverability";
-import googleNewsRouter from "./routes/google-news";
+import googleNewsRouter from "./routes/google-news-simple";
 import { db } from "../db";
 import { users } from "../db/schema";
 import { eq, and, or, desc, asc, sql } from "drizzle-orm";
