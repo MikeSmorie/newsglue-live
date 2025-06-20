@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { db } from '../../db/index.js';
-import { newsItems, campaigns, campaignKeywords } from '../../db/schema.js';
+import { newsItems, campaigns, campaignKeywords, googleNewsArticles } from '../../db/schema.js';
 import { eq, and, asc, desc } from 'drizzle-orm';
 import OpenAI from 'openai';
 
@@ -545,14 +545,14 @@ router.post('/transfer/:campaignId', requireAuth, async (req, res) => {
       // Create enhanced content for NewsJack generation
       const fullContent = `${article.title}\n\n${article.description}\n\nSource: ${article.source.name}\nPublished: ${article.publishedAt}\nRelevance Score: ${article.relevanceScore}%\n\nThis article provides valuable NewsJacking opportunities aligned with your campaign objectives. The content discusses current industry trends and developments that can be leveraged for timely, relevant content creation.`;
 
-      // Insert using the same schema structure as Module 3 → Module 6 pathway
+      // Insert using actual database schema structure
       await db.insert(newsItems).values({
         campaignId,
         headline: article.title,
         content: fullContent,
         sourceUrl: article.url,
         contentType: 'googlenews',
-        status: 'draft', // Start as draft for review
+        status: 'draft',
         metadataScore: Math.min(article.relevanceScore || 80, 100),
         platformOutputs: {
           source: article.source.name,
@@ -562,8 +562,7 @@ router.post('/transfer/:campaignId', requireAuth, async (req, res) => {
           imageUrl: article.urlToImage,
           transferredFrom: 'module5',
           transferredAt: new Date().toISOString()
-        },
-        indexable: true
+        }
       });
 
       console.log(`✅ Transferred article to Module 6: ${article.title}`);
