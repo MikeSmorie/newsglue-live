@@ -92,18 +92,23 @@ export default function Module5GoogleNews() {
 
   // Fetch news articles
   const { data: articles = [], isLoading: articlesLoading, refetch: refetchArticles } = useQuery({
-    queryKey: ['/api/google-news', activeCampaign?.id, 'articles'],
+    queryKey: ['/api/google-news', activeCampaign?.id, 'articles', Date.now()],
     queryFn: async () => {
       console.log(`🔍 [Module 5 Frontend] Fetching articles for campaign: ${activeCampaign?.id}`);
-      const response = await fetch(`/api/google-news/articles/${activeCampaign?.id}`);
+      const response = await fetch(`/api/google-news/articles/${activeCampaign?.id}?t=${Date.now()}`, {
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      });
       if (!response.ok) throw new Error('Failed to fetch articles');
       const data = await response.json();
       console.log(`📊 [Module 5 Frontend] Received ${data.length} articles from API`);
       return data;
     },
     enabled: !!activeCampaign?.id,
-    staleTime: 0, // Always refetch to avoid cache issues
-    cacheTime: 0, // Don't cache results
+    refetchOnMount: true,
+    refetchOnWindowFocus: true
   });
 
   // Add keyword mutation
