@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { db } from '../../db/index.js';
 import { newsItems, campaigns } from '../../db/schema.js';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, desc, sql } from 'drizzle-orm';
 import OpenAI from 'openai';
 
 const router = Router();
@@ -370,7 +370,7 @@ router.post('/search/:campaignId', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'No keywords configured for search' });
     }
 
-    // Search all keywords using real Google News API
+    // Search all keywords using real Google News API and store in database
     let allArticles = [];
     
     for (const keyword of keywords) {
@@ -387,20 +387,30 @@ router.post('/search/:campaignId', requireAuth, async (req, res) => {
         if (response.ok) {
           const data = await response.json();
           const keywordArticles = data.articles?.map((article: any, index: number) => ({
-            id: `search-${keyword.id}-${Date.now()}-${index}`,
+            campaign_id: campaignId,
+            keyword_used: keyword.keyword,
             title: article.title,
-            description: article.description || 'No description available',
+            summary: article.description || 'No description available',
+            source: article.source?.name || 'Unknown Source',
             url: article.url,
-            urlToImage: article.urlToImage,
-            publishedAt: article.publishedAt,
-            source: { 
-              id: article.source?.id || null, 
-              name: article.source?.name || 'Unknown Source' 
-            },
-            keywords: [keyword.keyword],
-            relevanceScore: Math.floor(Math.random() * 20) + 80,
-            campaignId
+            image_url: article.urlToImage,
+            relevance_score: Math.floor(Math.random() * 20) + 80
           })) || [];
+          
+          // Insert into database
+          for (const articleData of keywordArticles) {
+            try {
+              await db.execute(sql`
+                INSERT INTO module5_articles (campaign_id, keyword_used, title, summary, source, url, image_url, relevance_score)
+                VALUES (${articleData.campaign_id}, ${articleData.keyword_used}, ${articleData.title}, 
+                        ${articleData.summary}, ${articleData.source}, ${articleData.url}, 
+                        ${articleData.image_url || null}, ${articleData.relevance_score})
+                ON CONFLICT (url) DO NOTHING
+              `);
+            } catch (dbError) {
+              console.log('Database insert error for article:', dbError);
+            }
+          }
           
           allArticles.push(...keywordArticles);
         } else {
@@ -411,20 +421,12 @@ router.post('/search/:campaignId', requireAuth, async (req, res) => {
       }
     }
 
-    console.log(`Found ${allArticles.length} real articles across ${keywords.length} keywords`);
-
-    const existingArticles = campaignArticles.get(campaignId) || [];
-    const newArticles = allArticles.filter((article: any) => 
-      !existingArticles.some((existing: any) => existing.url === article.url)
-    );
-    
-    const updatedArticles = [...existingArticles, ...newArticles];
-    campaignArticles.set(campaignId, updatedArticles);
+    console.log(`Found and stored ${allArticles.length} real articles across ${keywords.length} keywords`);
 
     res.json({ 
-      count: newArticles.length,
-      total: updatedArticles.length,
-      articles: newArticles
+      count: allArticles.length,
+      total: allArticles.length,
+      articles: allArticles
     });
   } catch (error) {
     console.error('Error searching articles:', error);
