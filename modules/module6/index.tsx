@@ -258,17 +258,17 @@ export default function Module6() {
 
   const StatusBadge = ({ status }: { status: string }) => {
     const statusConfig: any = {
-      draft: { color: 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200', label: 'Draft' },
-      active: { color: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200', label: 'Active' },
-      archived: { color: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200', label: 'Archived' },
-      bin: { color: 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200', label: 'Bin' }
+      draft: { color: 'bg-yellow-100 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-100', label: 'Draft' },
+      active: { color: 'bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-100', label: 'Active' },
+      archived: { color: 'bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-100', label: 'Archived' },
+      bin: { color: 'bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-100', label: 'Bin' }
     };
 
     const config = statusConfig[status];
     return (
-      <Badge className={`${config.color} border-0 text-xs`}>
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}>
         {config.label}
-      </Badge>
+      </span>
     );
   };
 
@@ -698,8 +698,40 @@ export default function Module6() {
                     </div>
                   </div>
                   
-                  {/* PDF Download Buttons */}
+                  {/* Action Buttons */}
                   <div className="flex gap-2 ml-4">
+                    {!selectedNewsItem.platformOutputs || Object.keys(selectedNewsItem.platformOutputs).length === 0 || !Object.values(selectedNewsItem.platformOutputs).some((output: any) => output.content) ? (
+                      <Button
+                        onClick={() => generateContentMutation.mutate(selectedNewsItem.id)}
+                        disabled={generateContentMutation.isPending}
+                        size="lg"
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 font-semibold"
+                      >
+                        {generateContentMutation.isPending ? (
+                          <>
+                            <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="mr-2 h-4 w-4" />
+                            Generate NewsJack Content
+                          </>
+                        )}
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={() => generateContentMutation.mutate(selectedNewsItem.id)}
+                        disabled={generateContentMutation.isPending}
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-2"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                        Regenerate
+                      </Button>
+                    )}
+                    
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
