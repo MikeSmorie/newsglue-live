@@ -63,10 +63,14 @@ export function setupAuth(app: Express) {
           return done(null, false, { message: "Incorrect username." });
         }
 
+        // 🔕 TEMPORARILY DISABLED: Email verification enforcement
+        // Suspended to prevent login blockages during Render email issues
+        /*
         // Check if user email is verified (skip in development)
         if (!user.isVerified && process.env.NODE_ENV !== 'development') {
           return done(null, false, { message: "Please verify your email address before logging in." });
         }
+        */
 
         console.log(`[DEBUG] Password comparison: provided='${password}', stored='${user.password}', match=${password === user.password}`);
         const isMatch = password === user.password;

@@ -1,6 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 
 export function requireVerifiedEmail(req: Request, res: Response, next: NextFunction) {
+  // 🔕 TEMPORARILY DISABLED: Email verification enforcement
+  // Suspended to prevent login blockages during Render email issues
+  return next();
+
+  // Original verification logic (commented out)
+  /*
   // In development, skip verification requirement
   if (process.env.NODE_ENV === 'development') {
     return next();
@@ -11,4 +17,5 @@ export function requireVerifiedEmail(req: Request, res: Response, next: NextFunc
   }
 
   next();
+  */
 }
