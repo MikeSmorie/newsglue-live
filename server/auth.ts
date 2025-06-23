@@ -12,6 +12,7 @@ const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
   password: z.string().min(1, "Password is required"),
   email: z.string().email().optional(),
+  bypassEmailVerification: z.boolean().optional(),
 });
 
 const MemoryStore = createMemoryStore(session);
@@ -51,7 +52,7 @@ export function setupAuth(app: Express) {
   app.use(passport.session());
 
   passport.use(
-    new LocalStrategy(async (username, password, done) => {
+    new LocalStrategy({ passReqToCallback: true }, async (req, username, password, done) => {
       try {
         const [user] = await db
           .select()
@@ -63,14 +64,11 @@ export function setupAuth(app: Express) {
           return done(null, false, { message: "Incorrect username." });
         }
 
-        // 🔕 TEMPORARILY DISABLED: Email verification enforcement
-        // Suspended to prevent login blockages during Render email issues
-        /*
-        // Check if user email is verified (skip in development)
-        if (!user.isVerified && process.env.NODE_ENV !== 'development') {
+        // Check email verification with bypass option
+        const bypassEmailVerification = req.body.bypassEmailVerification === true;
+        if (!user.isVerified && !bypassEmailVerification && process.env.NODE_ENV !== 'development') {
           return done(null, false, { message: "Please verify your email address before logging in." });
         }
-        */
 
         console.log(`[DEBUG] Password comparison: provided='${password}', stored='${user.password}', match=${password === user.password}`);
         const isMatch = password === user.password;

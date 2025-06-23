@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff, HelpCircle, Loader2, Shield } from "lucide-react";
 import { Link } from "wouter";
 
@@ -17,6 +18,7 @@ const authSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
   email: z.string().email("Invalid email address").max(255, "Email must be less than 255 characters"),
   password: z.string().min(6, "Password must be at least 6 characters"),
+  bypassEmailVerification: z.boolean().optional(),
 });
 
 type AuthFormData = z.infer<typeof authSchema>;
@@ -33,6 +35,7 @@ export default function AuthPage() {
       username: "",
       email: "",
       password: "",
+      bypassEmailVerification: false,
     },
   });
 
@@ -173,6 +176,31 @@ export default function AuthPage() {
                       </FormItem>
                     )}
                   />
+                  
+                  {/* Email Verification Bypass Checkbox - Sandbox Workaround */}
+                  <FormField
+                    control={form.control}
+                    name="bypassEmailVerification"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-yellow-50 dark:bg-yellow-950/20">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel className="text-sm font-medium">
+                            Sandbox Mode: Bypass Email Verification
+                          </FormLabel>
+                          <p className="text-xs text-muted-foreground">
+                            Check this box to skip email verification during sandbox testing
+                          </p>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                  
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                     Login
