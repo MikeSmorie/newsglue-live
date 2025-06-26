@@ -19,7 +19,7 @@ import {
   HelpCircle 
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useCampaign } from "@/contexts/campaign-context";
+import { useCampaignContext } from "@/hooks/use-campaign-context";
 
 interface BlogMetadata {
   id: string;
@@ -51,20 +51,20 @@ interface SitemapData {
 export default function Module9() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { selectedCampaignId } = useCampaign();
+  const { activeCampaignId } = useCampaignContext();
   const [selectedBlog, setSelectedBlog] = useState<BlogMetadata | null>(null);
 
   // Fetch discoverability audit data
   const { data: auditData, isLoading: auditLoading } = useQuery({
-    queryKey: ['/api/discoverability/audit', selectedCampaignId],
+    queryKey: ['/api/discoverability/audit', activeCampaignId],
     queryFn: async () => {
-      const response = await fetch(`/api/discoverability/audit?campaignId=${selectedCampaignId}`, {
+      const response = await fetch(`/api/discoverability/audit?campaignId=${activeCampaignId}`, {
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Failed to fetch audit data');
       return response.json();
     },
-    enabled: !!selectedCampaignId
+    enabled: !!activeCampaignId
   });
 
   // Fetch sitemap data
@@ -191,7 +191,7 @@ export default function Module9() {
     return `${diffInDays} days ago`;
   };
 
-  if (!selectedCampaignId) {
+  if (!activeCampaignId) {
     return (
       <div className="container max-w-7xl mx-auto p-6">
         <div className="text-center py-12">

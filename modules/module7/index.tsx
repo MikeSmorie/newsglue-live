@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Download, FileText, Copy, Loader2, Users } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
-import { useCampaign } from '@/contexts/campaign-context';
+import { useCampaignContext } from '@/hooks/use-campaign-context';
 
 interface Campaign {
   id: string;
@@ -32,12 +32,12 @@ export default function Module7() {
   const [proposalData, setProposalData] = useState<ProposalData | null>(null);
   const [activeTab, setActiveTab] = useState('form');
   const { toast } = useToast();
-  const { selectedCampaignId, selectedCampaign } = useCampaign();
+  const { activeCampaignId, activeCampaign } = useCampaignContext();
 
   // Generate proposal mutation
   const generateProposalMutation = useMutation({
     mutationFn: async (clientName: string) => {
-      if (!selectedCampaignId) {
+      if (!activeCampaignId) {
         throw new Error('No active campaign available');
       }
       
@@ -45,7 +45,7 @@ export default function Module7() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ campaignId: selectedCampaignId, clientName })
+        body: JSON.stringify({ campaignId: activeCampaignId, clientName })
       });
       
       if (!response.ok) {
@@ -74,7 +74,7 @@ export default function Module7() {
 
   // Download handlers
   const handleDownload = async (format: 'pdf' | 'html' | 'docx') => {
-    if (!proposalData || !selectedCampaignId) return;
+    if (!proposalData || !activeCampaignId) return;
     
     try {
       const response = await fetch(`/api/proposal/download/${format}`, {
@@ -82,7 +82,7 @@ export default function Module7() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          campaignId: selectedCampaignId,
+          campaignId: activeCampaignId,
           clientName: proposalData.clientName
         })
       });
@@ -125,7 +125,7 @@ export default function Module7() {
   };
 
   const handleGenerateProposal = () => {
-    if (!selectedCampaignId || !clientName.trim()) {
+    if (!activeCampaignId || !clientName.trim()) {
       toast({
         title: "Missing Information",
         description: "Please enter client name and ensure a campaign is available.",
@@ -148,9 +148,9 @@ export default function Module7() {
           <p className="text-foreground mt-2">
             Generate professional NewsJack proposals for rapid client acquisition
           </p>
-          {selectedCampaign && (
+          {activeCampaign && (
             <p className="text-sm text-foreground mt-1">
-              Active Campaign: <span className="font-medium">{selectedCampaign.campaignName}</span>
+              Active Campaign: <span className="font-medium">{activeCampaign.campaignName}</span>
             </p>
           )}
         </div>
@@ -173,7 +173,7 @@ export default function Module7() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {!selectedCampaignId ? (
+              {!activeCampaignId ? (
                 <div className="text-center py-8">
                   <Users className="mx-auto h-12 w-12 text-foreground mb-4" />
                   <h3 className="text-lg font-medium text-foreground mb-2">

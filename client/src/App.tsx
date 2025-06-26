@@ -33,14 +33,12 @@ import ResetPasswordPage from "@/pages/reset-password";
 import VerifyEmailPage from "@/pages/verify-email";
 import NewsJack from "@/pages/NewsJack";
 import CampaignPage from "@/pages/campaigns";
-import CampaignDashboard from "@/components/CampaignDashboard";
 
 import { useUser } from "@/hooks/use-user";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AdminProvider } from "@/contexts/admin-context";
-import { CampaignProvider } from "@/contexts/campaign-context";
 import { MainLayout } from "@/components/layout/main-layout";
 
 function ProtectedAdminRoute({ component: Component }: { component: React.ComponentType }) {
@@ -142,7 +140,7 @@ function Router() {
         <Route path="/locked-module" component={LockedModule} />
         <Route path="/2fa" component={TwoFactorAuth} />
         <Route path="/profile" component={Dashboard} />
-        <Route path="/" component={() => <CampaignDashboard />} />
+        <Route path="/" component={() => <ModuleView moduleId="1" />} />
         <Route component={NotFound} />
       </Switch>
     </MainLayout>
@@ -155,10 +153,8 @@ function App() {
       <ThemeProvider defaultTheme="dark">
         <QueryClientProvider client={queryClient}>
           <AdminProvider>
-            <CampaignProvider>
-              <Router />
-              <Toaster />
-            </CampaignProvider>
+            <Router />
+            <Toaster />
           </AdminProvider>
         </QueryClientProvider>
       </ThemeProvider>
