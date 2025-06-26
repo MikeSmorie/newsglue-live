@@ -33,6 +33,7 @@ import ResetPasswordPage from "@/pages/reset-password";
 import VerifyEmailPage from "@/pages/verify-email";
 import NewsJack from "@/pages/NewsJack";
 import CampaignPage from "@/pages/campaigns";
+import CampaignDashboard from "@/components/CampaignDashboard";
 
 import { useUser } from "@/hooks/use-user";
 import { useToast } from "@/hooks/use-toast";
@@ -141,7 +142,7 @@ function Router() {
         <Route path="/locked-module" component={LockedModule} />
         <Route path="/2fa" component={TwoFactorAuth} />
         <Route path="/profile" component={Dashboard} />
-        <Route path="/" component={() => <ModuleView moduleId="1" />} />
+        <Route path="/" component={() => <CampaignDashboard />} />
         <Route component={NotFound} />
       </Switch>
     </MainLayout>
@@ -154,8 +155,10 @@ function App() {
       <ThemeProvider defaultTheme="dark">
         <QueryClientProvider client={queryClient}>
           <AdminProvider>
-            <Router />
-            <Toaster />
+            <CampaignProvider>
+              <Router />
+              <Toaster />
+            </CampaignProvider>
           </AdminProvider>
         </QueryClientProvider>
       </ThemeProvider>
