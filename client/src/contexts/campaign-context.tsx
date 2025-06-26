@@ -56,7 +56,11 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
   };
 
   const clearSelectedCampaign = () => {
-    setSelectedCampaign(null);
+    console.log("[CAMPAIGN CONTEXT] Clearing campaign selection");
+    setSelectedCampaignID(null);
+    setSelectedCampaignState(null);
+    localStorage.removeItem('activeCampaign');
+    localStorage.removeItem('activeCampaignData');
   };
 
   return (

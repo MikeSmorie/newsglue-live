@@ -132,12 +132,8 @@ export function Sidebar() {
   const [adminOpen, setAdminOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
-  // Debug logging
-  console.log("[SIDEBAR DEBUG] selectedCampaignID:", selectedCampaignID);
-
   // Don't render sidebar if no campaign is selected
   if (!selectedCampaignID) {
-    console.log("[SIDEBAR DEBUG] No campaign selected, returning null");
     return null;
   }
 
