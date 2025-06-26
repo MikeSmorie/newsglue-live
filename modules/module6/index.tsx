@@ -493,7 +493,7 @@ export default function Module6() {
   // Edit Content Modal Component
   const EditContentModal = ({ isOpen, onClose, platform, content, onSave }: any) => (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+      <DialogContent className="max-w-2xl bg-background border">
         <DialogHeader>
           <DialogTitle className="text-gray-900 dark:text-white">Edit {platform} Content</DialogTitle>
           <DialogDescription className="text-gray-600 dark:text-gray-300">
@@ -504,7 +504,7 @@ export default function Module6() {
           <Textarea
             defaultValue={content?.content || ''}
             rows={8}
-            className="w-full bg-white dark:bg-gray-900 text-gray-900 dark:text-white border-gray-200 dark:border-gray-600"
+            className="w-full bg-background text-foreground border"
           />
         </div>
         <DialogFooter>
@@ -519,7 +519,7 @@ export default function Module6() {
     <div className="h-screen flex bg-gray-50 dark:bg-gray-900">
       <TooltipProvider>
         {/* Panel 2: Left Column - News Item List */}
-        <div className="w-96 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+        <div className="w-96 bg-card border-r border flex flex-col">
           {/* Header */}
           <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">News Items</h2>
@@ -807,7 +807,7 @@ export default function Module6() {
         </div>
 
         {/* Panel 3: Right Column - Content Display */}
-        <div className="flex-1 flex flex-col bg-white dark:bg-gray-900">
+        <div className="flex-1 flex flex-col bg-background">
           {!selectedNewsItem ? (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center max-w-md">
@@ -864,9 +864,9 @@ export default function Module6() {
                                 <span>Progress</span>
                                 <span>{Math.round((Object.values(generationProgress).filter(Boolean).length / 5) * 100)}%</span>
                               </div>
-                              <div className="w-full bg-white/20 rounded-full h-1.5">
+                              <div className="w-full bg-secondary rounded-full h-1.5">
                                 <div 
-                                  className="bg-white h-1.5 rounded-full transition-all duration-500"
+                                  className="bg-primary h-1.5 rounded-full transition-all duration-500"
                                   style={{ width: `${(Object.values(generationProgress).filter(Boolean).length / 5) * 100}%` }}
                                 ></div>
                               </div>
@@ -977,7 +977,7 @@ export default function Module6() {
                         </Button>
                         
                         {generateContentMutation.isPending && (
-                          <div className="mt-8 p-6 bg-white/50 dark:bg-black/20 rounded-xl border border-blue-300 dark:border-blue-700">
+                          <div className="mt-8 p-6 bg-card/50 rounded-xl border border-primary/30">
                             <div className="flex items-center justify-center gap-2 mb-4">
                               <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                               <span className="font-semibold text-blue-600 dark:text-blue-400">Processing: 30-60 seconds</span>
@@ -1033,7 +1033,7 @@ export default function Module6() {
                           </div>
                           
                           <div className="p-6">
-                            <div className={`bg-white dark:bg-gray-900 p-6 rounded border leading-relaxed text-gray-900 dark:text-white ${
+                            <div className={`bg-background p-6 rounded border leading-relaxed text-foreground ${
                               activeChannel === 'blog' 
                                 ? 'text-base whitespace-pre-wrap font-serif max-h-96 overflow-y-auto' 
                                 : 'text-sm whitespace-pre-wrap font-mono'
@@ -1319,7 +1319,7 @@ export default function Module6() {
                           <div className="bg-purple-50 dark:bg-purple-900/50 border border-purple-200 dark:border-purple-600 p-4 rounded-lg">
                             <h4 className="text-sm font-semibold text-purple-900 dark:text-purple-100 mb-3">NewsJack Quality Analysis</h4>
                             <div className="grid grid-cols-2 gap-6">
-                              <div className="text-center bg-white dark:bg-gray-800 p-4 rounded-lg border border-orange-200 dark:border-orange-700">
+                              <div className="text-center bg-card p-4 rounded-lg border border-orange-500/30">
                                 <div className="text-3xl font-bold text-orange-600 dark:text-orange-300 mb-1">
                                   {selectedNewsItem.platformOutputs?.[activeChannel]?.metrics?.newsPercentage || 0}%
                                 </div>
@@ -1331,7 +1331,7 @@ export default function Module6() {
                                   ></div>
                                 </div>
                               </div>
-                              <div className="text-center bg-white dark:bg-gray-800 p-4 rounded-lg border border-purple-200 dark:border-purple-700">
+                              <div className="text-center bg-card p-4 rounded-lg border border-purple-500/30">
                                 <div className="text-3xl font-bold text-purple-600 dark:text-purple-300 mb-1">
                                   {selectedNewsItem.platformOutputs?.[activeChannel]?.metrics?.campaignPercentage || 0}%
                                 </div>
