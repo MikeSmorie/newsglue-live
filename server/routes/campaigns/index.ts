@@ -14,12 +14,12 @@ const router = express.Router();
 // Validation schema for campaign creation/update - NewsJack focused
 const campaignCreateSchema = z.object({
   name: z.string().min(1, "Campaign name is required"),
-  website_url: z.string().optional(),
-  cta_url: z.string().optional(),
-  emotional_objective: z.string().optional(),
-  audience_pain: z.string().optional(),
-  additional_data: z.string().optional(),
-  website_analysis: z.string().optional(),
+  website_url: z.string().nullable().optional(),
+  cta_url: z.string().nullable().optional(),
+  emotional_objective: z.string().nullable().optional(),
+  audience_pain: z.string().nullable().optional(),
+  additional_data: z.string().nullable().optional(),
+  website_analysis: z.string().nullable().optional(),
   social_settings: z.record(z.any()).optional(),
   status: z.enum(["draft", "active", "archived"]).optional().default("draft"),
   platforms: z.array(z.string()).optional(),
@@ -27,11 +27,12 @@ const campaignCreateSchema = z.object({
 
 const campaignUpdateSchema = z.object({
   name: z.string().min(1, "Campaign name is required").optional(),
-  website_url: z.string().optional(),
-  cta_url: z.string().optional(),
-  emotional_objective: z.string().optional(),
-  audience_pain: z.string().optional(),
-  additional_data: z.string().optional(),
+  website_url: z.string().nullable().optional(),
+  cta_url: z.string().nullable().optional(),
+  emotional_objective: z.string().nullable().optional(),
+  audience_pain: z.string().nullable().optional(),
+  additional_data: z.string().nullable().optional(),
+  website_analysis: z.string().nullable().optional(),
   status: z.enum(["draft", "active", "archived"]).optional(),
 });
 
