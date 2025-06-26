@@ -1,4 +1,4 @@
-import { pgTable, text, varchar, serial, timestamp, integer, boolean, decimal, jsonb, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, serial, timestamp, integer, boolean, decimal, jsonb, uuid, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations, sql } from "drizzle-orm";
@@ -316,6 +316,44 @@ export const newsItems = pgTable("news_items", {
 export const newsItemsRelations = relations(newsItems, ({ one }) => ({
   campaign: one(campaigns, {
     fields: [newsItems.campaignId],
+    references: [campaigns.id]
+  })
+}));
+
+// Module 5: Google News Keywords table
+export const module5Keywords = pgTable("module5_keywords", {
+  id: serial("id").primaryKey(),
+  campaignId: uuid("campaign_id").notNull().references(() => campaigns.id),
+  keyword: text("keyword").notNull(),
+  isDefault: boolean("is_default").default(false),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+// Module 5: Google News Articles table
+export const module5Articles = pgTable("module5_articles", {
+  id: serial("id").primaryKey(),
+  campaignId: uuid("campaign_id").notNull().references(() => campaigns.id),
+  keywordUsed: text("keyword_used").notNull(),
+  title: text("title").notNull(),
+  summary: text("summary"),
+  source: text("source").notNull(),
+  url: text("url").notNull().unique(),
+  imageUrl: text("image_url"),
+  relevanceScore: integer("relevance_score").default(50),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+// Module 5 relations
+export const module5KeywordsRelations = relations(module5Keywords, ({ one }) => ({
+  campaign: one(campaigns, {
+    fields: [module5Keywords.campaignId],
+    references: [campaigns.id]
+  })
+}));
+
+export const module5ArticlesRelations = relations(module5Articles, ({ one }) => ({
+  campaign: one(campaigns, {
+    fields: [module5Articles.campaignId],
     references: [campaigns.id]
   })
 }));
