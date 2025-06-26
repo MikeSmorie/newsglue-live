@@ -104,39 +104,25 @@ export function SimpleCampaignSelector() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 max-w-2xl mx-auto">
             {campaigns.map((campaign) => (
-              <Card 
-                key={campaign.id} 
-                className="cursor-pointer hover:shadow-md transition-shadow border-2 hover:border-primary/20"
+              <div
+                key={campaign.id}
                 onClick={() => handleSelectCampaign(campaign)}
+                className="cursor-pointer bg-card text-card-foreground px-6 py-4 rounded-lg border-2 hover:border-primary/50 transition-all hover:shadow-md"
               >
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg text-primary hover:text-primary/80">
-                      {campaign.name}
-                    </CardTitle>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                <div className="text-xl font-semibold text-primary">{campaign.name}</div>
+                {campaign.targetAudience && (
+                  <div className="text-sm text-muted-foreground mt-2">
+                    Target: {campaign.targetAudience}
                   </div>
-                </CardHeader>
-                <CardContent>
-                  {campaign.targetAudience && (
-                    <div className="mb-2">
-                      <p className="text-sm text-muted-foreground mb-1">Target Audience:</p>
-                      <p className="text-sm text-foreground">{campaign.targetAudience}</p>
-                    </div>
-                  )}
-                  {campaign.brandVoice && (
-                    <div className="mb-2">
-                      <p className="text-sm text-muted-foreground mb-1">Brand Voice:</p>
-                      <p className="text-sm text-foreground">{campaign.brandVoice}</p>
-                    </div>
-                  )}
-                  <div className="text-xs text-muted-foreground mt-2">
-                    Click anywhere on this card to enter campaign
+                )}
+                {campaign.brandVoice && (
+                  <div className="text-sm text-muted-foreground">
+                    Voice: {campaign.brandVoice}
                   </div>
-                </CardContent>
-              </Card>
+                )}
+              </div>
             ))}
           </div>
         )}
