@@ -46,7 +46,7 @@ export function AuditTable({ logs }: AuditTableProps) {
                   {formatTimestamp(log.created_at)}
                 </TableCell>
                 <TableCell>
-                  <Badge variant="outline" className="text-gray-700 dark:text-gray-300">
+                  <Badge variant="outline" className="text-foreground">
                     {log.actor}
                   </Badge>
                 </TableCell>
@@ -58,7 +58,7 @@ export function AuditTable({ logs }: AuditTableProps) {
                 <TableCell className="text-gray-900 dark:text-white">
                   {log.target || "-"}
                 </TableCell>
-                <TableCell className="text-gray-700 dark:text-gray-300 font-mono text-xs max-w-xs truncate">
+                <TableCell className="text-foreground font-mono text-xs max-w-xs truncate">
                   {formatData(log.data)}
                 </TableCell>
                 <TableCell className="text-gray-900 dark:text-white font-mono text-sm">

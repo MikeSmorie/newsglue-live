@@ -68,13 +68,13 @@ export function ExecutivePrivileges() {
         </div>
         
         <div className="space-y-2">
-          <h4 className="text-sm font-medium flex items-center gap-2 text-gray-800 dark:text-gray-200">
+          <h4 className="text-sm font-medium flex items-center gap-2 text-foreground">
             <Users className="h-4 w-4" />
             Granted Privileges:
           </h4>
           <ul className="text-xs space-y-1 pl-6">
             {privileges.map((privilege, index) => (
-              <li key={index} className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+              <li key={index} className="flex items-center gap-2 text-foreground">
                 <div className="h-1 w-1 bg-amber-500 rounded-full" />
                 {privilege}
               </li>

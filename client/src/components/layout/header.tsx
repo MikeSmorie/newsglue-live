@@ -83,7 +83,7 @@ export function Header() {
             variant="ghost"
             size="icon"
             onClick={() => window.history.back()}
-            className="h-8 w-8 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="h-8 w-8 text-foreground hover:bg-gray-100 dark:hover:bg-gray-800"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -92,7 +92,7 @@ export function Header() {
             variant="ghost"
             size="icon"
             onClick={() => navigate("/")}
-            className="h-8 w-8 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="h-8 w-8 text-foreground hover:bg-gray-100 dark:hover:bg-gray-800"
           >
             <Home className="h-4 w-4" />
           </Button>
@@ -101,7 +101,7 @@ export function Header() {
             variant="ghost"
             size="icon"
             onClick={() => window.history.forward()}
-            className="h-8 w-8 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="h-8 w-8 text-foreground hover:bg-gray-100 dark:hover:bg-gray-800"
           >
             <ArrowRight className="h-4 w-4" />
           </Button>
@@ -140,7 +140,7 @@ export function Header() {
               variant="ghost"
               size="icon"
               onClick={() => setIsSupportAgentOpen(true)}
-              className="h-8 w-8 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="h-8 w-8 text-foreground hover:bg-gray-100 dark:hover:bg-gray-800"
               title="Help Assistant"
             >
               <HelpCircle className="h-4 w-4" />
@@ -154,7 +154,7 @@ export function Header() {
             variant="ghost"
             size="icon"
             onClick={handleLogout}
-            className="h-8 w-8 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="h-8 w-8 text-foreground hover:bg-gray-100 dark:hover:bg-gray-800"
           >
             <LogOut className="h-4 w-4" />
           </Button>

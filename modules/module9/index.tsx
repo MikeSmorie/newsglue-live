@@ -195,11 +195,11 @@ export default function Module9() {
     return (
       <div className="container max-w-7xl mx-auto p-6">
         <div className="text-center py-12">
-          <Search className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-          <h3 className="text-xl font-medium text-gray-900 dark:text-gray-100 mb-2">
+          <Search className="mx-auto h-16 w-16 text-foreground mb-4" />
+          <h3 className="text-xl font-medium text-foreground dark:text-foreground mb-2">
             No Campaign Available
           </h3>
-          <p className="text-gray-500 dark:text-gray-400 mb-6">
+          <p className="text-foreground dark:text-foreground mb-6">
             Create a campaign to monitor AI discoverability of published content.
           </p>
         </div>
@@ -216,7 +216,7 @@ export default function Module9() {
               <Search className="h-8 w-8 text-blue-600" />
               Module 9: AI Discoverability Engine
             </h1>
-            <p className="text-gray-600 mt-2">
+            <p className="text-foreground mt-2">
               Track AI and SEO indexing status of your published content
             </p>
           </div>
@@ -229,10 +229,10 @@ export default function Module9() {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-1">
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Published Blogs</p>
+                    <p className="text-sm font-medium text-foreground dark:text-foreground">Published Blogs</p>
                     <UITooltip>
                       <TooltipTrigger>
-                        <HelpCircle className="h-3 w-3 text-gray-400" />
+                        <HelpCircle className="h-3 w-3 text-foreground" />
                       </TooltipTrigger>
                       <TooltipContent className="bg-gray-900 text-white border-gray-700">
                         <p className="text-sm">Total number of blog-style NewsJack outputs published for AI discovery.</p>
@@ -253,10 +253,10 @@ export default function Module9() {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-1">
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Indexability Rate</p>
+                    <p className="text-sm font-medium text-foreground dark:text-foreground">Indexability Rate</p>
                     <UITooltip>
                       <TooltipTrigger>
-                        <HelpCircle className="h-3 w-3 text-gray-400" />
+                        <HelpCircle className="h-3 w-3 text-foreground" />
                       </TooltipTrigger>
                       <TooltipContent className="bg-gray-900 text-white border-gray-700">
                         <p className="text-sm">Percentage of published blogs that are properly indexable by AI crawlers.</p>
@@ -277,10 +277,10 @@ export default function Module9() {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-1">
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Avg. Metadata Score</p>
+                    <p className="text-sm font-medium text-foreground dark:text-foreground">Avg. Metadata Score</p>
                     <UITooltip>
                       <TooltipTrigger>
-                        <HelpCircle className="h-3 w-3 text-gray-400" />
+                        <HelpCircle className="h-3 w-3 text-foreground" />
                       </TooltipTrigger>
                       <TooltipContent className="bg-gray-900 text-white border-gray-700">
                         <p className="text-sm">Average metadata completeness score across all published blogs (1-5 scale).</p>
@@ -301,10 +301,10 @@ export default function Module9() {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-1">
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Sitemap Entries</p>
+                    <p className="text-sm font-medium text-foreground dark:text-foreground">Sitemap Entries</p>
                     <UITooltip>
                       <TooltipTrigger>
-                        <HelpCircle className="h-3 w-3 text-gray-400" />
+                        <HelpCircle className="h-3 w-3 text-foreground" />
                       </TooltipTrigger>
                       <TooltipContent className="bg-gray-900 text-white border-gray-700">
                         <p className="text-sm">Number of published blogs included in the AI sitemap for crawler discovery.</p>
@@ -355,7 +355,7 @@ export default function Module9() {
                               <h4 className="font-medium">{blog.slug}</h4>
                               {getStatusBadge(blog.status)}
                             </div>
-                            <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300">
+                            <div className="flex items-center gap-4 text-sm text-foreground dark:text-foreground">
                               <span>Sitemap: {blog.sitemapEntry ? '✅ Yes' : '❌ No'}</span>
                               <span className={`font-medium ${getMetadataScoreColor(blog.metadataScore)}`}>
                                 Score: {blog.metadataScore}/5
@@ -392,8 +392,8 @@ export default function Module9() {
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <Globe className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                    <p className="text-gray-500 dark:text-gray-400">
+                    <Globe className="mx-auto h-12 w-12 text-foreground mb-4" />
+                    <p className="text-foreground dark:text-foreground">
                       No published blogs found. Create and publish content to see AI discoverability status.
                     </p>
                   </div>
@@ -467,8 +467,8 @@ export default function Module9() {
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <AlertCircle className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                    <p className="text-gray-500 dark:text-gray-400">
+                    <AlertCircle className="mx-auto h-12 w-12 text-foreground mb-4" />
+                    <p className="text-foreground dark:text-foreground">
                       Select a blog from the list to view its metadata health
                     </p>
                   </div>
@@ -496,7 +496,7 @@ export default function Module9() {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm">Last Modified</span>
-                      <span className="text-sm text-gray-600 dark:text-gray-300">
+                      <span className="text-sm text-foreground dark:text-foreground">
                         {formatRelativeTime(sitemapData.lastModified)}
                       </span>
                     </div>
@@ -512,7 +512,7 @@ export default function Module9() {
                 ) : (
                   <div className="text-center py-4">
                     <XCircle className="mx-auto h-8 w-8 text-red-400 mb-2" />
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <p className="text-sm text-foreground dark:text-foreground">
                       Sitemap not accessible
                     </p>
                   </div>

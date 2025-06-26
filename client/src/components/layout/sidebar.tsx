@@ -162,7 +162,7 @@ export function Sidebar() {
           <CollapsibleTrigger asChild>
             <Button
               variant="ghost"
-              className="w-full justify-between px-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="w-full justify-between px-2 text-foreground hover:bg-gray-100 dark:hover:bg-gray-800"
             >
               <div className="flex items-center">
                 <Settings className="mr-2 h-4 w-4" />
@@ -184,7 +184,7 @@ export function Sidebar() {
                   variant={isActive(item.href) ? "secondary" : "ghost"}
                   size="sm"
                   className={cn(
-                    "w-full justify-start ml-4 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800",
+                    "w-full justify-start ml-4 text-foreground hover:bg-gray-100 dark:hover:bg-gray-800",
                     isActive(item.href) && "bg-gray-100 dark:bg-gray-800"
                   )}
                   asChild
@@ -200,7 +200,7 @@ export function Sidebar() {
             {(user?.role === "admin" || user?.role === "supergod") && (
               <>
                 <div className="ml-4 mt-2 mb-1">
-                  <h4 className="px-2 py-1 text-xs font-medium text-gray-500 dark:text-gray-500">
+                  <h4 className="px-2 py-1 text-xs font-medium text-foreground">
                     Administration
                   </h4>
                 </div>
@@ -212,7 +212,7 @@ export function Sidebar() {
                       variant={isActive(item.href) ? "secondary" : "ghost"}
                       size="sm"
                       className={cn(
-                        "w-full justify-start ml-4 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800",
+                        "w-full justify-start ml-4 text-foreground hover:bg-gray-100 dark:hover:bg-gray-800",
                         isActive(item.href) && "bg-gray-100 dark:bg-gray-800"
                       )}
                       asChild
@@ -228,7 +228,7 @@ export function Sidebar() {
                 {user?.role === "supergod" && (
                   <>
                     <div className="ml-4 mt-2 mb-1">
-                      <h4 className="px-2 py-1 text-xs font-medium text-gray-500 dark:text-gray-500">
+                      <h4 className="px-2 py-1 text-xs font-medium text-foreground">
                         Supergod
                       </h4>
                     </div>
@@ -240,7 +240,7 @@ export function Sidebar() {
                           variant={isActive(item.href) ? "secondary" : "ghost"}
                           size="sm"
                           className={cn(
-                            "w-full justify-start ml-4 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800",
+                            "w-full justify-start ml-4 text-foreground hover:bg-gray-100 dark:hover:bg-gray-800",
                             isActive(item.href) && "bg-gray-100 dark:bg-gray-800"
                           )}
                           asChild
@@ -254,7 +254,7 @@ export function Sidebar() {
                     })}
 
                     <div className="ml-4 mt-2 mb-1">
-                      <h4 className="px-2 py-1 text-xs font-medium text-gray-500 dark:text-gray-500">
+                      <h4 className="px-2 py-1 text-xs font-medium text-foreground">
                         System Controls
                       </h4>
                     </div>
@@ -288,7 +288,7 @@ export function Sidebar() {
         <Separator className="my-4" />
 
         <div className="space-y-1">
-          <h3 className="px-2 py-1 text-sm font-medium text-gray-600 dark:text-gray-400">
+          <h3 className="px-2 py-1 text-sm font-medium text-foreground">
             Modules
           </h3>
           {moduleItems.map((item) => {
@@ -300,7 +300,7 @@ export function Sidebar() {
                 variant={isActive(item.href) ? "secondary" : "ghost"}
                 size="sm"
                 className={cn(
-                  "w-full justify-start text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800",
+                  "w-full justify-start text-foreground hover:bg-gray-100 dark:hover:bg-gray-800",
                   isActive(item.href) && "bg-gray-100 dark:bg-gray-800",
                   isFeatured && "border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-950/30"
                 )}
@@ -341,7 +341,7 @@ export function Sidebar() {
       
       {/* Version Footer */}
       <div className="mt-auto p-4 border-t border-gray-200 dark:border-gray-800">
-        <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
+        <div className="text-xs text-foreground text-center">
           Omega-8-Clean-Core v1.0.0
         </div>
       </div>

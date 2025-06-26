@@ -332,14 +332,14 @@ export default function Module3() {
     const statusConfig = {
       draft: { color: 'bg-yellow-100 text-yellow-800', label: 'Draft' },
       active: { color: 'bg-green-100 text-green-800', label: 'Active' },
-      archived: { color: 'bg-gray-100 text-gray-800', label: 'Archived' },
+      archived: { color: 'bg-gray-100 text-foreground', label: 'Archived' },
       bin: { color: 'bg-red-100 text-red-800', label: 'Bin' }
     };
 
     const config = statusConfig[status];
     if (!config) {
       return (
-        <Badge className="bg-gray-100 text-gray-800 border-0">
+        <Badge className="bg-gray-100 text-foreground border-0">
           Unknown
         </Badge>
       );
@@ -547,7 +547,7 @@ export default function Module3() {
             <TooltipProvider>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <h4 className="font-medium text-gray-900">📰 News Items Queue ({newsItems.length})</h4>
+                  <h4 className="font-medium text-foreground">📰 News Items Queue ({newsItems.length})</h4>
                   <div className="flex gap-2">
                     {selectedItems.length > 0 && (
                       <Button
@@ -570,7 +570,7 @@ export default function Module3() {
                     checked={selectedItems.length === newsItems.length && newsItems.length > 0}
                     onCheckedChange={handleSelectAll}
                   />
-                  <Label htmlFor="select-all" className="text-sm text-gray-600">
+                  <Label htmlFor="select-all" className="text-sm text-foreground">
                     Select all items
                   </Label>
                 </div>
@@ -588,7 +588,7 @@ export default function Module3() {
                         
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-start mb-2">
-                            <h5 className="font-medium text-sm text-gray-900 truncate pr-2">{item.headline}</h5>
+                            <h5 className="font-medium text-sm text-foreground truncate pr-2">{item.headline}</h5>
                             <div className="flex items-center gap-2">
                               <Tooltip>
                                 <TooltipTrigger>
@@ -601,10 +601,10 @@ export default function Module3() {
                             </div>
                           </div>
                           
-                          <p className="text-xs text-gray-600 mb-3 line-clamp-2">{item.content}</p>
+                          <p className="text-xs text-foreground mb-3 line-clamp-2">{item.content}</p>
                           
                           <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-4 text-xs text-gray-500">
+                            <div className="flex items-center gap-4 text-xs text-foreground">
                               <span className="capitalize">{item.contentType} content</span>
                               <span>{new Date(item.createdAt).toLocaleString()}</span>
                             </div>

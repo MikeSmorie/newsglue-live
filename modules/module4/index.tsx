@@ -374,7 +374,7 @@ export default function Module4NewsAggregator() {
     if (hours < 1) return { text: "Fresh", color: "text-green-600" };
     if (hours < 24) return { text: `${hours}h ago`, color: "text-yellow-600" };
     if (hours < 168) return { text: `${Math.floor(hours / 24)}d ago`, color: "text-orange-600" };
-    return { text: "Stale", color: "text-gray-500" };
+    return { text: "Stale", color: "text-foreground" };
   };
 
   if (!activeCampaign) {

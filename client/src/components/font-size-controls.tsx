@@ -23,7 +23,7 @@ export function FontSizeControls() {
               variant="outline"
               size="icon"
               onClick={() => adjustFontSize(-1)}
-              className="h-8 w-8 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="h-8 w-8 text-foreground hover:bg-gray-100 dark:hover:bg-gray-800"
             >
               <Minus className="h-4 w-4" />
             </Button>
@@ -41,7 +41,7 @@ export function FontSizeControls() {
               variant="outline"
               size="icon"
               onClick={() => adjustFontSize(1)}
-              className="h-8 w-8 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="h-8 w-8 text-foreground hover:bg-gray-100 dark:hover:bg-gray-800"
             >
               <Plus className="h-4 w-4" />
             </Button>

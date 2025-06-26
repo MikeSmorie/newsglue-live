@@ -398,7 +398,7 @@ export default function Module6() {
     const statusConfig: any = {
       draft: { color: 'bg-yellow-100 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-100', label: 'Draft' },
       active: { color: 'bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-100', label: 'Active' },
-      archived: { color: 'bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-100', label: 'Archived' },
+      archived: { color: 'bg-secondary text-foreground dark:text-foreground', label: 'Archived' },
       bin: { color: 'bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-100', label: 'Bin' }
     };
 
@@ -603,7 +603,7 @@ export default function Module6() {
 
             {/* Bulk Selection Toggle */}
             {filteredItems.length > 0 && (
-              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+              <div className="mt-3 pt-3 border-t border">
                 <div className="flex items-center justify-between">
                   <Label className="text-xs text-muted-foreground">Bulk Selection Mode</Label>
                   <Checkbox
@@ -631,12 +631,12 @@ export default function Module6() {
           {/* Scrollable News List */}
           <div className="flex-1 overflow-y-auto">
             {!selectedCampaign ? (
-              <div className="p-6 text-center text-gray-500 dark:text-gray-400">
+              <div className="p-6 text-center text-foreground dark:text-foreground">
                 <div className="text-4xl mb-3">📋</div>
                 <p className="text-sm">Select a campaign to view news items</p>
               </div>
             ) : filteredItems.length === 0 ? (
-              <div className="p-6 text-center text-gray-500 dark:text-gray-400">
+              <div className="p-6 text-center text-foreground dark:text-foreground">
                 <div className="text-4xl mb-3">📰</div>
                 <p className="text-sm">No news items found</p>
                 <p className="text-xs mt-1">Add items from Module 4 or 5</p>
@@ -689,7 +689,7 @@ export default function Module6() {
                               href={item.sourceUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="p-1 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+                              className="p-1 text-foreground dark:text-foreground hover:text-blue-600 dark:hover:text-blue-400"
                               onClick={(e) => e.stopPropagation()}
                             >
                               <ExternalLink className="h-3 w-3" />
@@ -701,7 +701,7 @@ export default function Module6() {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <button
-                              className="p-1 text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"
+                              className="p-1 text-foreground dark:text-foreground hover:text-green-600 dark:hover:text-green-400"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleNewsJackPDFExport(item.id, item.headline);
@@ -716,7 +716,7 @@ export default function Module6() {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <button
-                              className="p-1 text-gray-400 hover:text-yellow-600"
+                              className="p-1 text-foreground hover:text-yellow-600"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setEditingContent({ platform: 'edit', content: item });
@@ -731,7 +731,7 @@ export default function Module6() {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <button
-                              className="p-1 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                              className="p-1 text-foreground dark:text-foreground hover:text-foreground dark:hover:text-foreground"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 updateStatusMutation.mutate({ id: item.id, status: 'archived' });
@@ -746,7 +746,7 @@ export default function Module6() {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <button
-                              className="p-1 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400"
+                              className="p-1 text-foreground dark:text-foreground hover:text-red-600 dark:hover:text-red-400"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 deleteItemMutation.mutate(item.id);
@@ -763,7 +763,7 @@ export default function Module6() {
                     {/* Headline with Tooltip */}
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2 line-clamp-2 leading-tight">
+                        <h4 className="text-sm font-medium text-foreground dark:text-white mb-2 line-clamp-2 leading-tight">
                           {item.headline}
                         </h4>
                       </TooltipTrigger>
@@ -773,7 +773,7 @@ export default function Module6() {
                     </Tooltip>
 
                     {/* Date and Generation Status */}
-                    <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center justify-between text-xs text-foreground dark:text-foreground">
                       <span>{new Date(item.createdAt).toLocaleDateString()}</span>
                       <div className="flex items-center gap-1">
                         {getGeneratedPlatforms(item).length > 0 ? (
@@ -812,8 +812,8 @@ export default function Module6() {
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center max-w-md">
                 <div className="text-6xl mb-4">👆</div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Select a news item to begin</h3>
-                <p className="text-gray-600 dark:text-gray-300">
+                <h3 className="text-xl font-semibold text-foreground dark:text-white mb-2">Select a news item to begin</h3>
+                <p className="text-foreground dark:text-foreground">
                   Choose an item from the queue to generate or view NewsJack content
                 </p>
               </div>
@@ -821,13 +821,13 @@ export default function Module6() {
           ) : (
             <>
               {/* Header Area */}
-              <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+              <div className="p-6 border-b border bg-gray-50 dark:bg-gray-800">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
-                    <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                    <h1 className="text-xl font-bold text-foreground dark:text-white mb-2">
                       {selectedNewsItem.headline}
                     </h1>
-                    <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300 mb-3">
+                    <div className="flex items-center gap-4 text-sm text-foreground dark:text-foreground mb-3">
                       <span>Campaign: {selectedCampaign?.campaignName}</span>
                       <span>•</span>
                       <a
@@ -933,7 +933,7 @@ export default function Module6() {
                         className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors capitalize border ${
                           activeChannel === channel
                             ? 'bg-blue-600 text-white border-blue-600 dark:bg-blue-500 dark:border-blue-500'
-                            : 'bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 border-gray-300 dark:border-gray-600'
+                            : 'bg-gray-50 dark:bg-gray-800 text-foreground dark:text-foreground hover:bg-gray-100 dark:hover:bg-gray-700 border'
                         }`}
                         onClick={() => setActiveChannel(channel)}
                       >
@@ -951,9 +951,9 @@ export default function Module6() {
                     <div className="text-center max-w-2xl">
                       <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-2xl p-12 border border-blue-200 dark:border-blue-800">
                         <Zap className="mx-auto h-20 w-20 text-blue-600 dark:text-blue-400 mb-8" />
-                        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Ready to NewsJack</h2>
-                        <h3 className="text-xl font-medium text-gray-700 dark:text-gray-300 mb-6">Transform Breaking News Into Strategic Content</h3>
-                        <p className="text-gray-600 dark:text-gray-400 mb-8 leading-relaxed text-lg">
+                        <h2 className="text-3xl font-bold text-foreground dark:text-white mb-4">Ready to NewsJack</h2>
+                        <h3 className="text-xl font-medium text-foreground dark:text-foreground mb-6">Transform Breaking News Into Strategic Content</h3>
+                        <p className="text-foreground dark:text-foreground mb-8 leading-relaxed text-lg">
                           Apply NewsJack methodology to turn current events into compelling content that drives engagement and conversions across all platforms.
                         </p>
                         
@@ -982,7 +982,7 @@ export default function Module6() {
                               <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                               <span className="font-semibold text-blue-600 dark:text-blue-400">Processing: 30-60 seconds</span>
                             </div>
-                            <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
+                            <div className="space-y-3 text-sm text-foreground dark:text-foreground">
                               <div className="flex items-center gap-2">
                                 <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
                                 <span>Analyzing news context and relevance...</span>
@@ -1007,10 +1007,10 @@ export default function Module6() {
                     {selectedNewsItem.platformOutputs?.[activeChannel]?.content && (
                       <>
                         {/* Styled Output */}
-                        <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
-                          <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-900">
+                        <div className="bg-gray-50 dark:bg-gray-800 border border rounded-lg">
+                          <div className="p-4 border-b border bg-secondary">
                             <div className="flex items-center justify-between">
-                              <h3 className="font-semibold text-gray-900 dark:text-white capitalize">
+                              <h3 className="font-semibold text-foreground dark:text-white capitalize">
                                 {activeChannel} NewsJack Output
                               </h3>
                               <div className="flex items-center gap-2">
@@ -1146,13 +1146,13 @@ export default function Module6() {
 
                         {/* Performance Metrics */}
                         {selectedNewsItem.processingTimeSeconds && (
-                          <div className="bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800 dark:to-blue-900 border border-gray-200 dark:border-gray-700 p-4 rounded-lg">
+                          <div className="bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800 dark:to-blue-900 border border p-4 rounded-lg">
                             <div className="flex items-center gap-2 mb-3">
                               <div className="text-lg">📈</div>
-                              <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Performance Benchmarks</h4>
+                              <h4 className="text-sm font-semibold text-foreground dark:text-white">Performance Benchmarks</h4>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <button className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                                  <button className="text-foreground dark:text-foreground hover:text-foreground dark:hover:text-foreground">
                                     <div className="w-4 h-4 rounded-full border border-current flex items-center justify-center text-xs">?</div>
                                   </button>
                                 </TooltipTrigger>
@@ -1165,20 +1165,20 @@ export default function Module6() {
                             <div className="grid grid-cols-2 gap-4 text-sm">
                               <div className="space-y-2">
                                 <div className="flex justify-between">
-                                  <span className="text-gray-600 dark:text-gray-400">NG Processing Time:</span>
+                                  <span className="text-foreground dark:text-foreground">NG Processing Time:</span>
                                   <Badge variant="default" className="bg-green-600 text-white">
                                     {formatTime(selectedNewsItem.processingTimeSeconds)}
                                   </Badge>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span className="text-gray-600 dark:text-gray-400">Est. Human Time:</span>
-                                  <span className="font-medium text-gray-900 dark:text-white">
+                                  <span className="text-foreground dark:text-foreground">Est. Human Time:</span>
+                                  <span className="font-medium text-foreground dark:text-white">
                                     {formatTime(calculateTimeSavings(selectedNewsItem.processingTimeSeconds).humanTime)}
                                   </span>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span className="text-gray-600 dark:text-gray-400">Est. Human + AI Time:</span>
-                                  <span className="font-medium text-gray-900 dark:text-white">
+                                  <span className="text-foreground dark:text-foreground">Est. Human + AI Time:</span>
+                                  <span className="font-medium text-foreground dark:text-white">
                                     {formatTime(calculateTimeSavings(selectedNewsItem.processingTimeSeconds).humanAiTime)}
                                   </span>
                                 </div>
@@ -1186,19 +1186,19 @@ export default function Module6() {
                               
                               <div className="space-y-2">
                                 <div className="flex justify-between">
-                                  <span className="text-gray-600 dark:text-gray-400">Time Saved (vs Human):</span>
+                                  <span className="text-foreground dark:text-foreground">Time Saved (vs Human):</span>
                                   <Badge variant="default" className="bg-blue-600 text-white">
                                     {formatTime(calculateTimeSavings(selectedNewsItem.processingTimeSeconds).humanTimeSaved)}
                                   </Badge>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span className="text-gray-600 dark:text-gray-400">Time Saved (vs Human+AI):</span>
+                                  <span className="text-foreground dark:text-foreground">Time Saved (vs Human+AI):</span>
                                   <Badge variant="default" className="bg-purple-600 text-white">
                                     {formatTime(calculateTimeSavings(selectedNewsItem.processingTimeSeconds).humanAiTimeSaved)}
                                   </Badge>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span className="text-gray-600 dark:text-gray-400">Efficiency Gain:</span>
+                                  <span className="text-foreground dark:text-foreground">Efficiency Gain:</span>
                                   <Badge variant="default" className="bg-orange-600 text-white">
                                     {Math.round((calculateTimeSavings(selectedNewsItem.processingTimeSeconds).humanTimeSaved / calculateTimeSavings(selectedNewsItem.processingTimeSeconds).humanTime) * 100)}%
                                   </Badge>
@@ -1229,36 +1229,36 @@ export default function Module6() {
                         {/* Stats Panel */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                           {/* Content Metrics */}
-                          <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 rounded-lg">
-                            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Content Analysis</h4>
+                          <div className="bg-gray-50 dark:bg-gray-800 border border p-4 rounded-lg">
+                            <h4 className="text-sm font-semibold text-foreground dark:text-white mb-3">Content Analysis</h4>
                             <div className="space-y-3">
                               <div className="flex justify-between text-sm">
-                                <span className="text-gray-600 dark:text-gray-300">Requested vs. Actual:</span>
-                                <span className="font-medium text-gray-900 dark:text-white">
+                                <span className="text-foreground dark:text-foreground">Requested vs. Actual:</span>
+                                <span className="font-medium text-foreground dark:text-white">
                                   {activeChannel === 'twitter' ? '280' : 
                                    activeChannel === 'linkedin' ? '3000' : 
                                    activeChannel === 'instagram' ? '2200' : '1000'} / {selectedNewsItem.platformOutputs?.[activeChannel]?.content?.length || 0} chars
                                 </span>
                               </div>
                               <div className="flex justify-between text-sm">
-                                <span className="text-gray-600 dark:text-gray-300">Word Count:</span>
-                                <span className="font-medium text-gray-900 dark:text-white">{selectedNewsItem.platformOutputs?.[activeChannel]?.content?.split(/\s+/).length || 0} words</span>
+                                <span className="text-foreground dark:text-foreground">Word Count:</span>
+                                <span className="font-medium text-foreground dark:text-white">{selectedNewsItem.platformOutputs?.[activeChannel]?.content?.split(/\s+/).length || 0} words</span>
                               </div>
                               <div className="flex justify-between text-sm">
-                                <span className="text-gray-600 dark:text-gray-300">AI Model:</span>
-                                <span className="font-medium text-gray-900 dark:text-white">GPT-4o</span>
+                                <span className="text-foreground dark:text-foreground">AI Model:</span>
+                                <span className="font-medium text-foreground dark:text-white">GPT-4o</span>
                               </div>
                             </div>
                           </div>
 
                           {/* Performance Benchmarks */}
-                          <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 rounded-lg">
+                          <div className="bg-gray-50 dark:bg-gray-800 border border p-4 rounded-lg">
                             <div className="flex items-center gap-2 mb-3">
                               <div className="text-lg">📈</div>
-                              <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Performance Benchmarks</h4>
+                              <h4 className="text-sm font-semibold text-foreground dark:text-white">Performance Benchmarks</h4>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <button className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                                  <button className="text-foreground dark:text-foreground hover:text-foreground dark:hover:text-foreground">
                                     <div className="w-4 h-4 rounded-full border border-current flex items-center justify-center text-xs">?</div>
                                   </button>
                                 </TooltipTrigger>
@@ -1272,7 +1272,7 @@ export default function Module6() {
                             </div>
                             <div className="space-y-3">
                               <div className="flex justify-between text-sm">
-                                <span className="text-gray-600 dark:text-gray-300">NewsGlue Processing (All 5 Platforms):</span>
+                                <span className="text-foreground dark:text-foreground">NewsGlue Processing (All 5 Platforms):</span>
                                 <Badge variant="default" className="bg-green-600 text-white">
                                   {selectedNewsItem.processingTimeSeconds ? 
                                     formatTime(selectedNewsItem.processingTimeSeconds) : 
@@ -1284,16 +1284,16 @@ export default function Module6() {
                                 </Badge>
                               </div>
                               <div className="flex justify-between text-sm">
-                                <span className="text-gray-600 dark:text-gray-300">Est. Human Time (All 5 Platforms):</span>
-                                <span className="font-medium text-gray-600 dark:text-gray-400">45min</span>
+                                <span className="text-foreground dark:text-foreground">Est. Human Time (All 5 Platforms):</span>
+                                <span className="font-medium text-foreground dark:text-foreground">45min</span>
                               </div>
                               <div className="flex justify-between text-sm">
-                                <span className="text-gray-600 dark:text-gray-300">Est. Human + AI Time (All 5 Platforms):</span>
+                                <span className="text-foreground dark:text-foreground">Est. Human + AI Time (All 5 Platforms):</span>
                                 <span className="font-medium text-orange-600 dark:text-orange-400">8min</span>
                               </div>
-                              <div className="pt-2 border-t border-gray-300 dark:border-gray-600">
+                              <div className="pt-2 border-t border">
                                 <div className="flex justify-between text-sm font-medium">
-                                  <span className="text-gray-700 dark:text-gray-300">Speed Improvement:</span>
+                                  <span className="text-foreground dark:text-foreground">Speed Improvement:</span>
                                   <div className="flex gap-2">
                                     <Badge variant="outline" className="text-emerald-600 border-emerald-600">
                                       {selectedNewsItem.processingTimeSeconds ? 
@@ -1323,8 +1323,8 @@ export default function Module6() {
                                 <div className="text-3xl font-bold text-orange-600 dark:text-orange-300 mb-1">
                                   {selectedNewsItem.platformOutputs?.[activeChannel]?.metrics?.newsPercentage || 0}%
                                 </div>
-                                <div className="text-sm text-gray-700 dark:text-gray-200 font-medium">News Focus</div>
-                                <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3 mt-2">
+                                <div className="text-sm text-foreground dark:text-foreground font-medium">News Focus</div>
+                                <div className="w-full bg-secondary rounded-full h-3 mt-2">
                                   <div 
                                     className="bg-orange-500 dark:bg-orange-400 h-3 rounded-full transition-all" 
                                     style={{ width: `${selectedNewsItem.platformOutputs?.[activeChannel]?.metrics?.newsPercentage || 0}%` }}
@@ -1335,8 +1335,8 @@ export default function Module6() {
                                 <div className="text-3xl font-bold text-purple-600 dark:text-purple-300 mb-1">
                                   {selectedNewsItem.platformOutputs?.[activeChannel]?.metrics?.campaignPercentage || 0}%
                                 </div>
-                                <div className="text-sm text-gray-700 dark:text-gray-200 font-medium">Campaign Focus</div>
-                                <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3 mt-2">
+                                <div className="text-sm text-foreground dark:text-foreground font-medium">Campaign Focus</div>
+                                <div className="w-full bg-secondary rounded-full h-3 mt-2">
                                   <div 
                                     className="bg-purple-500 dark:bg-purple-400 h-3 rounded-full transition-all" 
                                     style={{ width: `${selectedNewsItem.platformOutputs?.[activeChannel]?.metrics?.campaignPercentage || 0}%` }}

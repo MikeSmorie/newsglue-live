@@ -107,10 +107,10 @@ export default function Module1() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+          <h1 className="text-3xl font-bold text-foreground dark:text-foreground">
             NewsJack Campaign Builder
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
+          <p className="text-foreground dark:text-foreground mt-2">
             Create emotion-driven content that connects trending news with your brand
           </p>
         </div>
@@ -204,11 +204,11 @@ export default function Module1() {
             <CardContent>
               {campaigns.length === 0 ? (
                 <div className="text-center py-8">
-                  <Lightbulb className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                  <Lightbulb className="mx-auto h-12 w-12 text-foreground mb-4" />
+                  <h3 className="text-lg font-medium text-foreground dark:text-foreground mb-2">
                     No campaigns yet
                   </h3>
-                  <p className="text-gray-500 dark:text-gray-400 mb-4">
+                  <p className="text-foreground dark:text-foreground mb-4">
                     Create your first NewsJack campaign to start generating emotion-driven content.
                   </p>
                   <Button onClick={handleCreateCampaign}>
@@ -224,12 +224,12 @@ export default function Module1() {
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-1">
-                          <h4 className="font-medium text-gray-900 dark:text-gray-100">
+                          <h4 className="font-medium text-foreground dark:text-foreground">
                             {campaign.campaignName}
                           </h4>
                           {getStatusBadge(campaign.status)}
                         </div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <p className="text-sm text-foreground dark:text-foreground">
                           Created {formatDate(campaign.createdAt)}
                           {campaign.channels && campaign.channels.length > 0 && (
                             <span> • {campaign.channels.length} platform{campaign.channels.length !== 1 ? 's' : ''}</span>

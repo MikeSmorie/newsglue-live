@@ -145,11 +145,11 @@ export default function Module7() {
             <Users className="h-8 w-8 text-blue-600" />
             Module 7: Proposal Builder
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-foreground mt-2">
             Generate professional NewsJack proposals for rapid client acquisition
           </p>
           {activeCampaign && (
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-foreground mt-1">
               Active Campaign: <span className="font-medium">{activeCampaign.campaignName}</span>
             </p>
           )}
@@ -175,11 +175,11 @@ export default function Module7() {
             <CardContent className="space-y-6">
               {!activeCampaignId ? (
                 <div className="text-center py-8">
-                  <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  <Users className="mx-auto h-12 w-12 text-foreground mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">
                     No Campaign Available
                   </h3>
-                  <p className="text-gray-500 mb-4">
+                  <p className="text-foreground mb-4">
                     Create a campaign in Module 1 to generate proposals.
                   </p>
                 </div>

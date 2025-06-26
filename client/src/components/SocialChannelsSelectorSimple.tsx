@@ -69,7 +69,7 @@ export default function SocialChannelsSelectorSimple({
   if (platformsLoading) {
     return (
       <div className="space-y-3">
-        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <h3 className="text-sm font-medium text-foreground">
           Target Social Platforms
         </h3>
         <div className="text-sm text-gray-500">Loading platforms...</div>
@@ -80,10 +80,10 @@ export default function SocialChannelsSelectorSimple({
   return (
     <TooltipProvider>
       <div className="space-y-3">
-        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <h3 className="text-sm font-medium text-foreground">
           Target Social Platforms
         </h3>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
+        <p className="text-xs text-foreground">
           Select platforms where this campaign will be distributed. Each platform has unique content style requirements.
         </p>
         
@@ -140,7 +140,7 @@ export default function SocialChannelsSelectorSimple({
                       </TooltipContent>
                     </Tooltip>
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <p className="text-xs text-foreground mt-1">
                     {platform.style}
                   </p>
                 </div>

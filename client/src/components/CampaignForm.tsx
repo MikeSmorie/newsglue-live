@@ -236,10 +236,10 @@ export default function CampaignForm({ onSuccess, onCancel, editingCampaign }: C
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+        <h1 className="text-3xl font-bold text-foreground mb-2">
           {editingCampaign ? 'Edit Campaign' : 'Create NewsJack Campaign'}
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-foreground">
           Build emotion-driven content that connects trending news with your brand message
         </p>
       </div>
@@ -351,11 +351,11 @@ export default function CampaignForm({ onSuccess, onCancel, editingCampaign }: C
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div>
                     <Label className="font-semibold">Page Title</Label>
-                    <p className="text-gray-600 dark:text-gray-300">{scrapedData.title}</p>
+                    <p className="text-foreground">{scrapedData.title}</p>
                   </div>
                   <div>
                     <Label className="font-semibold">Meta Description</Label>
-                    <p className="text-gray-600 dark:text-gray-300">{scrapedData.description}</p>
+                    <p className="text-foreground">{scrapedData.description}</p>
                   </div>
                 </div>
                 
@@ -598,7 +598,7 @@ The more detail you provide, the better the AI can create targeted NewsJack cont
                       Choose Files to Upload
                     </Button>
                     
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
+                    <p className="text-xs text-foreground mt-3">
                       Supported: PDF, Word (.doc/.docx), Text files (.txt/.rtf) • Max 10MB per file
                     </p>
                   </div>

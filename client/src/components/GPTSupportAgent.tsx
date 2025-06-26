@@ -255,7 +255,7 @@ Answer the user's question about how the platform works:`;
                   className={`max-w-[80%] rounded-lg px-4 py-2 ${
                     message.role === 'user'
                       ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                      : 'bg-gray-100 dark:bg-gray-800 text-foreground'
                   }`}
                 >
                   <p className="text-sm whitespace-pre-wrap">{message.content}</p>
@@ -282,7 +282,7 @@ Answer the user's question about how the platform works:`;
                   </div>
                 </div>
                 <div className="bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-2">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-sm text-foreground">
                     Thinking...
                   </p>
                 </div>
