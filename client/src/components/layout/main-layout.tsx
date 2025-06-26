@@ -1,16 +1,24 @@
 import { Sidebar } from "./sidebar";
 import { Header } from "./header";
 import LoginStatusGuard from "@/components/login-status-guard";
-import { useCampaign } from "@/contexts/campaign-context";
 import { SimpleCampaignSelector } from "@/components/SimpleCampaignSelector";
 import { CampaignDashboard } from "@/components/CampaignDashboard";
+import { useState, useEffect } from "react";
 
 interface MainLayoutProps {
   children: React.ReactNode;
 }
 
 export function MainLayout({ children }: MainLayoutProps) {
-  const { selectedCampaignID, isLoading } = useCampaign();
+  const [selectedCampaignID, setSelectedCampaignID] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Check for selected campaign in localStorage
+  useEffect(() => {
+    const campaignId = localStorage.getItem('selectedCampaignID');
+    setSelectedCampaignID(campaignId);
+    setIsLoading(false);
+  }, []);
 
   // Show campaign selector if no campaign is selected
   if (!isLoading && !selectedCampaignID) {

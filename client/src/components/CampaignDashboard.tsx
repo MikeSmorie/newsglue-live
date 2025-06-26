@@ -1,13 +1,28 @@
-import { useCampaign } from "@/contexts/campaign-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Settings } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 
 export function CampaignDashboard() {
-  const { selectedCampaign, clearSelectedCampaign } = useCampaign();
+  const [selectedCampaignName, setSelectedCampaignName] = useState<string>("");
+  const [, setLocation] = useLocation();
 
-  if (!selectedCampaign) {
+  useEffect(() => {
+    const campaignName = localStorage.getItem('selectedCampaignName');
+    if (campaignName) {
+      setSelectedCampaignName(campaignName);
+    }
+  }, []);
+
+  const clearSelectedCampaign = () => {
+    localStorage.removeItem('selectedCampaignID');
+    localStorage.removeItem('selectedCampaignName');
+    setLocation('/');
+  };
+
+  if (!selectedCampaignName) {
     return null;
   }
 
@@ -20,7 +35,7 @@ export function CampaignDashboard() {
               <Badge variant="secondary" className="bg-primary/10 text-primary">
                 Active Campaign
               </Badge>
-              <CardTitle className="text-xl">{selectedCampaign.name}</CardTitle>
+              <CardTitle className="text-xl">{selectedCampaignName}</CardTitle>
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -38,19 +53,8 @@ export function CampaignDashboard() {
           </div>
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            {selectedCampaign.targetAudience && (
-              <div>
-                <p className="text-muted-foreground mb-1">Target Audience:</p>
-                <p className="text-foreground">{selectedCampaign.targetAudience}</p>
-              </div>
-            )}
-            {selectedCampaign.brandVoice && (
-              <div>
-                <p className="text-muted-foreground mb-1">Brand Voice:</p>
-                <p className="text-foreground">{selectedCampaign.brandVoice}</p>
-              </div>
-            )}
+          <div className="text-sm text-muted-foreground">
+            Campaign active and ready for content generation
           </div>
         </CardContent>
       </Card>
