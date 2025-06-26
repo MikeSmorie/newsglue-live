@@ -46,6 +46,10 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
     }
   }, [selectedCampaign]);
 
+  const selectCampaign = (campaign: Campaign) => {
+    setSelectedCampaign(campaign);
+  };
+
   const exitCampaign = () => {
     setSelectedCampaign(null);
   };
@@ -57,6 +61,7 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
       value={{ 
         selectedCampaign, 
         setSelectedCampaign, 
+        selectCampaign,
         isInCampaignMode, 
         exitCampaign 
       }}
