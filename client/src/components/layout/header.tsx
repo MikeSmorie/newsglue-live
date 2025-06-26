@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { useCampaign } from "@/contexts/campaign-context";
 import { useUser } from "@/hooks/use-user";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
@@ -43,12 +44,13 @@ function getRoleVariant(role: string) {
 }
 
 export function Header() {
-  const [, navigate] = useLocation();
   const { user, logout } = useUser();
+  const { selectedCampaign, exitCampaign } = useCampaign();
+  const [, navigate] = useLocation();
   const { toast } = useToast();
   const [isSupportAgentOpen, setIsSupportAgentOpen] = useState(false);
   const [isSupportMinimized, setIsSupportMinimized] = useState(false);
-  
+
   // Fetch 2FA status for header indicator
   const { data: twoFactorStatus } = useQuery<{ enabled: boolean; secret?: string }>({
     queryKey: ["/api/2fa/status"],
@@ -87,16 +89,22 @@ export function Header() {
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          
+
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate("/")}
+            onClick={() => {
+            // Exit current campaign and go to campaign selector
+            if (selectedCampaign) {
+              exitCampaign();
+            }
+            navigate('/');
+          }}
             className="h-8 w-8 text-foreground hover:bg-gray-100 dark:hover:bg-gray-800"
           >
             <Home className="h-4 w-4" />
           </Button>
-          
+
           <Button
             variant="ghost"
             size="icon"
@@ -106,25 +114,25 @@ export function Header() {
             <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
-        
+
         <div className="flex items-center gap-4 ml-auto">
           {user && (
             <>
               <span className="font-bold text-gray-900 dark:text-white">
                 {user.username || "User1#*User1$"}
               </span>
-              
+
               <Badge variant={getRoleVariant(user.role)} className="flex items-center gap-1">
                 {getRoleIcon(user.role)}
                 {user.role}
               </Badge>
-              
+
               {user.role === "supergod" && (
                 <span className="text-sm font-bold text-red-500 dark:text-red-400">
                   👑 Super-God Mode Active
                 </span>
               )}
-              
+
               {twoFactorStatus && twoFactorStatus.enabled && (
                 <Badge variant="default" className="flex items-center gap-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 border-green-300 dark:border-green-700">
                   <KeyRound className="h-3 w-3" />
@@ -133,7 +141,7 @@ export function Header() {
               )}
             </>
           )}
-          
+
           {/* GPT Support Agent - Only for logged in users */}
           {user && (
             <Button

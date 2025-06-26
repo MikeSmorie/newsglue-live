@@ -142,7 +142,7 @@ function Router() {
         <Route path="/locked-module" component={LockedModule} />
         <Route path="/2fa" component={TwoFactorAuth} />
         <Route path="/profile" component={Dashboard} />
-        <Route path="/" component={() => <CampaignDashboard />} />
+        <Route path="/" component={CampaignPage} />
         <Route component={NotFound} />
       </Switch>
     </MainLayout>

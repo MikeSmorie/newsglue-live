@@ -17,6 +17,7 @@ import {
   Settings,
   Megaphone
 } from 'lucide-react';
+import CampaignPage from './campaigns';
 
 interface Campaign {
   id: string;
@@ -77,6 +78,10 @@ export default function CampaignDashboard() {
         <CampaignForm onSuccess={handleCampaignCreated} />
       </div>
     );
+  }
+
+  if (!isInCampaignMode || !selectedCampaign) {
+    return <CampaignPage />;
   }
 
   if (isInCampaignMode && selectedCampaign) {
