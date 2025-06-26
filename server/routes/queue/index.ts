@@ -231,15 +231,21 @@ CONTENT STRUCTURE:
 3. Bridge to how this affects the target audience 
 4. Introduce the campaign as the solution
 5. Drive urgency for immediate action
-6. End with clear CTA including the campaign URL: ${campaign.ctaUrl || campaign.websiteUrl || 'Learn more'}
+6. Naturally integrate the campaign action within the content flow
 
-CRITICAL: Always include the campaign CTA URL (${campaign.ctaUrl || campaign.websiteUrl}) in your response.
+FORMATTING RULES:
+- Never use headers like "Call-to-Action:" or "CTA:" in the content
+- Integrate the action request naturally into the final paragraph
+- Make the transition from content to action feel organic and conversational
+- Avoid obvious sales language or marketing headers
+
+CRITICAL: Always include the campaign URL (${campaign.ctaUrl || campaign.websiteUrl}) naturally within the content flow.
 
 Respond with JSON in this format:
 {
-  "content": "Your generated content here - ${platform === 'blog' ? 'Write a comprehensive 1200-2000 word article with multiple sections, subheadings (use ## for H2, ### for H3), bullet points, and in-depth analysis. Include introduction, main body with detailed explanations, examples, and conclusion. Use markdown formatting for structure.' : 'concise and platform-optimized'}",
+  "content": "Your generated content here - ${platform === 'blog' ? 'Write a comprehensive 1200-2000 word article with multiple sections, subheadings (use ## for H2, ### for H3), bullet points, and in-depth analysis. Include introduction, main body with detailed explanations, examples, and conclusion. Use markdown formatting for structure. End with a natural, conversational invitation to action without using CTA headers.' : 'concise and platform-optimized ending with natural action invitation'}",
   "hashtags": ["relevant", "hashtags", "for", "the", "platform"],
-  "cta": "Call-to-action with URL: ${campaign.ctaUrl || campaign.websiteUrl || 'Learn more'}",
+  "cta": "${campaign.ctaUrl || campaign.websiteUrl || 'Learn more'}",
   "ctaUrl": "${campaign.ctaUrl || campaign.websiteUrl || ''}",
   "metrics": {
     "newsPercentage": ${newsRatio},

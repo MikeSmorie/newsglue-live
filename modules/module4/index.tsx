@@ -597,7 +597,7 @@ export default function Module4NewsAggregator() {
                                     setEditingKeyword(keyword.id);
                                     setEditKeywordText(keyword.keyword);
                                   }}
-                                  disabled={keyword.isDefault}
+                                  disabled={false}
                                 >
                                   <Edit2 className="h-3 w-3" />
                                 </Button>
@@ -625,7 +625,7 @@ export default function Module4NewsAggregator() {
                                   size="sm"
                                   variant="ghost"
                                   onClick={() => removeKeywordMutation.mutate(keyword.id)}
-                                  disabled={keyword.isDefault || removeKeywordMutation.isPending}
+                                  disabled={removeKeywordMutation.isPending}
                                 >
                                   <Trash2 className="h-3 w-3" />
                                 </Button>
