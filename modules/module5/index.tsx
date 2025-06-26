@@ -11,7 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
-import { useCampaignContext } from "@/hooks/use-campaign-context";
+import { useCampaign } from "@/hooks/use-campaign-context";
 import { 
   Search, 
   Plus, 
@@ -56,7 +56,7 @@ interface SearchKeyword {
 }
 
 export default function Module5GoogleNews() {
-  const { activeCampaign } = useCampaignContext();
+  const { selectedCampaign } = useCampaign();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -70,41 +70,41 @@ export default function Module5GoogleNews() {
 
   // Fetch full campaign data for resilience
   const { data: fullCampaignData } = useQuery({
-    queryKey: ['/api/campaigns', activeCampaign?.id, 'full'],
+    queryKey: ['/api/campaigns', selectedCampaignID, 'full'],
     queryFn: async () => {
-      const response = await fetch(`/api/campaigns/${activeCampaign?.id}`);
+      const response = await fetch(`/api/campaigns/${selectedCampaignID}`);
       if (!response.ok) throw new Error('Failed to fetch campaign');
       return response.json();
     },
-    enabled: !!activeCampaign?.id,
+    enabled: !!selectedCampaignID,
   });
 
   // Fetch campaign keywords
   const { data: keywords = [], isLoading: keywordsLoading } = useQuery({
-    queryKey: ['/api/campaigns', activeCampaign?.id, 'keywords'],
+    queryKey: ['/api/campaigns', selectedCampaignID, 'keywords'],
     queryFn: async () => {
-      const response = await fetch(`/api/google-news/keywords/${activeCampaign?.id}`);
+      const response = await fetch(`/api/google-news/keywords/${selectedCampaignID}`);
       if (!response.ok) throw new Error('Failed to fetch keywords');
       return response.json();
     },
-    enabled: !!activeCampaign?.id,
+    enabled: !!selectedCampaignID,
   });
 
   // Fetch news articles
   const { data: articles = [], isLoading: articlesLoading, refetch: refetchArticles } = useQuery({
-    queryKey: ['/api/google-news', activeCampaign?.id, 'articles'],
+    queryKey: ['/api/google-news', selectedCampaignID, 'articles'],
     queryFn: async () => {
-      const response = await fetch(`/api/google-news/articles/${activeCampaign?.id}`);
+      const response = await fetch(`/api/google-news/articles/${selectedCampaignID}`);
       if (!response.ok) throw new Error('Failed to fetch articles');
       return response.json();
     },
-    enabled: !!activeCampaign?.id,
+    enabled: !!selectedCampaignID,
   });
 
   // Add keyword mutation
   const addKeywordMutation = useMutation({
     mutationFn: async (keyword: string) => {
-      const response = await fetch(`/api/google-news/keywords/${activeCampaign?.id}`, {
+      const response = await fetch(`/api/google-news/keywords/${selectedCampaignID}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ keyword }),
@@ -113,7 +113,7 @@ export default function Module5GoogleNews() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/campaigns', activeCampaign?.id, 'keywords'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/campaigns', selectedCampaignID, 'keywords'] });
       setNewKeyword("");
       toast({ title: "Keyword added successfully" });
     },
@@ -126,14 +126,14 @@ export default function Module5GoogleNews() {
   const suggestKeywordsMutation = useMutation({
     mutationFn: async () => {
       setIsSuggestingKeywords(true);
-      const response = await fetch(`/api/google-news/suggest-keywords/${activeCampaign?.id}`, {
+      const response = await fetch(`/api/google-news/suggest-keywords/${selectedCampaignID}`, {
         method: 'POST',
       });
       if (!response.ok) throw new Error('Failed to suggest keywords');
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/campaigns', activeCampaign?.id, 'keywords'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/campaigns', selectedCampaignID, 'keywords'] });
       toast({ 
         title: "Keywords suggested successfully", 
         description: `Added ${data.count} AI-suggested keywords`
@@ -156,7 +156,7 @@ export default function Module5GoogleNews() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/campaigns', activeCampaign?.id, 'keywords'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/campaigns', selectedCampaignID, 'keywords'] });
       toast({ title: "Keyword removed successfully" });
     },
     onError: () => {
@@ -168,14 +168,14 @@ export default function Module5GoogleNews() {
   const searchArticlesMutation = useMutation({
     mutationFn: async () => {
       setIsSearching(true);
-      const response = await fetch(`/api/google-news/search/${activeCampaign?.id}`, {
+      const response = await fetch(`/api/google-news/search/${selectedCampaignID}`, {
         method: 'POST',
       });
       if (!response.ok) throw new Error('Failed to search articles');
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/google-news', activeCampaign?.id, 'articles'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/google-news', selectedCampaignID, 'articles'] });
       toast({ 
         title: "Search completed", 
         description: `Found ${data.count} new articles` 
@@ -199,7 +199,7 @@ export default function Module5GoogleNews() {
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/campaigns', activeCampaign?.id, 'keywords'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/campaigns', selectedCampaignID, 'keywords'] });
       toast({
         title: "Success",
         description: "All keywords cleared successfully",
@@ -226,7 +226,7 @@ export default function Module5GoogleNews() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/campaigns', activeCampaign?.id, 'keywords'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/campaigns', selectedCampaignID, 'keywords'] });
       setEditingKeyword(null);
       setEditKeywordText("");
       toast({
@@ -246,14 +246,14 @@ export default function Module5GoogleNews() {
   // Search single keyword mutation
   const searchKeywordMutation = useMutation({
     mutationFn: async (keywordId: string) => {
-      const response = await fetch(`/api/google-news/search-keyword/${activeCampaign?.id}/${keywordId}`, {
+      const response = await fetch(`/api/google-news/search-keyword/${selectedCampaignID}/${keywordId}`, {
         method: 'POST',
       });
       if (!response.ok) throw new Error('Failed to search keyword');
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/google-news', activeCampaign?.id, 'articles'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/google-news', selectedCampaignID, 'articles'] });
       toast({
         title: "Keyword search completed",
         description: `Found ${data.count} articles for "${data.keyword}"`,
@@ -272,7 +272,7 @@ export default function Module5GoogleNews() {
   // Transfer articles mutation
   const transferArticlesMutation = useMutation({
     mutationFn: async (articleIds: string[]) => {
-      const response = await fetch(`/api/google-news/transfer/${activeCampaign?.id}`, {
+      const response = await fetch(`/api/google-news/transfer/${selectedCampaignID}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ articleIds }),
@@ -281,7 +281,7 @@ export default function Module5GoogleNews() {
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/google-news', activeCampaign?.id, 'articles'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/google-news', selectedCampaignID, 'articles'] });
       setSelectedArticles([]);
       toast({ 
         title: "Sent to Execution Module", 
@@ -305,7 +305,7 @@ export default function Module5GoogleNews() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/google-news', activeCampaign?.id, 'articles'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/google-news', selectedCampaignID, 'articles'] });
       setSelectedArticles([]);
       toast({ title: "Articles deleted successfully" });
     },
@@ -377,7 +377,7 @@ export default function Module5GoogleNews() {
     return { text: "Stale", color: "text-foreground" };
   };
 
-  if (!activeCampaign) {
+  if (!selectedCampaign) {
     return (
       <Card>
         <CardContent className="pt-6">

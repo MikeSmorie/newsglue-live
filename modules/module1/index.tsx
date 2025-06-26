@@ -296,7 +296,7 @@ export default function Module1() {
       <BackupRestoreModal
         isOpen={showBackupModal}
         onClose={() => setShowBackupModal(false)}
-        campaignId={selectedCampaign?.id}
+        campaignId={selectedCampaignID}
         campaignName={selectedCampaign?.campaignName}
       />
     </div>
