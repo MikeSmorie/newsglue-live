@@ -10,7 +10,7 @@ import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger }
 import { BarChart3, Clock, DollarSign, Target, Download, Copy, FileText, TrendingUp, HelpCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { useCampaign } from "@/hooks/use-campaign-context";
+import { useCampaign } from "@/contexts/campaign-context";
 
 interface CampaignMetrics {
   id: number;

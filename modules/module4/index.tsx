@@ -56,23 +56,9 @@ interface SearchKeyword {
 }
 
 export default function Module4NewsAggregator() {
-  const { selectedCampaignID, selectedCampaign } = useCampaign();
+  const { selectedCampaign } = useCampaign();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  // Don't render if no campaign is selected
-  if (!selectedCampaignID) {
-    return (
-      <Card className="max-w-md mx-auto">
-        <CardHeader>
-          <CardTitle>No Campaign Selected</CardTitle>
-          <CardDescription>
-            Please select a campaign to access Module 4 - News Aggregator & Search.
-          </CardDescription>
-        </CardHeader>
-      </Card>
-    );
-  }
   
   const [newKeyword, setNewKeyword] = useState("");
   const [selectedArticles, setSelectedArticles] = useState<string[]>([]);
@@ -82,32 +68,43 @@ export default function Module4NewsAggregator() {
   const [editingKeyword, setEditingKeyword] = useState<string | null>(null);
   const [editKeywordText, setEditKeywordText] = useState("");
 
+  // Fetch full campaign data for resilience
+  const { data: fullCampaignData } = useQuery({
+    queryKey: ['/api/campaigns', selectedCampaign?.id, 'full'],
+    queryFn: async () => {
+      const response = await fetch(`/api/campaigns/${selectedCampaign?.id}`);
+      if (!response.ok) throw new Error('Failed to fetch campaign');
+      return response.json();
+    },
+    enabled: !!selectedCampaign?.id,
+  });
+
   // Fetch campaign keywords
   const { data: keywords = [], isLoading: keywordsLoading } = useQuery({
-    queryKey: ['/api/campaigns', selectedCampaignID, 'keywords'],
+    queryKey: ['/api/campaigns', selectedCampaign?.id, 'keywords'],
     queryFn: async () => {
-      const response = await fetch(`/api/news-aggregator/keywords/${selectedCampaignID}`);
+      const response = await fetch(`/api/news-aggregator/keywords/${selectedCampaign?.id}`);
       if (!response.ok) throw new Error('Failed to fetch keywords');
       return response.json();
     },
-    enabled: !!selectedCampaignID,
+    enabled: !!selectedCampaign?.id,
   });
 
   // Fetch news articles
   const { data: articles = [], isLoading: articlesLoading, refetch: refetchArticles } = useQuery({
-    queryKey: ['/api/news-aggregator', selectedCampaignID, 'articles'],
+    queryKey: ['/api/news-aggregator', selectedCampaign?.id, 'articles'],
     queryFn: async () => {
-      const response = await fetch(`/api/news-aggregator/articles/${selectedCampaignID}`);
+      const response = await fetch(`/api/news-aggregator/articles/${selectedCampaign?.id}`);
       if (!response.ok) throw new Error('Failed to fetch articles');
       return response.json();
     },
-    enabled: !!selectedCampaignID,
+    enabled: !!selectedCampaign?.id,
   });
 
   // Add keyword mutation
   const addKeywordMutation = useMutation({
     mutationFn: async (keyword: string) => {
-      const response = await fetch(`/api/news-aggregator/keywords/${selectedCampaignID}`, {
+      const response = await fetch(`/api/news-aggregator/keywords/${selectedCampaign?.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ keyword }),
@@ -116,7 +113,7 @@ export default function Module4NewsAggregator() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/campaigns', selectedCampaignID, 'keywords'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/campaigns', selectedCampaign?.id, 'keywords'] });
       setNewKeyword("");
       toast({ title: "Keyword added successfully" });
     },
@@ -129,14 +126,14 @@ export default function Module4NewsAggregator() {
   const suggestKeywordsMutation = useMutation({
     mutationFn: async () => {
       setIsSuggestingKeywords(true);
-      const response = await fetch(`/api/news-aggregator/suggest-keywords/${selectedCampaignID}`, {
+      const response = await fetch(`/api/news-aggregator/suggest-keywords/${selectedCampaign?.id}`, {
         method: 'POST',
       });
       if (!response.ok) throw new Error('Failed to suggest keywords');
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/campaigns', selectedCampaignID, 'keywords'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/campaigns', selectedCampaign?.id, 'keywords'] });
       toast({ 
         title: "Keywords suggested successfully", 
         description: `Added ${data.count} AI-suggested keywords`
@@ -159,7 +156,7 @@ export default function Module4NewsAggregator() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/campaigns', selectedCampaignID, 'keywords'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/campaigns', selectedCampaign?.id, 'keywords'] });
       toast({ title: "Keyword removed successfully" });
     },
     onError: () => {
@@ -171,14 +168,14 @@ export default function Module4NewsAggregator() {
   const searchArticlesMutation = useMutation({
     mutationFn: async () => {
       setIsSearching(true);
-      const response = await fetch(`/api/news-aggregator/search/${selectedCampaignID}`, {
+      const response = await fetch(`/api/news-aggregator/search/${selectedCampaign?.id}`, {
         method: 'POST',
       });
       if (!response.ok) throw new Error('Failed to search articles');
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/news-aggregator', selectedCampaignID, 'articles'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/news-aggregator', selectedCampaign?.id, 'articles'] });
       toast({ 
         title: "Search completed", 
         description: `Found ${data.count} new articles` 
@@ -202,7 +199,7 @@ export default function Module4NewsAggregator() {
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/campaigns', selectedCampaignID, 'keywords'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/campaigns', selectedCampaign?.id, 'keywords'] });
       toast({
         title: "Success",
         description: "All keywords cleared successfully",
@@ -229,7 +226,7 @@ export default function Module4NewsAggregator() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/campaigns', selectedCampaignID, 'keywords'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/campaigns', selectedCampaign?.id, 'keywords'] });
       setEditingKeyword(null);
       setEditKeywordText("");
       toast({
@@ -249,14 +246,14 @@ export default function Module4NewsAggregator() {
   // Search single keyword mutation
   const searchKeywordMutation = useMutation({
     mutationFn: async (keywordId: string) => {
-      const response = await fetch(`/api/news-aggregator/search-keyword/${selectedCampaignID}/${keywordId}`, {
+      const response = await fetch(`/api/news-aggregator/search-keyword/${selectedCampaign?.id}/${keywordId}`, {
         method: 'POST',
       });
       if (!response.ok) throw new Error('Failed to search keyword');
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/news-aggregator', selectedCampaignID, 'articles'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/news-aggregator', selectedCampaign?.id, 'articles'] });
       toast({
         title: "Keyword search completed",
         description: `Found ${data.count} articles for "${data.keyword}"`,
@@ -275,7 +272,7 @@ export default function Module4NewsAggregator() {
   // Transfer articles mutation
   const transferArticlesMutation = useMutation({
     mutationFn: async (articleIds: string[]) => {
-      const response = await fetch(`/api/news-aggregator/transfer/${selectedCampaignID}`, {
+      const response = await fetch(`/api/news-aggregator/transfer/${selectedCampaign?.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ articleIds }),
@@ -284,7 +281,7 @@ export default function Module4NewsAggregator() {
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/news-aggregator', selectedCampaignID, 'articles'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/news-aggregator', selectedCampaign?.id, 'articles'] });
       setSelectedArticles([]);
       toast({ 
         title: "Sent to Execution Module", 
@@ -308,7 +305,7 @@ export default function Module4NewsAggregator() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/news-aggregator', selectedCampaignID, 'articles'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/news-aggregator', selectedCampaign?.id, 'articles'] });
       setSelectedArticles([]);
       toast({ title: "Articles deleted successfully" });
     },

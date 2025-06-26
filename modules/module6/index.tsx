@@ -183,15 +183,15 @@ export default function Module6() {
 
   // Fetch news queue for selected campaign
   const { data: queueData, refetch: refetchQueue } = useQuery({
-    queryKey: ['/api/queue/fetch', selectedCampaignID],
+    queryKey: ['/api/queue/fetch', selectedCampaign?.id],
     queryFn: async () => {
-      if (!selectedCampaignID) return { newsItems: [] };
+      if (!selectedCampaign?.id) return { newsItems: [] };
       const res = await fetch(`/api/queue/fetch/${selectedCampaign.id}`, { credentials: 'include' });
       if (!res.ok) throw new Error('Failed to fetch queue');
       const data = await res.json();
       return data;
     },
-    enabled: !!selectedCampaignID
+    enabled: !!selectedCampaign?.id
   });
 
   const newsQueue = queueData?.newsItems || [];
@@ -530,7 +530,7 @@ export default function Module6() {
             {/* Campaign Selection */}
             <div className="mb-3">
               <Select
-                value={selectedCampaignID || ''}
+                value={selectedCampaign?.id || ''}
                 onValueChange={(value) => {
                   const campaign = campaigns.find(c => c.id === value);
                   setSelectedCampaign(campaign || null);

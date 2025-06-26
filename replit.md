@@ -107,13 +107,6 @@ Ghostli is a sophisticated NewsJack content marketing platform built on a modern
 - **Role-Based Access Control**: Comprehensive permission system
 
 ## Changelog
-- June 26, 2025: Campaign Selector Workflow Implementation
-  - Added campaign context system with localStorage persistence
-  - Campaign names now clickable links that enter campaign mode
-  - Sidebar completely hidden until campaign selected  
-  - All modules enforce selectedCampaignID check before rendering
-  - Active campaign dashboard with "Change Campaign" functionality
-  - Automatic redirect to Module 1 after campaign selection
 - June 26, 2025: Critical security and UX fixes implemented
   - Fixed campaign name data leakage between users
   - Enabled deletion/editing of default keywords

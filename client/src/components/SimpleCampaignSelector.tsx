@@ -1,101 +1,142 @@
-import { useQuery } from "@tanstack/react-query";
-import { useLocation } from "wouter";
-import { useEffect } from "react";
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Search, Calendar, Plus } from 'lucide-react';
+import { useCampaign } from '@/contexts/campaign-context';
 
 interface Campaign {
   id: string;
-  name: string;
-  brandVoice?: string;
-  targetAudience?: string;
-  createdAt?: string;
+  campaignName: string;
+  status: 'draft' | 'active' | 'archived';
+  createdAt: string;
+  updatedAt: string;
+  websiteUrl?: string;
 }
 
-export function SimpleCampaignSelector() {
-  const [, setLocation] = useLocation();
+interface SimpleCampaignSelectorProps {
+  onCreateNew?: () => void;
+}
+
+export default function SimpleCampaignSelector({ onCreateNew }: SimpleCampaignSelectorProps) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const { selectCampaign } = useCampaign();
 
   const { data: campaigns, isLoading, error } = useQuery({
-    queryKey: ['/api/campaigns'],
+    queryKey: ['campaigns'],
     queryFn: async () => {
-      const response = await fetch('/api/campaigns');
-      if (!response.ok) {
-        throw new Error('Failed to fetch campaigns');
-      }
-      return response.json() as Promise<Campaign[]>;
+      const res = await fetch('/api/campaigns', {
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to fetch campaigns');
+      return res.json();
     },
   });
 
-  // Check if campaign already selected and redirect
-  useEffect(() => {
-    const selected = localStorage.getItem('selectedCampaignID');
-    if (selected) {
-      setLocation('/module/1');
-    }
-  }, [setLocation]);
+  const filteredCampaigns = campaigns?.filter((campaign: Campaign) =>
+    campaign.campaignName.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
 
-  const selectCampaign = (id: string, name: string) => {
-    localStorage.setItem('selectedCampaignID', id);
-    localStorage.setItem('selectedCampaignName', name);
-    setLocation('/module/1');
+  const handleCampaignClick = (campaign: Campaign) => {
+    selectCampaign(campaign);
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading campaigns...</p>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">Select Campaign</h1>
+          <Button onClick={onCreateNew} className="flex items-center space-x-2">
+            <Plus className="w-4 h-4" />
+            <span>Create New</span>
+          </Button>
         </div>
+        <div className="text-center py-8">Loading campaigns...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
-        <div className="max-w-md text-center">
-          <h2 className="text-xl font-semibold text-destructive mb-2">Error Loading Campaigns</h2>
-          <p className="text-muted-foreground">Failed to load your campaigns. Please try refreshing the page.</p>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">Select Campaign</h1>
+          <Button onClick={onCreateNew} className="flex items-center space-x-2">
+            <Plus className="w-4 h-4" />
+            <span>Create New</span>
+          </Button>
         </div>
+        <div className="text-center py-8 text-red-600">Failed to load campaigns</div>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen p-10 bg-background text-foreground">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold mb-4">🎯 Select a Campaign</h1>
-        <button
-          onClick={() => setLocation('/module/1')}
-          className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium"
-        >
-          + Create New Campaign
-        </button>
-      </div>
-      
-      {!campaigns || campaigns.length === 0 ? (
-        <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">No Campaigns Found</h2>
-          <p className="text-muted-foreground">Create your first campaign to get started with NewsJack content generation.</p>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">Select Campaign</h1>
+          <p className="text-muted-foreground mt-1">Choose a campaign to work with, or create a new one</p>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-6 max-w-2xl">
-          {campaigns.map((campaign) => {
-            const campaignName = campaign.campaignName || campaign.name || 'Unnamed Campaign';
-            const createdDate = campaign.createdAt ? new Date(campaign.createdAt).toLocaleDateString() : 'Jun 26, 2025';
-            
-            return (
-              <button
-                key={campaign.id}
-                onClick={() => selectCampaign(campaign.id, campaignName)}
-                className="p-6 rounded bg-card hover:bg-muted/50 cursor-pointer transition-all border-2 hover:border-primary/50 text-left w-full"
-              >
-                <h2 className="text-xl font-bold text-primary mb-2">{campaignName}</h2>
-                <p className="text-sm text-muted-foreground">Created {createdDate}</p>
-              </button>
-            );
-          })}
+        <Button onClick={onCreateNew} className="flex items-center space-x-2">
+          <Plus className="w-4 h-4" />
+          <span>Create New</span>
+        </Button>
+      </div>
+
+      {campaigns && campaigns.length > 0 && (
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+          <Input
+            placeholder="Search campaigns..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
         </div>
       )}
-    </main>
+
+      <div className="space-y-3">
+        {filteredCampaigns.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            {campaigns?.length === 0 ? 'No campaigns found. Create your first campaign to get started.' : 'No campaigns match your search.'}
+          </div>
+        ) : (
+          filteredCampaigns.map((campaign: Campaign) => (
+            <div
+              key={campaign.id}
+              onClick={() => handleCampaignClick(campaign)}
+              className="bg-card border border-border rounded-lg p-4 cursor-pointer hover:bg-accent hover:border-accent-foreground/20 transition-all duration-200 group"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold group-hover:text-primary transition-colors">
+                    {campaign.campaignName || 'Untitled Campaign'}
+                  </h3>
+                  <div className="flex items-center space-x-3 mt-2">
+                    <Badge 
+                      variant={campaign.status === 'active' ? 'default' : campaign.status === 'draft' ? 'secondary' : 'outline'}
+                      className="text-xs"
+                    >
+                      {campaign.status}
+                    </Badge>
+                    <span className="text-sm text-muted-foreground flex items-center">
+                      <Calendar className="w-3 h-3 mr-1" />
+                      {new Date(campaign.createdAt).toLocaleDateString()}
+                    </span>
+                    {campaign.websiteUrl && (
+                      <span className="text-sm text-muted-foreground">
+                        {campaign.websiteUrl}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
   );
 }

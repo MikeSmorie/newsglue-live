@@ -17,7 +17,6 @@ import {
 import CampaignList from '@/components/CampaignList';
 import CampaignForm from '@/components/CampaignForm';
 import { BackupRestoreModal } from '@/components/backup/BackupRestoreModal';
-import { useCampaign } from '@/contexts/campaign-context';
 
 interface Campaign {
   id: string;
@@ -30,24 +29,10 @@ interface Campaign {
 }
 
 export default function Module1() {
-  const { selectedCampaignID, selectedCampaign } = useCampaign();
   const [activeTab, setActiveTab] = useState('overview');
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   const [showBackupModal, setShowBackupModal] = useState(false);
-
-  // Don't render if no campaign is selected
-  if (!selectedCampaignID) {
-    return (
-      <Card className="max-w-md mx-auto">
-        <CardHeader>
-          <CardTitle>No Campaign Selected</CardTitle>
-          <CardDescription>
-            Please select a campaign to access Module 1 - Campaign Builder.
-          </CardDescription>
-        </CardHeader>
-      </Card>
-    );
-  }
+  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
 
   const { data: campaigns = [], isLoading } = useQuery<Campaign[]>({
     queryKey: ['campaigns'],
@@ -296,7 +281,7 @@ export default function Module1() {
       <BackupRestoreModal
         isOpen={showBackupModal}
         onClose={() => setShowBackupModal(false)}
-        campaignId={selectedCampaignID}
+        campaignId={selectedCampaign?.id}
         campaignName={selectedCampaign?.campaignName}
       />
     </div>

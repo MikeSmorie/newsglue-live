@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Download, FileText, Copy, Loader2, Users } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
-import { useCampaign } from '@/hooks/use-campaign-context';
+import { useCampaign } from '@/contexts/campaign-context';
 
 interface Campaign {
   id: string;

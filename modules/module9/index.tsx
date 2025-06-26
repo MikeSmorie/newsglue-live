@@ -19,7 +19,7 @@ import {
   HelpCircle 
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useCampaign } from "@/hooks/use-campaign-context";
+import { useCampaign } from "@/contexts/campaign-context";
 
 interface BlogMetadata {
   id: string;

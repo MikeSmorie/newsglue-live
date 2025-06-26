@@ -91,11 +91,7 @@ export function Header() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => {
-              localStorage.removeItem('selectedCampaignID');
-              localStorage.removeItem('selectedCampaignName');
-              navigate("/");
-            }}
+            onClick={() => navigate("/")}
             className="h-8 w-8 text-foreground hover:bg-gray-100 dark:hover:bg-gray-800"
           >
             <Home className="h-4 w-4" />

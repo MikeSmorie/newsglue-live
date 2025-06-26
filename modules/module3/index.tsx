@@ -74,7 +74,7 @@ export default function Module3() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/news-items', selectedCampaignID] });
+      queryClient.invalidateQueries({ queryKey: ['/api/news-items', selectedCampaign?.id] });
       toast({
         title: "News Updated",
         description: "Your news item has been updated successfully.",
@@ -107,7 +107,7 @@ export default function Module3() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/news-items', selectedCampaignID] });
+      queryClient.invalidateQueries({ queryKey: ['/api/news-items', selectedCampaign?.id] });
       toast({
         title: "News Deleted",
         description: "News item has been deleted successfully.",
@@ -141,7 +141,7 @@ export default function Module3() {
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/news-items', selectedCampaignID] });
+      queryClient.invalidateQueries({ queryKey: ['/api/news-items', selectedCampaign?.id] });
       toast({
         title: "Items Deleted",
         description: `Successfully deleted ${data.deletedCount} news items.`,
@@ -170,15 +170,15 @@ export default function Module3() {
 
   // Fetch news items for selected campaign
   const { data: newsItems = [], refetch: refetchNewsItems } = useQuery<NewsItem[]>({
-    queryKey: ['news-items', selectedCampaignID],
+    queryKey: ['news-items', selectedCampaign?.id],
     queryFn: async () => {
-      if (!selectedCampaignID) return [];
+      if (!selectedCampaign?.id) return [];
       const res = await fetch(`/api/news-items/${selectedCampaign.id}`, { credentials: 'include' });
       if (!res.ok) throw new Error('Failed to fetch news items');
       const data = await res.json();
       return data.newsItems || [];
     },
-    enabled: !!selectedCampaignID
+    enabled: !!selectedCampaign?.id
   });
 
   // Submit news item mutation
@@ -206,7 +206,7 @@ export default function Module3() {
       
       // Reset form
       setFormData({
-        campaignId: selectedCampaignID || '',
+        campaignId: selectedCampaign?.id || '',
         headline: '',
         sourceUrl: '',
         content: '',
@@ -298,7 +298,7 @@ export default function Module3() {
   const handleCancelEdit = () => {
     setEditingItem(null);
     setFormData({
-      campaignId: selectedCampaignID || '',
+      campaignId: selectedCampaign?.id || '',
       headline: '',
       sourceUrl: '',
       content: '',

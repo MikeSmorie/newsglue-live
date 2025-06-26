@@ -1,76 +1,71 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 interface Campaign {
   id: string;
-  name: string;
-  brandVoice?: string;
-  targetAudience?: string;
+  campaignName: string;
+  status: 'draft' | 'active' | 'archived';
+  createdAt: string;
+  updatedAt: string;
+  websiteUrl?: string;
+  channels?: any[];
 }
 
 interface CampaignContextType {
-  selectedCampaignID: string | null;
   selectedCampaign: Campaign | null;
   setSelectedCampaign: (campaign: Campaign | null) => void;
-  clearSelectedCampaign: () => void;
-  isLoading: boolean;
+  selectCampaign: (campaign: Campaign) => void;
+  isInCampaignMode: boolean;
+  exitCampaign: () => void;
 }
 
 const CampaignContext = createContext<CampaignContextType | undefined>(undefined);
 
 export function CampaignProvider({ children }: { children: ReactNode }) {
-  const [selectedCampaignID, setSelectedCampaignID] = useState<string | null>(null);
-  const [selectedCampaign, setSelectedCampaignState] = useState<Campaign | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
 
-  // Load from localStorage on app start
+  // Load selected campaign from localStorage on mount
   useEffect(() => {
-    const storedCampaignId = localStorage.getItem('activeCampaign');
-    const storedCampaign = localStorage.getItem('activeCampaignData');
-    
-    if (storedCampaignId && storedCampaign) {
+    const stored = localStorage.getItem('selectedCampaign');
+    if (stored) {
       try {
-        const campaignData = JSON.parse(storedCampaign);
-        setSelectedCampaignID(storedCampaignId);
-        setSelectedCampaignState(campaignData);
+        const campaign = JSON.parse(stored);
+        setSelectedCampaign(campaign);
       } catch (error) {
-        console.error('Failed to parse stored campaign data:', error);
-        localStorage.removeItem('activeCampaign');
-        localStorage.removeItem('activeCampaignData');
+        console.error('Failed to parse stored campaign:', error);
+        localStorage.removeItem('selectedCampaign');
       }
     }
-    setIsLoading(false);
   }, []);
 
-  const setSelectedCampaign = (campaign: Campaign | null) => {
-    if (campaign) {
-      setSelectedCampaignID(campaign.id);
-      setSelectedCampaignState(campaign);
-      localStorage.setItem('activeCampaign', campaign.id);
-      localStorage.setItem('activeCampaignData', JSON.stringify(campaign));
+  // Save selected campaign to localStorage when it changes
+  useEffect(() => {
+    if (selectedCampaign) {
+      localStorage.setItem('selectedCampaign', JSON.stringify(selectedCampaign));
     } else {
-      setSelectedCampaignID(null);
-      setSelectedCampaignState(null);
-      localStorage.removeItem('activeCampaign');
-      localStorage.removeItem('activeCampaignData');
+      localStorage.removeItem('selectedCampaign');
     }
+  }, [selectedCampaign]);
+
+  const selectCampaign = (campaign: Campaign) => {
+    setSelectedCampaign(campaign);
   };
 
-  const clearSelectedCampaign = () => {
-    console.log("[CAMPAIGN CONTEXT] Clearing campaign selection");
-    setSelectedCampaignID(null);
-    setSelectedCampaignState(null);
-    localStorage.removeItem('activeCampaign');
-    localStorage.removeItem('activeCampaignData');
+  const exitCampaign = () => {
+    setSelectedCampaign(null);
   };
+
+  const isInCampaignMode = selectedCampaign !== null;
 
   return (
-    <CampaignContext.Provider value={{
-      selectedCampaignID,
-      selectedCampaign,
-      setSelectedCampaign,
-      clearSelectedCampaign,
-      isLoading
-    }}>
+    <CampaignContext.Provider 
+      value={{ 
+        selectedCampaign, 
+        setSelectedCampaign, 
+        selectCampaign,
+        isInCampaignMode, 
+        exitCampaign 
+      }}
+    >
       {children}
     </CampaignContext.Provider>
   );
