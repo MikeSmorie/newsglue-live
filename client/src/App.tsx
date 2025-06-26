@@ -39,6 +39,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AdminProvider } from "@/contexts/admin-context";
+import { CampaignProvider } from "@/contexts/campaign-context";
 import { MainLayout } from "@/components/layout/main-layout";
 
 function ProtectedAdminRoute({ component: Component }: { component: React.ComponentType }) {

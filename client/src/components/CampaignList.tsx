@@ -12,7 +12,8 @@ import {
   Calendar,
   Settings,
   AlertTriangle,
-  Shield
+  Shield,
+  ArrowRight
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -41,9 +42,11 @@ interface CampaignListProps {
   onEditCampaign?: (campaign: Campaign) => void;
   onCreateNew?: () => void;
   onBackupCampaign?: (campaign: Campaign) => void;
+  onSelectCampaign?: (campaign: Campaign) => void;
+  showSelectButton?: boolean;
 }
 
-export default function CampaignList({ onEditCampaign, onCreateNew, onBackupCampaign }: CampaignListProps) {
+export default function CampaignList({ onEditCampaign, onCreateNew, onBackupCampaign, onSelectCampaign, showSelectButton = true }: CampaignListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState('newest');
@@ -263,7 +266,11 @@ export default function CampaignList({ onEditCampaign, onCreateNew, onBackupCamp
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-2">
-                  <h3 className="text-lg font-semibold text-foreground truncate">
+                  <h3 
+                    className="text-lg font-semibold text-foreground truncate cursor-pointer hover:text-primary transition-colors"
+                    onClick={() => onSelectCampaign?.(campaign)}
+                    title="Click to enter campaign modules"
+                  >
                     {campaign.campaignName}
                   </h3>
                   {getStatusBadge(campaign.status)}
@@ -288,6 +295,19 @@ export default function CampaignList({ onEditCampaign, onCreateNew, onBackupCamp
               </div>
 
               <div className="flex items-center gap-2 ml-4">
+                {/* Enter Campaign Button */}
+                {showSelectButton && onSelectCampaign && (
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => onSelectCampaign(campaign)}
+                    className="bg-primary hover:bg-primary/90"
+                  >
+                    <ArrowRight className="h-4 w-4 mr-1" />
+                    Enter Campaign
+                  </Button>
+                )}
+
                 {/* Status Selector */}
                 <Select
                   value={campaign.status}
