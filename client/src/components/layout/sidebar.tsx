@@ -1,14 +1,13 @@
 import { useLocation } from "wouter";
 import { useUser } from "@/hooks/use-user";
 import { useAdmin } from "@/contexts/admin-context";
-import { useCampaign } from "@/contexts/campaign-context";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { useState } from "react";
 import { 
   Home, 
   Settings, 
@@ -128,9 +127,15 @@ export function Sidebar() {
   const [location] = useLocation();
   const { user } = useUser();
   const { isSupergod } = useAdmin();
-  const { selectedCampaignID } = useCampaign();
   const [adminOpen, setAdminOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [selectedCampaignID, setSelectedCampaignID] = useState<string | null>(null);
+
+  // Check for selected campaign in localStorage
+  useEffect(() => {
+    const campaignId = localStorage.getItem('selectedCampaignID');
+    setSelectedCampaignID(campaignId);
+  }, []);
 
   // Don't render sidebar if no campaign is selected
   if (!selectedCampaignID) {
