@@ -495,8 +495,8 @@ export default function Module6() {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl bg-background border">
         <DialogHeader>
-          <DialogTitle className="text-gray-900 dark:text-white">Edit {platform} Content</DialogTitle>
-          <DialogDescription className="text-gray-600 dark:text-gray-300">
+          <DialogTitle className="text-foreground">Edit {platform} Content</DialogTitle>
+          <DialogDescription className="text-muted-foreground">
             Make changes to the generated content for {platform}
           </DialogDescription>
         </DialogHeader>
@@ -521,9 +521,9 @@ export default function Module6() {
         {/* Panel 2: Left Column - News Item List */}
         <div className="w-96 bg-card border-r border flex flex-col">
           {/* Header */}
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">News Items</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+          <div className="p-4 border-b border bg-muted/50">
+            <h2 className="text-lg font-semibold text-foreground mb-2">News Items</h2>
+            <p className="text-sm text-foreground mb-3">
               Select a news item to generate or view newsjack content
             </p>
             
@@ -570,31 +570,31 @@ export default function Module6() {
             {/* Status Filter Buttons */}
             <div className="flex flex-wrap gap-1">
               <button 
-                className={`px-2 py-1 text-xs rounded ${statusFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600'}`}
+                className={`px-2 py-1 text-xs rounded ${statusFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80 border'}`}
                 onClick={() => setStatusFilter('all')}
               >
                 All
               </button>
               <button 
-                className={`px-2 py-1 text-xs rounded ${statusFilter === 'draft' ? 'bg-yellow-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600'}`}
+                className={`px-2 py-1 text-xs rounded ${statusFilter === 'draft' ? 'bg-yellow-600 text-white' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80 border'}`}
                 onClick={() => setStatusFilter('draft')}
               >
                 Draft
               </button>
               <button 
-                className={`px-2 py-1 text-xs rounded ${statusFilter === 'active' ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600'}`}
+                className={`px-2 py-1 text-xs rounded ${statusFilter === 'active' ? 'bg-green-600 text-white' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80 border'}`}
                 onClick={() => setStatusFilter('active')}
               >
                 Active
               </button>
               <button 
-                className={`px-2 py-1 text-xs rounded ${statusFilter === 'archived' ? 'bg-gray-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600'}`}
+                className={`px-2 py-1 text-xs rounded ${statusFilter === 'archived' ? 'bg-gray-600 text-white' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80 border'}`}
                 onClick={() => setStatusFilter('archived')}
               >
                 Archive
               </button>
               <button 
-                className={`px-2 py-1 text-xs rounded ${statusFilter === 'bin' ? 'bg-red-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600'}`}
+                className={`px-2 py-1 text-xs rounded ${statusFilter === 'bin' ? 'bg-red-600 text-white' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80 border'}`}
                 onClick={() => setStatusFilter('bin')}
               >
                 Bin
@@ -605,7 +605,7 @@ export default function Module6() {
             {filteredItems.length > 0 && (
               <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between">
-                  <Label className="text-xs text-gray-600 dark:text-gray-300">Bulk Selection Mode</Label>
+                  <Label className="text-xs text-muted-foreground">Bulk Selection Mode</Label>
                   <Checkbox
                     checked={bulkSelectMode}
                     onCheckedChange={(checked) => setBulkSelectMode(checked === true)}
