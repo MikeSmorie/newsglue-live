@@ -132,17 +132,9 @@ export function SimpleCampaignSelector() {
                       <p className="text-sm text-foreground">{campaign.brandVoice}</p>
                     </div>
                   )}
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full mt-3"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleSelectCampaign(campaign);
-                    }}
-                  >
-                    Enter Campaign
-                  </Button>
+                  <div className="text-xs text-muted-foreground mt-2">
+                    Click anywhere on this card to enter campaign
+                  </div>
                 </CardContent>
               </Card>
             ))}
