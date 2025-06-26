@@ -13,6 +13,7 @@ interface Campaign {
 interface CampaignContextType {
   selectedCampaign: Campaign | null;
   setSelectedCampaign: (campaign: Campaign | null) => void;
+  selectCampaign: (campaign: Campaign) => void;
   isInCampaignMode: boolean;
   exitCampaign: () => void;
 }
