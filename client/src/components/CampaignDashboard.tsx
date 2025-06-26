@@ -17,7 +17,6 @@ import {
   Settings,
   Megaphone
 } from 'lucide-react';
-import CampaignPage from './campaigns';
 
 interface Campaign {
   id: string;
