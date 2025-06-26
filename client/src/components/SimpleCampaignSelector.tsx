@@ -62,7 +62,15 @@ export function SimpleCampaignSelector() {
 
   return (
     <main className="min-h-screen p-10 bg-background text-foreground">
-      <h1 className="text-3xl mb-8 font-bold">🎯 Select a Campaign</h1>
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold mb-4">🎯 Select a Campaign</h1>
+        <button
+          onClick={() => setLocation('/module/1')}
+          className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium"
+        >
+          + Create New Campaign
+        </button>
+      </div>
       
       {!campaigns || campaigns.length === 0 ? (
         <div className="text-center">
