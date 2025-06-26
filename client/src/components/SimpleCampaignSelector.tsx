@@ -71,16 +71,21 @@ export function SimpleCampaignSelector() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 max-w-2xl">
-          {campaigns.map((campaign) => (
-            <div
-              key={campaign.id}
-              onClick={() => selectCampaign(campaign.id, campaign.name)}
-              className="p-6 rounded bg-card hover:bg-muted/50 cursor-pointer transition-all border-2 hover:border-primary/50"
-            >
-              <h2 className="text-xl font-bold text-primary">{campaign.name}</h2>
-              <p className="text-sm text-muted-foreground">Created {campaign.createdAt || 'Jun 26, 2025'}</p>
-            </div>
-          ))}
+          {campaigns.map((campaign) => {
+            const campaignName = campaign.campaignName || campaign.name || 'Unnamed Campaign';
+            const createdDate = campaign.createdAt ? new Date(campaign.createdAt).toLocaleDateString() : 'Jun 26, 2025';
+            
+            return (
+              <button
+                key={campaign.id}
+                onClick={() => selectCampaign(campaign.id, campaignName)}
+                className="p-6 rounded bg-card hover:bg-muted/50 cursor-pointer transition-all border-2 hover:border-primary/50 text-left w-full"
+              >
+                <h2 className="text-xl font-bold text-primary mb-2">{campaignName}</h2>
+                <p className="text-sm text-muted-foreground">Created {createdDate}</p>
+              </button>
+            );
+          })}
         </div>
       )}
     </main>
