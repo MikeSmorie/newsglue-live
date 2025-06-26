@@ -84,7 +84,7 @@ export default function CampaignForm({ onSuccess, onCancel, editingCampaign }: C
   const form = useForm<CampaignFormData>({
     resolver: zodResolver(campaignSchema),
     defaultValues: {
-      name: editingCampaign?.campaignName || '',
+      name: editingCampaign?.campaignName || 'In Code We Trust',
       website_url: editingCampaign?.websiteUrl || '',
       cta_url: editingCampaign?.ctaUrl || '',
       emotional_objective: editingCampaign?.emotionalObjective || '',
