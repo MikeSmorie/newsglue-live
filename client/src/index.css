@@ -14,6 +14,39 @@
     line-height: 1.6;
   }
   
+  /* Force high contrast text in all modes */
+  :root {
+    --foreground: 0 0% 3.9%;
+    --muted-foreground: 0 0% 25%;
+  }
+  
+  .dark {
+    --foreground: 0 0% 98%;
+    --muted-foreground: 0 0% 85%;
+  }
+  
+  /* Override any muted text to be more visible */
+  .text-muted-foreground {
+    color: hsl(var(--muted-foreground)) !important;
+  }
+  
+  .text-foreground {
+    color: hsl(var(--foreground)) !important;
+  }
+  
+  /* Force better contrast for common text patterns */
+  .text-sm, .text-base, .text-lg {
+    color: hsl(var(--foreground)) !important;
+  }
+  
+  /* Specific fixes for shadcn components */
+  .card .text-muted-foreground,
+  .text-gray-600,
+  .text-gray-700,
+  .text-gray-800 {
+    color: hsl(var(--muted-foreground)) !important;
+  }
+  
   /* Removed custom theme styles - now using Tailwind dark utilities */
   
   /* Special elements in dark mode */

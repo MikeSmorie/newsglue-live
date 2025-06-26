@@ -580,7 +580,7 @@ export default function Module4NewsAggregator() {
                       ) : (
                         <>
                           <div className="flex-1">
-                            <span className="text-sm font-medium">{keyword.keyword}</span>
+                            <span className="text-sm font-medium text-foreground">{keyword.keyword}</span>
                             {keyword.isDefault && (
                               <Badge variant="secondary" className="ml-2 text-xs">
                                 Default
@@ -714,7 +714,7 @@ export default function Module4NewsAggregator() {
                       
                       <div className="flex-1 space-y-3">
                         <div className="flex items-start justify-between gap-2">
-                          <h3 className="font-semibold text-base leading-tight">
+                          <h3 className="font-semibold text-base leading-tight text-foreground">
                             {article.title}
                           </h3>
                           
