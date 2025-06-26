@@ -10,7 +10,7 @@ import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger }
 import { BarChart3, Clock, DollarSign, Target, Download, Copy, FileText, TrendingUp, HelpCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { useCampaignContext } from "@/hooks/use-campaign-context";
+import { useCampaign } from "@/contexts/campaign-context";
 
 interface CampaignMetrics {
   id: number;
@@ -64,28 +64,28 @@ export default function Module8() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [hourlyRate, setHourlyRate] = useState<string>("40.00");
-  const { activeCampaignId, activeCampaign } = useCampaignContext();
+  const { selectedCampaignId, selectedCampaign } = useCampaign();
 
   // Fetch campaign metrics
   const { data: campaignMetrics, isLoading: metricsLoading } = useQuery<CampaignMetrics>({
-    queryKey: ['/api/metrics/campaign', activeCampaignId],
+    queryKey: ['/api/metrics/campaign', selectedCampaignId],
     queryFn: async () => {
-      const response = await fetch(`/api/metrics/campaign/${activeCampaignId}`);
+      const response = await fetch(`/api/metrics/campaign/${selectedCampaignId}`);
       if (!response.ok) throw new Error('Failed to fetch campaign metrics');
       return response.json();
     },
-    enabled: !!activeCampaignId
+    enabled: !!selectedCampaignId
   });
 
   // Fetch output metrics
   const { data: outputMetrics = [], isLoading: outputLoading } = useQuery<OutputMetrics[]>({
-    queryKey: ['/api/metrics/outputs', activeCampaignId],
+    queryKey: ['/api/metrics/outputs', selectedCampaignId],
     queryFn: async () => {
-      const response = await fetch(`/api/metrics/outputs/${activeCampaignId}`);
+      const response = await fetch(`/api/metrics/outputs/${selectedCampaignId}`);
       if (!response.ok) throw new Error('Failed to fetch output metrics');
       return response.json();
     },
-    enabled: !!activeCampaignId
+    enabled: !!selectedCampaignId
   });
 
   // Update hourly rate mutation
@@ -101,25 +101,25 @@ export default function Module8() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/metrics/campaign', activeCampaignId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/metrics/campaign', selectedCampaignId] });
       toast({ title: "Hourly rate updated successfully" });
     }
   });
 
   const handleUpdateRate = () => {
-    if (!activeCampaignId || !hourlyRate) return;
-    updateRateMutation.mutate({ campaignId: activeCampaignId, hourlyRate });
+    if (!selectedCampaignId || !hourlyRate) return;
+    updateRateMutation.mutate({ campaignId: selectedCampaignId, hourlyRate });
   };
 
   const handleExportReport = async () => {
-    if (!activeCampaignId || !campaignMetrics) return;
+    if (!selectedCampaignId || !campaignMetrics) return;
     
     try {
       const response = await fetch('/api/metrics/export', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ campaignId: activeCampaignId })
+        body: JSON.stringify({ campaignId: selectedCampaignId })
       });
 
       if (!response.ok) throw new Error('Failed to export report');
@@ -129,7 +129,7 @@ export default function Module8() {
       const a = document.createElement('a');
       a.style.display = 'none';
       a.href = url;
-      a.download = `metrics-report-${activeCampaignId}.pdf`;
+      a.download = `metrics-report-${selectedCampaignId}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -145,10 +145,10 @@ export default function Module8() {
   };
 
   const handleExportCSV = async () => {
-    if (!activeCampaignId) return;
+    if (!selectedCampaignId) return;
     
     try {
-      const response = await fetch(`/api/metrics/export/${activeCampaignId}/csv`, {
+      const response = await fetch(`/api/metrics/export/${selectedCampaignId}/csv`, {
         method: 'POST',
         credentials: 'include'
       });
@@ -160,7 +160,7 @@ export default function Module8() {
       const a = document.createElement('a');
       a.style.display = 'none';
       a.href = url;
-      a.download = `metrics-report-${activeCampaignId}-${Date.now()}.csv`;
+      a.download = `metrics-report-${selectedCampaignId}-${Date.now()}.csv`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -214,7 +214,7 @@ Efficiency Score: ${campaignMetrics.efficiencyScore}%`;
     fill: PLATFORM_COLORS[item.platform as keyof typeof PLATFORM_COLORS] || '#8884d8'
   }));
 
-  if (!activeCampaignId) {
+  if (!selectedCampaignId) {
     return (
       <div className="container max-w-7xl mx-auto p-6">
         <div className="text-center py-12">
@@ -242,9 +242,9 @@ Efficiency Score: ${campaignMetrics.efficiencyScore}%`;
           <p className="text-foreground mt-2">
             Performance analytics and efficiency tracking for NewsJack campaigns
           </p>
-          {activeCampaign && (
+          {selectedCampaign && (
             <p className="text-sm text-foreground mt-1">
-              Active Campaign: <span className="font-medium">{activeCampaign.campaignName}</span>
+              Active Campaign: <span className="font-medium">{selectedCampaign.campaignName}</span>
             </p>
           )}
         </div>
