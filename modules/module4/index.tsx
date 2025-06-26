@@ -11,7 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
-import { useCampaignContext } from "@/hooks/use-campaign-context";
+import { useCampaign } from "@/contexts/campaign-context";
 import { 
   Search, 
   Plus, 
