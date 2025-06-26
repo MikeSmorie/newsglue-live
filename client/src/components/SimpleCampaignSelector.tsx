@@ -30,9 +30,18 @@ export function SimpleCampaignSelector() {
   });
 
   const handleSelectCampaign = (campaign: Campaign) => {
+    console.log("[CAMPAIGN SELECTOR] Selecting campaign:", campaign);
+    // Clear any existing campaign data first
+    localStorage.removeItem('activeCampaign');
+    localStorage.removeItem('activeCampaignData');
+    
+    // Set the new campaign
     setSelectedCampaign(campaign);
-    // Redirect to Module 1 after campaign selection
-    setLocation("/module/1");
+    
+    // Small delay to ensure state updates, then redirect
+    setTimeout(() => {
+      setLocation("/module/1");
+    }, 100);
   };
 
   if (isLoading) {

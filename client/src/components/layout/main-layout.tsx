@@ -12,6 +12,9 @@ interface MainLayoutProps {
 export function MainLayout({ children }: MainLayoutProps) {
   const { selectedCampaignID, isLoading } = useCampaign();
 
+  // Debug logging
+  console.log("[MAIN LAYOUT DEBUG] selectedCampaignID:", selectedCampaignID, "isLoading:", isLoading);
+
   // Show campaign selector if no campaign is selected
   if (!isLoading && !selectedCampaignID) {
     return (
