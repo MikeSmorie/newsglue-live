@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Search, Calendar, Plus } from 'lucide-react';
 import { useCampaign } from '@/contexts/campaign-context';
+import { useLocation } from 'wouter';
 
 interface Campaign {
   id: string;
@@ -22,6 +23,7 @@ interface SimpleCampaignSelectorProps {
 export default function SimpleCampaignSelector({ onCreateNew }: SimpleCampaignSelectorProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const { selectCampaign } = useCampaign();
+  const [, navigate] = useLocation();
 
   const { data: campaigns, isLoading, error } = useQuery({
     queryKey: ['campaigns'],
@@ -40,6 +42,8 @@ export default function SimpleCampaignSelector({ onCreateNew }: SimpleCampaignSe
 
   const handleCampaignClick = (campaign: Campaign) => {
     selectCampaign(campaign);
+    // Navigate directly to Module 1 after campaign selection
+    navigate('/module/1');
   };
 
   if (isLoading) {
