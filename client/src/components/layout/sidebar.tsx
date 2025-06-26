@@ -1,6 +1,7 @@
 import { useLocation } from "wouter";
 import { useUser } from "@/hooks/use-user";
 import { useAdmin } from "@/contexts/admin-context";
+import { useCampaign } from "@/contexts/campaign-context";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -127,8 +128,14 @@ export function Sidebar() {
   const [location] = useLocation();
   const { user } = useUser();
   const { isSupergod } = useAdmin();
+  const { selectedCampaignID } = useCampaign();
   const [adminOpen, setAdminOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  // Don't render sidebar if no campaign is selected
+  if (!selectedCampaignID) {
+    return null;
+  }
 
   const isActive = (href: string) => {
     if (href === "/") {

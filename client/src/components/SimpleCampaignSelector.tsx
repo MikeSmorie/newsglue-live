@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useCampaign } from "@/contexts/campaign-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChevronRight, Plus } from "lucide-react";
+import { useLocation } from "wouter";
 
 interface Campaign {
   id: string;
@@ -15,6 +16,7 @@ interface Campaign {
 
 export function SimpleCampaignSelector() {
   const { setSelectedCampaign } = useCampaign();
+  const [, setLocation] = useLocation();
 
   const { data: campaigns, isLoading, error } = useQuery({
     queryKey: ["/api/campaigns"],
@@ -29,6 +31,8 @@ export function SimpleCampaignSelector() {
 
   const handleSelectCampaign = (campaign: Campaign) => {
     setSelectedCampaign(campaign);
+    // Redirect to Module 1 after campaign selection
+    setLocation("/module/1");
   };
 
   if (isLoading) {
