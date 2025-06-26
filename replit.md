@@ -107,7 +107,12 @@ Ghostli is a sophisticated NewsJack content marketing platform built on a modern
 - **Role-Based Access Control**: Comprehensive permission system
 
 ## Changelog
-- June 26, 2025. Initial setup
+- June 26, 2025: Critical security and UX fixes implemented
+  - Fixed campaign name data leakage between users
+  - Enabled deletion/editing of default keywords
+  - Removed visible Call-to-Action headers from blog content
+  - Comprehensive UI contrast correction for both light/dark modes
+- June 26, 2025: Initial setup
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
