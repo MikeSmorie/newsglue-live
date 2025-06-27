@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import SimpleCampaignSelector from '@/components/SimpleCampaignSelector';
 import CampaignForm from '@/components/CampaignForm';
+import { Button } from '@/components/ui/button';
 import { useCampaign } from '@/contexts/campaign-context';
 
 export default function CampaignPage() {

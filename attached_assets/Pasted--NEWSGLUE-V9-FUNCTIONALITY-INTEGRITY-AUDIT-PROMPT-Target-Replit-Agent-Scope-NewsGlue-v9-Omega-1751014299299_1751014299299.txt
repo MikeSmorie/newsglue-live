@@ -1,0 +1,75 @@
+ 
+✅ NEWSGLUE-V9 FUNCTIONALITY INTEGRITY AUDIT PROMPT
+
+Target: Replit Agent
+Scope: NewsGlue-v9 (Omega-9 foundation)
+Goal: Validate and repair campaign-siloed workflows, UI logic, DB writes, AI responses, and routing integrity.
+ 
+🔐 GENERAL RULES
+•	🚫 No architecture changes or rewrites
+•	🔍 Only validate and repair current functionality
+•	🔒 Ensure campaign isolation — no data leaks between campaigns
+ 
+🔍 PHASE 1 — UI & Navigation Audit (Campaign Mode)
+1.	Confirm campaign selector logic:
+o	Campaign cards are clickable and route into correct silo
+o	Sidebar only appears once a campaign is selected
+o	Campaign switch clears previous state and refreshes modules cleanly
+2.	Validate UI across 10 modules (/module/1 to /module/10):
+o	Sidebar and header routing works bidirectionally
+o	Buttons and tabs are functional, not duplicated or misplaced
+o	? tooltips render and are campaign-contextual
+ 
+🔍 PHASE 2 — Input System + Voice Capture Audit
+1.	Test all field types in each module:
+o	Text inputs, dropdowns, sliders, toggles, file/image uploads
+o	Voice-to-text icons appear in longform fields and capture input
+2.	Submit dummy data in each module
+3.	Confirm campaign-bound database save:
+o	Inputs persist on refresh
+o	Data remains within selected campaign scope only
+o	No cross-campaign bleed
+ 
+🔍 PHASE 3 — AI & Prompt Processing Logic
+1.	Run NewsJack AI (Module 2) on sample input:
+o	Confirm AI call includes intake + tone + archetype context
+o	Platform-specific content returned (Twitter, LinkedIn, etc.)
+o	Output written to correct database fields
+2.	Run AI logic in any other AI-enabled modules (e.g., Planning, Cortex)
+3.	Validate:
+o	Re-runs and alternates trigger new AI generations
+o	Regenerate and Edit buttons behave as expected
+ 
+🔍 PHASE 4 — Backend & Database Schema Audit
+1.	Confirm all tables exist and match expected schema:
+o	e.g., campaigns, newsjacks, social_outputs, module_inputs
+o	All contain IDs, timestamps, and campaign_id for binding
+2.	Submit inputs and verify backend receives correct payloads
+3.	Validate relational writes:
+o	One-to-many mappings (campaign → newsjacks)
+o	Admin-level visibility for multi-user or enterprise users
+ 
+🔍 PHASE 5 — Admin & Supergod Control Check
+1.	Log in as admin (or impersonate)
+2.	Confirm ability to:
+o	View/edit all campaigns
+o	Trigger campaign resets or deletions
+o	View AI call logs and DB write traces
+3.	Confirm campaign-permission separation:
+o	No visibility into other users’ campaigns unless admin
+ 
+📤 REPORT OUTPUT REQUIREMENTS
+
+Return the following in markdown:
+•	❌ Broken/missing UI buttons or unclickable components
+•	❌ AI calls failing, unresponsive, or returning null
+•	❌ Fields or modules not writing to DB or leaking across campaigns
+•	❌ Inactive voice inputs or placeholders with no handlers
+•	❌ Routing bugs: incorrect path after click, sidebar exposed prematurely
+•	✅ Fixes made (per item, with filename and line number if possible)
+ 
+✅ Final Confirmation Output
+✓ NEWSGLUE-V9 audit complete — all UI, routing, campaign isolation, voice input, AI logic, and DB flows verified and repaired.
+ 
+Let me know if you want this in a Replit-ready prompt block with formatting for immediate input.
+
