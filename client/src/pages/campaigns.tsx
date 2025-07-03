@@ -10,8 +10,10 @@ export default function CampaignPage() {
 
   // STEP 1: Clear campaign state on landing at /
   React.useEffect(() => {
+    console.log('🔄 [CAMPAIGN RESET] Clearing campaign state on landing at /');
     localStorage.removeItem('selectedCampaign');
     exitCampaign();
+    console.log('✅ [CAMPAIGN RESET] Campaign context and localStorage cleared');
   }, [exitCampaign]);
 
   const handleCreateNew = () => {

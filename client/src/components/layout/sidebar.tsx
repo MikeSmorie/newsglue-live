@@ -305,8 +305,9 @@ export function Sidebar() {
                   variant="ghost"
                   className="h-5 px-1 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
                   onClick={() => {
-                    console.log('[CAMPAIGN EXIT] Exiting campaign and clearing state');
+                    console.log('🚪 [CAMPAIGN EXIT] User clicked Exit - clearing campaign state');
                     exitCampaign();
+                    console.log('✅ [CAMPAIGN EXIT] Context cleared, redirecting to campaign selector');
                     window.location.href = '/';
                   }}
                 >

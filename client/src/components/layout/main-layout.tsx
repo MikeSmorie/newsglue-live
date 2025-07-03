@@ -27,14 +27,21 @@ export function MainLayout({ children }: MainLayoutProps) {
   // STEP 2: Enforce sidebar visibility ONLY when campaign is actively selected
   const showSidebar = !!selectedCampaign && !!selectedCampaign.id;
   
-  // STEP 6: Dev logging for campaign state validation
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[CAMPAIGN STATE]', { 
-      selectedCampaign: selectedCampaign?.id || 'null', 
+  // STEP 6: Enhanced dev logging for campaign state validation
+  React.useEffect(() => {
+    console.log('🔒 [CAMPAIGN GUARDRAILS]', { 
+      selectedCampaign: selectedCampaign?.id || 'NULL', 
       showSidebar,
-      location 
+      location,
+      timestamp: new Date().toLocaleTimeString()
     });
-  }
+    
+    if (showSidebar) {
+      console.log('✅ SIDEBAR RENDERED - Campaign active:', selectedCampaign?.campaignName);
+    } else {
+      console.log('❌ SIDEBAR HIDDEN - No campaign selected');
+    }
+  }, [selectedCampaign, showSidebar, location]);
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">

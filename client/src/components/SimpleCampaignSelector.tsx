@@ -41,8 +41,9 @@ export default function SimpleCampaignSelector({ onCreateNew }: SimpleCampaignSe
   ) || [];
 
   const handleCampaignClick = (campaign: Campaign) => {
-    console.log('[CAMPAIGN ENTRY] Selecting campaign:', campaign.id);
+    console.log('🎯 [CAMPAIGN ENTRY] Selecting campaign:', campaign.campaignName, '(ID:', campaign.id + ')');
     selectCampaign(campaign);
+    console.log('✅ [CAMPAIGN ENTRY] Campaign selected, navigating to Module 1');
     // STEP 3: Navigate to Module 1 after campaign selection
     navigate('/module/1');
   };
