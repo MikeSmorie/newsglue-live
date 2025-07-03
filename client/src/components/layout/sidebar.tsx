@@ -296,9 +296,22 @@ export function Sidebar() {
               Modules
             </h3>
             <div className="px-2 py-1 mb-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
-              <p className="text-xs text-blue-700 dark:text-blue-300">
-                Campaign: {selectedCampaign.campaignName}
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-blue-700 dark:text-blue-300">
+                  Campaign: {selectedCampaign.campaignName}
+                </p>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-5 px-1 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => {
+                    localStorage.removeItem('selectedCampaign');
+                    window.location.href = '/';
+                  }}
+                >
+                  Exit
+                </Button>
+              </div>
             </div>
             {moduleItems.map((item) => {
               const Icon = item.icon;
