@@ -52,6 +52,7 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
 
   const exitCampaign = () => {
     setSelectedCampaign(null);
+    localStorage.removeItem('selectedCampaign');
   };
 
   const isInCampaignMode = selectedCampaign !== null;

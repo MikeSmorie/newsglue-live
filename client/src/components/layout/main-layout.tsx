@@ -1,3 +1,4 @@
+import React from "react";
 import { Sidebar } from "./sidebar";
 import { Header } from "./header";
 import LoginStatusGuard from "@/components/login-status-guard";
@@ -10,10 +11,21 @@ interface MainLayoutProps {
 
 export function MainLayout({ children }: MainLayoutProps) {
   const { selectedCampaign } = useCampaign();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   
-  // Show sidebar only when a campaign is selected (removes admin bypass)
-  const showSidebar = selectedCampaign;
+  // Block module access without valid campaign context
+  const isModuleRoute = location.startsWith('/module/');
+  const isProtectedRoute = isModuleRoute;
+  
+  // Enforce campaign context integrity - redirect to campaign selector
+  React.useEffect(() => {
+    if (isProtectedRoute && (!selectedCampaign || !selectedCampaign.id)) {
+      setLocation('/');
+    }
+  }, [isProtectedRoute, selectedCampaign, setLocation]);
+  
+  // Show sidebar only when a campaign is selected with valid ID
+  const showSidebar = selectedCampaign && selectedCampaign.id;
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">

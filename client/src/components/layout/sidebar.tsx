@@ -128,7 +128,7 @@ export function Sidebar() {
   const [location] = useLocation();
   const { user } = useUser();
   const { isSupergod } = useAdmin();
-  const { selectedCampaign } = useCampaign();
+  const { selectedCampaign, exitCampaign } = useCampaign();
   const [adminOpen, setAdminOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
@@ -305,7 +305,7 @@ export function Sidebar() {
                   variant="ghost"
                   className="h-5 px-1 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
                   onClick={() => {
-                    localStorage.removeItem('selectedCampaign');
+                    exitCampaign();
                     window.location.href = '/';
                   }}
                 >
