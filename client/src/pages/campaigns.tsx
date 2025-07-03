@@ -5,8 +5,14 @@ import { Button } from '@/components/ui/button';
 import { useCampaign } from '@/contexts/campaign-context';
 
 export default function CampaignPage() {
-  const { selectedCampaign } = useCampaign();
+  const { selectedCampaign, exitCampaign } = useCampaign();
   const [showCreateForm, setShowCreateForm] = useState(false);
+
+  // STEP 1: Clear campaign state on landing at /
+  React.useEffect(() => {
+    localStorage.removeItem('selectedCampaign');
+    exitCampaign();
+  }, [exitCampaign]);
 
   const handleCreateNew = () => {
     setShowCreateForm(true);

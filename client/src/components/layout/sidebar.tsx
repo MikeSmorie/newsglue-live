@@ -305,6 +305,7 @@ export function Sidebar() {
                   variant="ghost"
                   className="h-5 px-1 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
                   onClick={() => {
+                    console.log('[CAMPAIGN EXIT] Exiting campaign and clearing state');
                     exitCampaign();
                     window.location.href = '/';
                   }}

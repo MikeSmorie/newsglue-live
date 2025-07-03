@@ -24,8 +24,17 @@ export function MainLayout({ children }: MainLayoutProps) {
     }
   }, [isProtectedRoute, selectedCampaign, setLocation]);
   
-  // Show sidebar only when a campaign is selected with valid ID
-  const showSidebar = selectedCampaign && selectedCampaign.id;
+  // STEP 2: Enforce sidebar visibility ONLY when campaign is actively selected
+  const showSidebar = !!selectedCampaign && !!selectedCampaign.id;
+  
+  // STEP 6: Dev logging for campaign state validation
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[CAMPAIGN STATE]', { 
+      selectedCampaign: selectedCampaign?.id || 'null', 
+      showSidebar,
+      location 
+    });
+  }
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
