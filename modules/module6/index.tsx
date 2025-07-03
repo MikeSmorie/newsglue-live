@@ -8,11 +8,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { useCampaign } from '@/contexts/campaign-context';
 import { Copy, Trash2, ExternalLink, Sparkles, Edit, RefreshCw, Filter, Clock, Zap, Download, FileText, File, BookOpen, Globe } from 'lucide-react';
 import { SeoLandingPageButton } from '@/components/seo-landing-page-button';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useLocation } from 'wouter';
 
 interface Campaign {
   id: string;
@@ -50,7 +52,6 @@ interface PlatformOutput {
 }
 
 export default function Module6() {
-  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [selectedNewsItem, setSelectedNewsItem] = useState<NewsItem | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
@@ -62,6 +63,14 @@ export default function Module6() {
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
+  const { selectedCampaign } = useCampaign();
+
+  // Campaign isolation enforcement
+  if (!selectedCampaign) {
+    navigate('/');
+    return null;
+  }
   
   // Check if debug mode is enabled via URL parameter
   const isDebugMode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('debug') === 'true';
@@ -171,15 +180,7 @@ export default function Module6() {
     }
   };
 
-  // Fetch campaigns
-  const { data: campaigns = [] } = useQuery<Campaign[]>({
-    queryKey: ['/api/campaigns'],
-    queryFn: async () => {
-      const res = await fetch('/api/campaigns', { credentials: 'include' });
-      if (!res.ok) throw new Error('Failed to fetch campaigns');
-      return res.json();
-    }
-  });
+  // Campaigns no longer needed - using global campaign context
 
   // Fetch news queue for selected campaign
   const { data: queueData, refetch: refetchQueue } = useQuery({
@@ -292,7 +293,6 @@ export default function Module6() {
       
       // Force invalidate all related queries to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ['/api/queue'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/campaigns'] });
       
       // Refresh the queue to get the latest data
       refetchQueue();
@@ -377,12 +377,7 @@ export default function Module6() {
     }
   }, [selectedNewsItem, activeChannel]);
 
-  // Auto-select first campaign if available
-  useEffect(() => {
-    if (campaigns.length > 0 && !selectedCampaign) {
-      setSelectedCampaign(campaigns[0]);
-    }
-  }, [campaigns, selectedCampaign]);
+  // Campaign auto-selection removed for security compliance
 
   // Debug logging
   useEffect(() => {
@@ -527,27 +522,11 @@ export default function Module6() {
               Select a news item to generate or view newsjack content
             </p>
             
-            {/* Campaign Selection */}
-            <div className="mb-3">
-              <Select
-                value={selectedCampaign?.id || ''}
-                onValueChange={(value) => {
-                  const campaign = campaigns.find(c => c.id === value);
-                  setSelectedCampaign(campaign || null);
-                  setSelectedNewsItem(null);
-                }}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select campaign" />
-                </SelectTrigger>
-                <SelectContent>
-                  {campaigns.map((campaign) => (
-                    <SelectItem key={campaign.id} value={campaign.id}>
-                      {campaign.campaignName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {/* Campaign Context Display */}
+            <div className="mb-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
+              <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">
+                Campaign: {selectedCampaign.campaignName}
+              </p>
             </div>
 
             {/* Campaign Dossier PDF Button */}

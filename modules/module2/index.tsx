@@ -10,17 +10,19 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useCampaign } from '@/contexts/campaign-context';
 import { Trash2, Plus, Settings, Eye, EyeOff, Lock, HelpCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useLocation } from 'wouter';
 
 interface Campaign {
   id: string;
   campaignName: string;
-  channels: Array<{ platform: string; enabled: boolean }>;
-  socialSettings: {
+  channels?: Array<{ platform: string; enabled: boolean }>;
+  socialSettings?: {
     channelConfig?: Record<string, ChannelConfig>;
     thumbnailOrder?: Record<string, 'default' | 'reverse'>;
     apiEnabled?: boolean;
@@ -141,7 +143,6 @@ const CONTENT_RATIO_OPTIONS = [
 
 export default function Module2() {
   const [activeTab, setActiveTab] = useState('channels');
-  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [channelConfigs, setChannelConfigs] = useState<Record<string, ChannelConfig>>({});
   const [thumbnailSettings, setThumbnailSettings] = useState<Record<string, 'default' | 'reverse'>>({});
   const [apiEnabled, setApiEnabled] = useState(false);
@@ -150,6 +151,14 @@ export default function Module2() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
+  const { selectedCampaign } = useCampaign();
+
+  // Campaign isolation enforcement
+  if (!selectedCampaign) {
+    navigate('/');
+    return null;
+  }
 
   // Fetch current user
   const { data: user } = useQuery<User>({
@@ -161,33 +170,31 @@ export default function Module2() {
     }
   });
 
-  // Fetch campaigns
-  const { data: campaigns = [] } = useQuery<Campaign[]>({
-    queryKey: ['campaigns'],
+  // Fetch full campaign data with social settings
+  const { data: fullCampaign } = useQuery<Campaign>({
+    queryKey: ['campaign', selectedCampaign?.id],
     queryFn: async () => {
-      const res = await fetch('/api/campaigns', { credentials: 'include' });
-      if (!res.ok) throw new Error('Failed to fetch campaigns');
+      const res = await fetch(`/api/campaigns/${selectedCampaign?.id}`, { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch campaign');
       return res.json();
-    }
+    },
+    enabled: !!selectedCampaign?.id
   });
 
-  // Initialize with first campaign
+  // Load existing settings from full campaign data
   useEffect(() => {
-    if (campaigns.length > 0 && !selectedCampaign) {
-      const campaign = campaigns[0];
-      setSelectedCampaign(campaign);
-      
+    if (fullCampaign) {
       // Load existing settings
-      const socialSettings = campaign.socialSettings || {};
+      const socialSettings = fullCampaign.socialSettings || {};
       setChannelConfigs(socialSettings.channelConfig || {});
       setThumbnailSettings(socialSettings.thumbnailOrder || {});
       setApiEnabled(socialSettings.apiEnabled || false);
       setApiCredentials(socialSettings.apiCredentials || {});
       
       // Initialize default configs for active channels
-      if (campaign.channels) {
+      if (fullCampaign.channels) {
         const newConfigs = { ...socialSettings.channelConfig || {} };
-        campaign.channels.forEach(ch => {
+        fullCampaign.channels.forEach(ch => {
           if (!newConfigs[ch.platform]) {
             newConfigs[ch.platform] = getPlatformDefaults(ch.platform);
           }
@@ -195,7 +202,7 @@ export default function Module2() {
         setChannelConfigs(newConfigs);
       }
     }
-  }, [campaigns, selectedCampaign]);
+  }, [fullCampaign]);
 
   // Save social settings mutation
   const saveMutation = useMutation({
@@ -233,7 +240,7 @@ export default function Module2() {
 
   const handleSaveChannelSettings = () => {
     const settings = {
-      ...selectedCampaign?.socialSettings,
+      ...(fullCampaign as any)?.socialSettings,
       channelConfig: channelConfigs
     };
     saveMutation.mutate(settings);
@@ -241,7 +248,7 @@ export default function Module2() {
 
   const handleSaveThumbnailSettings = () => {
     const settings = {
-      ...selectedCampaign?.socialSettings,
+      ...(fullCampaign as any)?.socialSettings,
       thumbnailOrder: thumbnailSettings
     };
     saveMutation.mutate(settings);
@@ -249,7 +256,7 @@ export default function Module2() {
 
   const handleSaveApiSettings = () => {
     const settings = {
-      ...selectedCampaign?.socialSettings,
+      ...(fullCampaign as any)?.socialSettings,
       apiEnabled,
       apiCredentials
     };
@@ -312,34 +319,6 @@ export default function Module2() {
           <h1 className="text-2xl font-bold">2 Social Channels</h1>
           <p className="text-muted-foreground">Configure social media posting for {selectedCampaign.campaignName}</p>
         </div>
-        
-        {campaigns.length > 1 && (
-          <Select
-            value={selectedCampaign.id}
-            onValueChange={(campaignId) => {
-              const campaign = campaigns.find(c => c.id === campaignId);
-              if (campaign) {
-                setSelectedCampaign(campaign);
-                const socialSettings = campaign.socialSettings || {};
-                setChannelConfigs(socialSettings.channelConfig || {});
-                setThumbnailSettings(socialSettings.thumbnailOrder || {});
-                setApiEnabled(socialSettings.apiEnabled || false);
-                setApiCredentials(socialSettings.apiCredentials || {});
-              }
-            }}
-          >
-            <SelectTrigger className="w-64">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {campaigns.map(campaign => (
-                <SelectItem key={campaign.id} value={campaign.id}>
-                  {campaign.campaignName}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">

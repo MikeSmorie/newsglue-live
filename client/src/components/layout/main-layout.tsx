@@ -12,8 +12,8 @@ export function MainLayout({ children }: MainLayoutProps) {
   const { selectedCampaign } = useCampaign();
   const [location] = useLocation();
   
-  // Show sidebar only when a campaign is selected OR on admin/supergod routes
-  const showSidebar = selectedCampaign || location.startsWith('/admin') || location.startsWith('/supergod');
+  // Show sidebar only when a campaign is selected (removes admin bypass)
+  const showSidebar = selectedCampaign;
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
