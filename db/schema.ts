@@ -297,8 +297,12 @@ export const newsItems = pgTable("news_items", {
   id: serial("id").primaryKey(),
   campaignId: uuid("campaign_id").notNull().references(() => campaigns.id),
   headline: text("headline").notNull(),
-  sourceUrl: text("source_url").notNull(),
-  content: text("content").notNull(),
+  summary: text("summary"),
+  url: text("url").notNull(),
+  source: text("source").notNull(),
+  imageUrl: text("image_url"),
+  content: text("content"),
+  sourceUrl: text("source_url"),
   contentType: text("content_type").notNull().default("external"), // 'external' | 'internal'
   status: text("status").notNull().default("draft"), // 'draft' | 'active' | 'archived' | 'bin'
   platformOutputs: jsonb("platform_outputs"), // Store generated content per platform

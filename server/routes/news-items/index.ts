@@ -52,6 +52,8 @@ router.post('/manual-submit', async (req, res) => {
     const [newNewsItem] = await db.insert(newsItems).values({
       campaignId,
       headline,
+      url: sourceUrl,
+      source: 'Manual Input',
       sourceUrl,
       content,
       contentType: type,
