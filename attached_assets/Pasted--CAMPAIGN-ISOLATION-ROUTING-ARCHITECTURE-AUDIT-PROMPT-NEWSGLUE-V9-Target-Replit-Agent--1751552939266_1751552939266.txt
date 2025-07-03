@@ -1,0 +1,59 @@
+// 🔍 CAMPAIGN ISOLATION & ROUTING ARCHITECTURE AUDIT PROMPT — NEWSGLUE-V9
+// Target: Replit Agent
+// Objective: Audit and validate campaign isolation across all frontend modules and backend models, ensuring silo integrity for SaaS use.
+
+––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+🔒 PHASE 1: Campaign Context Routing (Frontend)
+1. Confirm that a campaign **must be selected** before any module route (/module/1–9) becomes accessible.
+2. Verify:
+   - Campaign ID is passed via context or localStorage
+   - All module routes are **gated** by selectedCampaignID
+   - Sidebar menu is **hidden** until a campaign is selected
+3. Output:
+   - Routing file paths enforcing selection
+   - CampaignSelector.tsx logic
+   - Any bypass vulnerabilities
+
+––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+🧱 PHASE 2: Module Data Isolation (Frontend & Backend)
+1. For **each module** (1–9):
+   - Verify all CRUD operations (create/read/update/delete) require `campaign_id`
+   - Validate queries use `where campaign_id = selectedCampaignID`
+   - Confirm no global or cross-campaign data leakage in UI
+
+2. Output:
+   - Table of all modules and their corresponding isolation status
+   - Files/lines of logic enforcing or missing campaign filters
+
+––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+🗃 PHASE 3: Database Schema Enforcement
+1. Check the DB schema for all campaign-related tables.
+2. Confirm:
+   - Each entry is tied to a campaign_id (foreign key or direct reference)
+   - Foreign key constraints are active
+   - No tables write globally without campaign context
+
+3. Output:
+   - DB schema map of all tables related to campaigns
+   - Foreign key constraint status (enforced or missing)
+   - List of orphaned or improperly linked records (if any)
+
+––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+🧠 PHASE 4: Admin/User Permission Layer
+1. Confirm role-based access does not allow campaign switching from within modules.
+2. Validate impersonation tools (if any) respect campaign boundaries.
+3. Output:
+   - Permission structure table
+   - Vulnerability summary (if any)
+
+––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+✅ FINAL OUTPUT REQUIRED:
+- Campaign Context Routing: Pass/Fail
+- Module Data Isolation Table (1–9): Pass/Fail per module
+- DB Table Summary: CampaignID presence & enforcement
+- Sidebar Visibility Logic: Pass/Fail
+- Navigation Behavior: Screenshots/Logs showing correct flow
+- Vulnerabilities (if any): Detailed w/ file & line
+- Confirmation: "✓ Campaign silo integrity verified end-to-end" OR fail report
+
+🚫 DO NOT FIX. **Report only.** We'll manually approve and sequence all fixes.
