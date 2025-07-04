@@ -107,14 +107,14 @@ export default function Module1() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
+      {/* Campaign-Specific Header */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-foreground dark:text-foreground">
-            NewsJack Campaign Builder
+            Campaign Builder
           </h1>
           <p className="text-foreground dark:text-foreground mt-2">
-            Create emotion-driven content that connects trending news with your brand
+            Campaign: <strong>{selectedCampaign?.campaignName}</strong> - Configure your campaign settings and brand voice
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -124,70 +124,64 @@ export default function Module1() {
             className="flex items-center gap-2"
           >
             <Shield className="h-4 w-4" />
-            Backup & Restore
+            Backup Campaign
           </Button>
-          <Button onClick={handleCreateCampaign} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            New Campaign
+          <Button onClick={() => setEditingCampaign(selectedCampaign)} className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Edit Campaign
           </Button>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
-          <TabsTrigger value="create">
-            {editingCampaign ? 'Edit Campaign' : 'Create New'}
-          </TabsTrigger>
+          <TabsTrigger value="overview">Campaign Overview</TabsTrigger>
+          <TabsTrigger value="settings">Campaign Settings</TabsTrigger>
+          <TabsTrigger value="brandvoice">Brand Voice</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          {/* Stats Cards */}
+          {/* Campaign-Specific Stats */}
           <div className="grid gap-4 md:grid-cols-3">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Campaigns</CardTitle>
+                <CardTitle className="text-sm font-medium">Campaign Status</CardTitle>
                 <Target className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{campaigns.length}</div>
+                <div className="text-2xl font-bold capitalize">{selectedCampaign?.status || 'Unknown'}</div>
                 <p className="text-xs text-muted-foreground">
-                  Active campaigns ready for content generation
+                  Current campaign state
                 </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Active Campaigns</CardTitle>
+                <CardTitle className="text-sm font-medium">Content Channels</CardTitle>
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {campaigns.filter(c => c.status === 'active').length}
+                  {selectedCampaign?.channels?.length || 0}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Currently generating NewsJack content
+                  Distribution channels configured
                 </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Platforms</CardTitle>
+                <CardTitle className="text-sm font-medium">Website</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {campaigns.reduce((acc, c) => {
-                    const platforms = c.channels?.map(ch => ch.platform) || [];
-                    platforms.forEach(p => acc.add(p));
-                    return acc;
-                  }, new Set()).size}
+                <div className="text-lg font-bold">
+                  {selectedCampaign?.websiteUrl ? 'Configured' : 'Not Set'}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Unique distribution channels
+                  Brand website integration
                 </p>
               </CardContent>
             </Card>
