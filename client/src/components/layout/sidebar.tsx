@@ -18,6 +18,7 @@ import {
   Shield,
   Crown,
   KeyRound,
+  FolderOpen,
   FileText,
   Gift,
   BarChart3,
@@ -315,6 +316,23 @@ export function Sidebar() {
                 </Button>
               </div>
             </div>
+            
+            {/* View All Campaigns Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full justify-start mb-3 text-foreground border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
+              onClick={() => {
+                console.log('🔄 [SIDEBAR] User clicked View All Campaigns - clearing campaign state');
+                exitCampaign();
+                console.log('✅ [SIDEBAR] Redirecting to campaign selection');
+                window.location.href = '/';
+              }}
+            >
+              <FolderOpen className="mr-2 h-3 w-3" />
+              View All Campaigns
+            </Button>
+            
             {moduleItems.map((item) => {
               const Icon = item.icon;
               const isFeatured = item.featured;
