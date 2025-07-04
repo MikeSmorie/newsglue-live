@@ -17,6 +17,7 @@ import {
 import CampaignList from '@/components/CampaignList';
 import CampaignForm from '@/components/CampaignForm';
 import { BackupRestoreModal } from '@/components/backup/BackupRestoreModal';
+import { useCampaign } from '@/contexts/campaign-context';
 
 interface Campaign {
   id: string;
@@ -32,7 +33,18 @@ export default function Module1() {
   const [activeTab, setActiveTab] = useState('overview');
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   const [showBackupModal, setShowBackupModal] = useState(false);
-  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
+  const { selectedCampaign } = useCampaign();
+  
+  // CAMPAIGN ISOLATION GUARD - Block access without campaign selection
+  if (!selectedCampaign) {
+    console.log('❌ [MODULE 1] Campaign guard triggered - redirecting to campaign selection');
+    window.location.href = '/';
+    return (
+      <div className="p-6 text-center">
+        <p className="text-muted-foreground">Redirecting to campaign selection...</p>
+      </div>
+    );
+  }
 
   const { data: campaigns = [], isLoading } = useQuery<Campaign[]>({
     queryKey: ['campaigns'],
