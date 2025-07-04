@@ -89,29 +89,22 @@ function ProtectedSupergodRoute({ component: Component }: { component: React.Com
 }
 
 // SILO ARCHITECTURE ENFORCEMENT
-// Implements the 3 logical conditions for campaign isolation
 function SiloRootHandler() {
   const { selectedCampaign } = useCampaign();
   const [, setLocation] = useLocation();
   
-  React.useEffect(() => {
-    if (selectedCampaign && selectedCampaign.id) {
+  // If campaign is active, immediately redirect without rendering campaign selection
+  if (selectedCampaign && selectedCampaign.id) {
+    React.useEffect(() => {
       console.log('🔒 [SILO] Campaign active, redirecting to Module 1');
       setLocation('/module/1');
-    }
-  }, [selectedCampaign, setLocation]);
-  
-  // No campaign = show campaign selection (modules don't exist outside silos)
-  if (!selectedCampaign) {
-    return <CampaignPage />;
+    }, [setLocation]);
+    
+    return null; // Don't render anything during redirect
   }
   
-  // Campaign being activated = show loading
-  return (
-    <div className="flex items-center justify-center min-h-screen">
-      <Loader2 className="h-8 w-8 animate-spin text-border" />
-    </div>
-  );
+  // No campaign = show campaign selection only
+  return <CampaignPage />;
 }
 
 function Router() {
