@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useCampaign } from '@/contexts/campaign-context';
 
 interface Campaign {
   id: string;
@@ -41,7 +42,19 @@ interface NewsSubmission {
 }
 
 export default function Module3() {
-  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
+  const { selectedCampaign } = useCampaign();
+  
+  // CAMPAIGN ISOLATION GUARD - Block access without campaign selection
+  if (!selectedCampaign) {
+    console.log('❌ [MODULE 3] Campaign guard triggered - redirecting to campaign selection');
+    // Force redirect to campaign selection
+    window.location.href = '/';
+    return (
+      <div className="p-6 text-center">
+        <p className="text-muted-foreground">Redirecting to campaign selection...</p>
+      </div>
+    );
+  }
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [editingItem, setEditingItem] = useState<NewsItem | null>(null);
@@ -226,14 +239,12 @@ export default function Module3() {
     }
   });
 
-  // Initialize with first campaign
+  // Initialize form data with selected campaign
   useEffect(() => {
-    if (campaigns.length > 0 && !selectedCampaign) {
-      const campaign = campaigns[0];
-      setSelectedCampaign(campaign);
-      setFormData(prev => ({ ...prev, campaignId: campaign.id }));
+    if (selectedCampaign) {
+      setFormData(prev => ({ ...prev, campaignId: selectedCampaign.id }));
     }
-  }, [campaigns, selectedCampaign]);
+  }, [selectedCampaign]);
 
   // Update form campaign ID when selected campaign changes
   useEffect(() => {
@@ -391,8 +402,8 @@ export default function Module3() {
           <Select
             value={selectedCampaign.id}
             onValueChange={(campaignId) => {
-              const campaign = campaigns.find(c => c.id === campaignId);
-              if (campaign) setSelectedCampaign(campaign);
+              // Campaign selection is now handled by the campaign context
+              // This dropdown is read-only for display purposes
             }}
           >
             <SelectTrigger className="w-64">
