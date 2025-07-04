@@ -34,6 +34,7 @@ import VerifyEmailPage from "@/pages/verify-email";
 import NewsJack from "@/pages/NewsJack";
 import CampaignPage from "@/pages/campaigns";
 import CampaignDashboard from "@/components/CampaignDashboard";
+import { useCampaign } from "@/contexts/campaign-context";
 
 import { useUser } from "@/hooks/use-user";
 import { useToast } from "@/hooks/use-toast";
@@ -85,6 +86,32 @@ function ProtectedSupergodRoute({ component: Component }: { component: React.Com
   console.log("[DEBUG] Super-God exclusive route accessed");
   
   return <Component />;
+}
+
+// SILO ARCHITECTURE ENFORCEMENT
+// Implements the 3 logical conditions for campaign isolation
+function SiloRootHandler() {
+  const { selectedCampaign } = useCampaign();
+  const [, setLocation] = useLocation();
+  
+  React.useEffect(() => {
+    if (selectedCampaign && selectedCampaign.id) {
+      console.log('🔒 [SILO] Campaign active, redirecting to Module 1');
+      setLocation('/module/1');
+    }
+  }, [selectedCampaign, setLocation]);
+  
+  // No campaign = show campaign selection (modules don't exist outside silos)
+  if (!selectedCampaign) {
+    return <CampaignPage />;
+  }
+  
+  // Campaign being activated = show loading
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <Loader2 className="h-8 w-8 animate-spin text-border" />
+    </div>
+  );
 }
 
 function Router() {
@@ -142,7 +169,7 @@ function Router() {
         <Route path="/locked-module" component={LockedModule} />
         <Route path="/2fa" component={TwoFactorAuth} />
         <Route path="/profile" component={Dashboard} />
-        <Route path="/" component={CampaignPage} />
+        <Route path="/" component={SiloRootHandler} />
         <Route component={NotFound} />
       </Switch>
     </MainLayout>

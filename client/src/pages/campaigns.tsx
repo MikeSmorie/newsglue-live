@@ -43,19 +43,7 @@ export default function CampaignPage() {
     );
   }
 
-  // If a campaign is selected, redirect away from campaign selection
-  // This prevents the logical contradiction of showing both campaign selection and modules
-  return (
-    <div className="p-6">
-      <div className="text-center">
-        <h2 className="text-xl font-semibold mb-4">Campaign Active</h2>
-        <p className="text-muted-foreground">
-          You are working with campaign: <strong>{selectedCampaign.campaignName}</strong>
-        </p>
-        <p className="text-sm text-muted-foreground mt-2">
-          Use the sidebar to access modules, or click "Exit" to change campaigns.
-        </p>
-      </div>
-    </div>
-  );
+  // SILO ARCHITECTURE ENFORCEMENT: If campaign is active, this page should never render
+  // Campaign selection and modules are mutually exclusive
+  return null;
 }
