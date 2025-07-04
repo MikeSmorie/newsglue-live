@@ -187,90 +187,107 @@ export default function Module1() {
             </Card>
           </div>
 
-          {/* Recent Campaigns */}
+          {/* Campaign Information */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="h-5 w-5" />
-                Recent Campaigns
+                Campaign Information
               </CardTitle>
               <CardDescription>
-                Your latest NewsJack campaigns and their status
+                Details and configuration for {selectedCampaign?.campaignName}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {campaigns.length === 0 ? (
-                <div className="text-center py-8">
-                  <Lightbulb className="mx-auto h-12 w-12 text-foreground mb-4" />
-                  <h3 className="text-lg font-medium text-foreground dark:text-foreground mb-2">
-                    No campaigns yet
-                  </h3>
-                  <p className="text-foreground dark:text-foreground mb-4">
-                    Create your first NewsJack campaign to start generating emotion-driven content.
-                  </p>
-                  <Button onClick={handleCreateCampaign}>
-                    Create Your First Campaign
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {campaigns.slice(0, 5).map((campaign) => (
-                    <div
-                      key={campaign.id}
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-1">
-                          <h4 className="font-medium text-foreground dark:text-foreground">
-                            {campaign.campaignName}
-                          </h4>
-                          {getStatusBadge(campaign.status)}
-                        </div>
-                        <p className="text-sm text-foreground dark:text-foreground">
-                          Created {formatDate(campaign.createdAt)}
-                          {campaign.channels && campaign.channels.length > 0 && (
-                            <span> • {campaign.channels.length} platform{campaign.channels.length !== 1 ? 's' : ''}</span>
-                          )}
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEditCampaign(campaign)}
-                        >
-                          Edit
-                        </Button>
-                      </div>
+              <div className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="text-sm font-medium">Campaign Name</label>
+                    <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 rounded border">
+                      {selectedCampaign?.campaignName}
                     </div>
-                  ))}
-                  {campaigns.length > 5 && (
-                    <div className="text-center pt-4">
-                      <Button variant="outline" onClick={() => setActiveTab('campaigns')}>
-                        View All {campaigns.length} Campaigns
-                      </Button>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Status</label>
+                    <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 rounded border">
+                      <span className="capitalize">{selectedCampaign?.status}</span>
                     </div>
-                  )}
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Created</label>
+                    <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 rounded border">
+                      {selectedCampaign?.createdAt ? formatDate(selectedCampaign.createdAt) : 'Unknown'}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Last Updated</label>
+                    <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 rounded border">
+                      {selectedCampaign?.updatedAt ? formatDate(selectedCampaign.updatedAt) : 'Unknown'}
+                    </div>
+                  </div>
                 </div>
-              )}
+                {selectedCampaign?.websiteUrl && (
+                  <div>
+                    <label className="text-sm font-medium">Website URL</label>
+                    <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 rounded border">
+                      <a 
+                        href={selectedCampaign.websiteUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        {selectedCampaign.websiteUrl}
+                      </a>
+                    </div>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="campaigns" className="space-y-6">
-          <CampaignList
-            onEditCampaign={handleEditCampaign}
-            onCreateNew={handleCreateCampaign}
-            onBackupCampaign={handleBackupCampaign}
-          />
+        <TabsContent value="settings" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Campaign Settings</CardTitle>
+              <CardDescription>
+                Configure settings for {selectedCampaign?.campaignName}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Campaign settings interface will be available here to modify campaign configuration,
+                  target audience, and content generation parameters.
+                </p>
+                <Button onClick={() => setEditingCampaign(selectedCampaign)}>
+                  Edit Campaign Details
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        <TabsContent value="create" className="space-y-6">
-          <CampaignForm
-            onSuccess={handleFormSuccess}
-            onCancel={handleFormCancel}
-            editingCampaign={editingCampaign}
-          />
+        <TabsContent value="brandvoice" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Brand Voice Configuration</CardTitle>
+              <CardDescription>
+                Define the brand voice and tone for {selectedCampaign?.campaignName}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Brand voice settings will allow you to configure tone, style, and messaging 
+                  guidelines for content generation within this campaign.
+                </p>
+                <Button variant="outline">
+                  Configure Brand Voice
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 
