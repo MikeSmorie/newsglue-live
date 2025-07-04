@@ -65,21 +65,60 @@ export default function CampaignForm({ onSuccess, onCancel, editingCampaign }: C
 
   // Load existing platform selections and website analysis when editing
   React.useEffect(() => {
-    if (editingCampaign?.channels) {
-      const platforms = editingCampaign.channels.map((ch: any) => ch.platform);
-      setSelectedPlatforms(platforms);
-    }
-    
-    // Load saved website analysis data
-    if (editingCampaign?.websiteAnalysis) {
-      try {
-        const parsedData = JSON.parse(editingCampaign.websiteAnalysis);
-        setScrapedData(parsedData);
-      } catch (error) {
-        console.log('Could not parse website analysis data:', error);
+    const loadCampaignData = async () => {
+      if (editingCampaign?.id) {
+        try {
+          // Fetch channels for this campaign
+          const channelsResponse = await fetch(`/api/campaign-channels/${editingCampaign.id}`, {
+            credentials: 'include',
+          });
+          
+          if (channelsResponse.ok) {
+            const channels = await channelsResponse.json();
+            const platforms = channels.map((ch: any) => ch.platform);
+            setSelectedPlatforms(platforms);
+            console.log('Loaded campaign channels:', platforms);
+          }
+        } catch (error) {
+          console.error('Error loading campaign channels:', error);
+        }
       }
-    }
+      
+      // Load saved website analysis data
+      if (editingCampaign?.websiteAnalysis) {
+        try {
+          const parsedData = JSON.parse(editingCampaign.websiteAnalysis);
+          setScrapedData(parsedData);
+        } catch (error) {
+          console.log('Could not parse website analysis data:', error);
+        }
+      }
+    };
+
+    loadCampaignData();
   }, [editingCampaign]);
+
+  // Auto-save platform selections
+  const autoSavePlatforms = async (campaignId: string, platforms: string[]) => {
+    try {
+      const response = await fetch(`/api/campaign-channels/${campaignId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ platforms }),
+      });
+      
+      if (response.ok) {
+        console.log('Platform selection auto-saved:', platforms);
+        toast({
+          title: 'Platform selection saved',
+          description: 'Your platform choices have been automatically saved',
+        });
+      }
+    } catch (error) {
+      console.error('Auto-save failed:', error);
+    }
+  };
 
   const form = useForm<CampaignFormData>({
     resolver: zodResolver(campaignSchema),
@@ -124,20 +163,30 @@ export default function CampaignForm({ onSuccess, onCancel, editingCampaign }: C
       console.log('Campaign save successful:', campaign);
       
       // Save channel selections
-      if (selectedPlatforms.length > 0) {
+      if (selectedPlatforms.length > 0 || editingCampaign) {
         try {
-          await fetch('/api/campaign-channels', {
-            method: 'POST',
+          const response = await fetch(`/api/campaign-channels/${campaign.id}`, {
+            method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
             body: JSON.stringify({
-              campaignId: campaign.id,
               platforms: selectedPlatforms,
             }),
           });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to save channels');
+          }
+          
           console.log('Channels saved successfully');
         } catch (error) {
           console.error('Error saving channels:', error);
+          toast({
+            title: 'Warning',
+            description: 'Campaign saved but channel selection failed to save',
+            variant: 'destructive',
+          });
         }
       }
 
@@ -478,7 +527,13 @@ export default function CampaignForm({ onSuccess, onCancel, editingCampaign }: C
                 </Label>
                 <SimplePlatformSelector
                   selectedPlatforms={selectedPlatforms}
-                  onSelectionChange={setSelectedPlatforms}
+                  onSelectionChange={(platforms) => {
+                    setSelectedPlatforms(platforms);
+                    // Auto-save platform selection if editing campaign
+                    if (editingCampaign?.id) {
+                      autoSavePlatforms(editingCampaign.id, platforms);
+                    }
+                  }}
                 />
                 {selectedPlatforms.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-2">

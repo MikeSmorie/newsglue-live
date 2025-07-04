@@ -49,17 +49,16 @@ interface User {
   role: string;
 }
 
-const DEFAULT_PLATFORMS = [
-  { id: 'twitter', name: 'Twitter/X', icon: '🐦' },
-  { id: 'facebook', name: 'Facebook', icon: '📘' },
-  { id: 'linkedin', name: 'LinkedIn', icon: '💼' },
-  { id: 'instagram', name: 'Instagram', icon: '📷' },
-  { id: 'youtube', name: 'YouTube', icon: '🎥' },
-  { id: 'tiktok', name: 'TikTok', icon: '🎵' },
-  { id: 'blog', name: 'Blog', icon: '📝' },
-  { id: 'pinterest', name: 'Pinterest', icon: '📌' },
-  { id: 'google-business', name: 'Google Business Profile', icon: '🏢' }
-];
+// Platform icons for Module 2
+const PLATFORM_ICONS: Record<string, string> = {
+  'twitter': '🐦',
+  'facebook': '📘',
+  'linkedin': '💼',
+  'instagram': '📷',
+  'youtube': '🎥',
+  'tiktok': '🎵',
+  'blog': '📝'
+};
 
 // Platform-specific default configurations
 const getPlatformDefaults = (platformId: string): ChannelConfig => {
@@ -170,6 +169,18 @@ export default function Module2() {
     }
   });
 
+  // Fetch available platforms from API (synchronized with Module 1)
+  const { data: availablePlatforms = [] } = useQuery({
+    queryKey: ['platforms'],
+    queryFn: async () => {
+      const res = await fetch('/api/campaign-channels/platforms', {
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to fetch platforms');
+      return res.json();
+    },
+  });
+
   // Fetch full campaign data with social settings
   const { data: fullCampaign } = useQuery<Campaign>({
     queryKey: ['campaign', selectedCampaign?.id],
@@ -265,7 +276,7 @@ export default function Module2() {
 
   const handleAddDefaultChannels = () => {
     const newConfigs = { ...channelConfigs };
-    DEFAULT_PLATFORMS.forEach(platform => {
+    availablePlatforms.forEach((platform: any) => {
       if (!newConfigs[platform.id]) {
         newConfigs[platform.id] = getPlatformDefaults(platform.id);
       }
@@ -294,7 +305,15 @@ export default function Module2() {
   };
 
   const getPlatformInfo = (platformId: string) => {
-    return DEFAULT_PLATFORMS.find(p => p.id === platformId) || { id: platformId, name: platformId, icon: '📱' };
+    const platform = availablePlatforms.find((p: any) => p.id === platformId);
+    if (platform) {
+      return {
+        id: platform.id,
+        name: platform.name,
+        icon: PLATFORM_ICONS[platform.id] || '📱'
+      };
+    }
+    return { id: platformId, name: platformId, icon: '📱' };
   };
 
   const isAdmin = user?.role === 'god_mode';
@@ -362,7 +381,7 @@ export default function Module2() {
                       <DialogDescription>Select a platform to add to your campaign</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-2">
-                      {DEFAULT_PLATFORMS.filter(p => !channelConfigs[p.id]).map(platform => (
+                      {availablePlatforms.filter((p: any) => !channelConfigs[p.id]).map((platform: any) => (
                         <Button
                           key={platform.id}
                           variant="outline"
@@ -374,7 +393,7 @@ export default function Module2() {
                             }));
                           }}
                         >
-                          <span className="mr-2">{platform.icon}</span>
+                          <span className="mr-2">{PLATFORM_ICONS[platform.id] || '📱'}</span>
                           {platform.name}
                         </Button>
                       ))}
