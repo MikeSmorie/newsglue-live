@@ -495,9 +495,12 @@ router.post('/transfer/:campaignId', requireAuth, async (req, res) => {
       count: articlesToTransfer.length,
       transferred: articlesToTransfer.map((a: any) => ({ id: a.id, title: a.title }))
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error transferring articles:', error);
-    res.status(500).json({ error: 'Failed to transfer articles' });
+    res.status(500).json({ 
+      error: 'Failed to transfer articles',
+      details: error?.message || 'Unknown error'
+    });
   }
 });
 

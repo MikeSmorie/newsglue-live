@@ -287,9 +287,15 @@ export default function Module5GoogleNews() {
       const response = await fetch(`/api/google-news/transfer/${selectedCampaign?.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ articleIds }),
       });
-      if (!response.ok) throw new Error('Failed to transfer articles');
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.details || errorData.error || `Transfer failed: ${response.status}`);
+      }
+      
       return response.json();
     },
     onSuccess: (data) => {
@@ -300,8 +306,13 @@ export default function Module5GoogleNews() {
         description: `${data.count} articles transferred successfully` 
       });
     },
-    onError: () => {
-      toast({ title: "Transfer failed", variant: "destructive" });
+    onError: (error: any) => {
+      console.error('Transfer error:', error);
+      toast({ 
+        title: "Transfer failed", 
+        description: error?.message || "Unknown error occurred",
+        variant: "destructive" 
+      });
     },
   });
 
