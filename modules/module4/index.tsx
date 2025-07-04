@@ -60,6 +60,18 @@ export default function Module4NewsAggregator() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
+  // CAMPAIGN ISOLATION GUARD - Block access without campaign selection
+  if (!selectedCampaign) {
+    console.log('❌ [MODULE 4] Campaign guard triggered - redirecting to campaign selection');
+    // Force redirect to campaign selection
+    window.location.href = '/';
+    return (
+      <div className="p-6 text-center">
+        <p className="text-muted-foreground">Redirecting to campaign selection...</p>
+      </div>
+    );
+  }
+  
   const [newKeyword, setNewKeyword] = useState("");
   const [selectedArticles, setSelectedArticles] = useState<string[]>([]);
   const [activePanel, setActivePanel] = useState<'search' | 'results'>('search');
