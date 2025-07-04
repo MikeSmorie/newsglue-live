@@ -150,10 +150,14 @@ export default function CampaignForm({ onSuccess, onCancel, editingCampaign }: C
       
       console.log('Calling onSuccess callback');
       
-      // Force navigation back to campaigns
+      // Auto-navigate back to campaign list after saving
       setTimeout(() => {
         onSuccess?.();
-      }, 100);
+        // If no onSuccess callback provided, navigate to campaign list
+        if (!onSuccess) {
+          window.location.href = '/';
+        }
+      }, 1000); // Give user time to see success message
     },
     onError: (error: Error) => {
       toast({

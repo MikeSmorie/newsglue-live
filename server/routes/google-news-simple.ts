@@ -564,8 +564,8 @@ router.post('/transfer/:campaignId', requireAuth, async (req, res) => {
       const fullContent = `${article.title}\n\n${article.summary}\n\nThis article from ${article.source} provides valuable insights that could be leveraged for NewsJacking opportunities. The content discusses current industry trends and developments that align with campaign objectives.`;
 
       await db.execute(sql`
-        INSERT INTO news_items (campaign_id, headline, content, source_url, content_type, status, metadata_score, platform_outputs)
-        VALUES (${campaignId}, ${String(article.title)}, ${fullContent}, ${String(article.url)}, 
+        INSERT INTO news_items (campaign_id, headline, content, url, source, content_type, status, metadata_score, platform_outputs)
+        VALUES (${campaignId}, ${String(article.title)}, ${fullContent}, ${String(article.url)}, ${String(article.source)},
                 'googlenews', 'active', ${Number(article.relevance_score) || 80}, 
                 ${JSON.stringify({
                   source: String(article.source),

@@ -105,6 +105,28 @@ export default function Module1() {
     );
   }
 
+  // Show edit form if editing a campaign
+  if (editingCampaign) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="mb-6">
+          <Button 
+            variant="outline" 
+            onClick={() => setEditingCampaign(null)}
+            className="mb-4"
+          >
+            ← Back to Campaign Overview
+          </Button>
+        </div>
+        <CampaignForm 
+          editingCampaign={editingCampaign} 
+          onSuccess={handleFormSuccess}
+          onCancel={handleFormCancel}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Campaign-Specific Header */}

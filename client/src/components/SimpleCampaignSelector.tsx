@@ -131,11 +131,7 @@ export default function SimpleCampaignSelector({ onCreateNew }: SimpleCampaignSe
                       <Calendar className="w-3 h-3 mr-1" />
                       {new Date(campaign.createdAt).toLocaleDateString()}
                     </span>
-                    {campaign.websiteUrl && (
-                      <span className="text-sm text-muted-foreground">
-                        {campaign.websiteUrl}
-                      </span>
-                    )}
+
                   </div>
                 </div>
               </div>
