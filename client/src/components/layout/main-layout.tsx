@@ -17,10 +17,18 @@ export function MainLayout({ children }: MainLayoutProps) {
   const isModuleRoute = location.startsWith('/module/');
   const isProtectedRoute = isModuleRoute;
   
-  // Enforce campaign context integrity - redirect to campaign selector
+  // Enforce campaign context integrity with race condition protection
   React.useEffect(() => {
     if (isProtectedRoute && (!selectedCampaign || !selectedCampaign.id)) {
-      setLocation('/');
+      // Add a small delay to prevent race condition between campaign selection and navigation
+      const timeoutId = setTimeout(() => {
+        if (!selectedCampaign || !selectedCampaign.id) {
+          console.log('🚫 [MAIN LAYOUT] Redirecting to campaign selection - no valid campaign');
+          setLocation('/');
+        }
+      }, 100);
+      
+      return () => clearTimeout(timeoutId);
     }
   }, [isProtectedRoute, selectedCampaign, setLocation]);
   
