@@ -110,10 +110,10 @@ export default function SimpleCampaignSelector({ onCreateNew }: SimpleCampaignSe
           </div>
         ) : (
           filteredCampaigns.map((campaign: Campaign) => (
-            <div
+            <button
               key={campaign.id}
               onClick={() => handleCampaignClick(campaign)}
-              className="bg-card border border-border rounded-lg p-4 cursor-pointer hover:bg-accent hover:border-accent-foreground/20 transition-all duration-200 group"
+              className="w-full text-left bg-card border border-border rounded-lg p-4 cursor-pointer hover:bg-accent hover:border-accent-foreground/20 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1">
@@ -139,7 +139,7 @@ export default function SimpleCampaignSelector({ onCreateNew }: SimpleCampaignSe
                   </div>
                 </div>
               </div>
-            </div>
+            </button>
           ))
         )}
       </div>

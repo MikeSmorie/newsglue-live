@@ -8,13 +8,13 @@ export default function CampaignPage() {
   const { selectedCampaign, exitCampaign } = useCampaign();
   const [showCreateForm, setShowCreateForm] = useState(false);
 
-  // STEP 1: Clear campaign state on landing at /
+  // CRITICAL FIX: Always clear campaign state on landing at /
   React.useEffect(() => {
-    console.log('🔄 [CAMPAIGN RESET] Clearing campaign state on landing at /');
+    console.log('🔄 [CAMPAIGN RESET] Forcing campaign reset on landing');
     localStorage.removeItem('selectedCampaign');
     exitCampaign();
-    console.log('✅ [CAMPAIGN RESET] Campaign context and localStorage cleared');
-  }, [exitCampaign]);
+    console.log('✅ [CAMPAIGN RESET] All campaign state cleared');
+  }, []);
 
   const handleCreateNew = () => {
     setShowCreateForm(true);
