@@ -23,8 +23,20 @@ const CampaignContext = createContext<CampaignContextType | undefined>(undefined
 export function CampaignProvider({ children }: { children: ReactNode }) {
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
 
-  // DO NOT auto-load from localStorage - forces explicit campaign selection
-  // This prevents the security vulnerability of random campaign loading
+  // Restore campaign from localStorage on mount - needed for navigation persistence
+  useEffect(() => {
+    const saved = localStorage.getItem('selectedCampaign');
+    if (saved) {
+      try {
+        const campaign = JSON.parse(saved);
+        setSelectedCampaign(campaign);
+        console.log('🔄 [CAMPAIGN CONTEXT] Restored campaign from localStorage:', campaign.campaignName);
+      } catch (e) {
+        console.error('❌ [CAMPAIGN CONTEXT] Failed to restore campaign from localStorage');
+        localStorage.removeItem('selectedCampaign');
+      }
+    }
+  }, []);
 
   // Save selected campaign to localStorage when it changes
   useEffect(() => {

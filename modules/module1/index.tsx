@@ -35,16 +35,8 @@ export default function Module1() {
   const [showBackupModal, setShowBackupModal] = useState(false);
   const { selectedCampaign } = useCampaign();
   
-  // CAMPAIGN ISOLATION GUARD - Block access without campaign selection
-  if (!selectedCampaign) {
-    console.log('❌ [MODULE 1] Campaign guard triggered - redirecting to campaign selection');
-    window.location.href = '/';
-    return (
-      <div className="p-6 text-center">
-        <p className="text-muted-foreground">Redirecting to campaign selection...</p>
-      </div>
-    );
-  }
+  // Campaign context provides the selected campaign
+  console.log('🎯 [MODULE 1] Loading with campaign:', selectedCampaign?.campaignName || 'none');
 
   const { data: campaigns = [], isLoading } = useQuery<Campaign[]>({
     queryKey: ['campaigns'],
@@ -78,7 +70,6 @@ export default function Module1() {
   };
 
   const handleBackupCampaign = (campaign: Campaign) => {
-    setSelectedCampaign(campaign);
     setShowBackupModal(true);
   };
 
