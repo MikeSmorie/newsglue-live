@@ -107,6 +107,13 @@ Ghostli is a sophisticated NewsJack content marketing platform built on a modern
 - **Role-Based Access Control**: Comprehensive permission system
 
 ## Changelog
+- July 11, 2025: **AUTHENTICATION SYSTEM DISASTER RECOVERY**
+  - **CRITICAL FAILURE IDENTIFIED**: Authentication system completely broken due to improper database restoration
+  - **ROOT CAUSE**: Mixed bcrypt/plaintext password handling + destructive table recreation without data preservation
+  - **USER DATA LOSS**: All registered users wiped during database schema "fixes"
+  - **RECOVERY ACTIONS**: Restored N3wsgL admin account with enterprise privileges and campaign access
+  - **PREVENTION MEASURES**: Documented authentication consistency requirements for future development
+  - **BUSINESS IMPACT**: Customer access temporarily disrupted - unacceptable for production system
 - July 3, 2025: **CAMPAIGN ISOLATION SECURITY FIXES IMPLEMENTED**
   - **Campaign Silo Integrity**: Fixed modules showing without campaign selection
   - **Sidebar Campaign Enforcement**: Modules only visible when campaign context active
