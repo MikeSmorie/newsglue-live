@@ -123,15 +123,40 @@ export default function CampaignForm({ onSuccess, onCancel, editingCampaign }: C
   const form = useForm<CampaignFormData>({
     resolver: zodResolver(campaignSchema),
     defaultValues: {
-      name: editingCampaign?.campaignName || '',
-      website_url: editingCampaign?.websiteUrl || '',
-      cta_url: editingCampaign?.ctaUrl || '',
-      emotional_objective: editingCampaign?.emotionalObjective || '',
-      audience_pain: editingCampaign?.audiencePain || '',
-      additional_data: editingCampaign?.additionalData || '',
+      name: '',
+      website_url: '',
+      cta_url: '',
+      emotional_objective: '',
+      audience_pain: '',
+      additional_data: '',
       platforms: [],
     },
   });
+
+  // Reset form when editingCampaign changes
+  React.useEffect(() => {
+    if (editingCampaign) {
+      form.reset({
+        name: editingCampaign.campaignName || '',
+        website_url: editingCampaign.websiteUrl || '',
+        cta_url: editingCampaign.ctaUrl || '',
+        emotional_objective: editingCampaign.emotionalObjective || '',
+        audience_pain: editingCampaign.audiencePain || '',
+        additional_data: editingCampaign.additionalData || '',
+        platforms: [],
+      });
+    } else {
+      form.reset({
+        name: '',
+        website_url: '',
+        cta_url: '',
+        emotional_objective: '',
+        audience_pain: '',
+        additional_data: '',
+        platforms: [],
+      });
+    }
+  }, [editingCampaign, form]);
 
   const createMutation = useMutation({
     mutationFn: async (data: CampaignFormData) => {

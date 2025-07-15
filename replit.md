@@ -107,6 +107,12 @@ Ghostli is a sophisticated NewsJack content marketing platform built on a modern
 - **Role-Based Access Control**: Comprehensive permission system
 
 ## Changelog
+- July 15, 2025: **MODULE 4 & 5 KEYWORD FUNCTIONALITY RESTORED**
+  - **DATABASE RESTORATION**: Created missing module4_keywords and module4_articles tables
+  - **SCHEMA FIXES**: Fixed column name mismatches (is_suggested vs is_default, timestamp vs backup_timestamp)
+  - **AI INTEGRATION**: Corrected OpenAI API JSON response format for proper keyword suggestions
+  - **FORM PERSISTENCE**: Fixed React form state management to properly populate campaign data in Module 1
+  - **PRODUCTION READY**: All keyword suggestion functionality now operational across modules
 - July 11, 2025: **AUTHENTICATION SYSTEM DISASTER RECOVERY**
   - **CRITICAL FAILURE IDENTIFIED**: Authentication system completely broken due to improper database restoration
   - **ROOT CAUSE**: Mixed bcrypt/plaintext password handling + destructive table recreation without data preservation
