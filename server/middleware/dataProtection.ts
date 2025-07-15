@@ -17,8 +17,8 @@ export const createBackup = async (tableName: string, recordId: string, data: an
   try {
     // Store backup in database for permanent protection
     const backupResult = await db.execute(sql`
-      INSERT INTO data_backups (user_id, table_name, record_id, backup_data, operation, description)
-      VALUES (${userId || null}, ${tableName}, ${recordId}, ${JSON.stringify(data)}, ${operation}, 
+      INSERT INTO data_backups (user_id, table_name, record_id, backup_data, backup_type, operation, description)
+      VALUES (${userId || null}, ${tableName}, ${recordId}, ${JSON.stringify(data)}, 'daily_backup', ${operation}, 
               'Automatic backup before ' || ${operation} || ' operation')
       RETURNING id
     `);
