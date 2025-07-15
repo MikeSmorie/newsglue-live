@@ -112,7 +112,7 @@ router.post('/suggest-keywords/:campaignId', requireAuth, async (req, res) => {
       websiteAnalysis: campaign.websiteAnalysis
     };
 
-    const prompt = `Based on this campaign data: ${JSON.stringify(campaignContext)}, suggest 5-8 relevant keywords for news aggregator searches. Focus on industry terms, trending topics, and newsworthy angles. Return as a JSON array of strings: ["keyword1", "keyword2", ...]`;
+    const prompt = `Based on this campaign data: ${JSON.stringify(campaignContext)}, suggest 5-8 relevant keywords for news aggregator searches. Focus on industry terms, trending topics, and newsworthy angles. Return as a JSON object with this exact format: {"keywords": ["keyword1", "keyword2", "keyword3", ...]}`;
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
