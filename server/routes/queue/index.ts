@@ -132,15 +132,11 @@ router.post('/generate-newsjacks/:id', requireAuth, async (req, res) => {
     console.log(`[LATENCY] T3: API received request at ${T3} (${new Date(T3).toISOString()}) for item ${itemId}`);
     console.time(`NewsJack-Backend-Processing-${itemId}`);
 
-    // Verify user owns the news item through campaign ownership and get channels
+    // Verify user owns the news item through campaign ownership
     const newsItem = await db.query.newsItems.findFirst({
       where: eq(newsItems.id, itemId),
       with: {
-        campaign: {
-          with: {
-            channels: true
-          }
-        }
+        campaign: true
       }
     });
 
@@ -151,26 +147,9 @@ router.post('/generate-newsjacks/:id', requireAuth, async (req, res) => {
     const campaign = newsItem.campaign;
     const startTime = T3;
 
-    // Get enabled platforms from campaign channels, always include blog
-    let platforms = ['blog']; // Always include blog for NewsJack methodology
-    
-    if (campaign.channels && campaign.channels.length > 0) {
-      const enabledChannels = campaign.channels
-        .filter(channel => channel.enabled)
-        .map(channel => channel.platform);
-      platforms = [...platforms, ...enabledChannels];
-      console.log('Using configured platforms:', platforms);
-    } else {
-      // If no channels configured, use all 7 platforms including YouTube and TikTok
-      platforms = ['blog', 'twitter', 'linkedin', 'instagram', 'facebook', 'youtube', 'tiktok'];
-      console.log('No platforms configured, using all 7 defaults:', platforms);
-    }
-    
-    // Always ensure blog is included if not already present
-    if (!platforms.includes('blog')) {
-      platforms.unshift('blog');
-      console.log('Added blog platform to generation:', platforms);
-    }
+    // Use all 7 platforms for NewsJack generation
+    const platforms = ['blog', 'twitter', 'linkedin', 'instagram', 'facebook', 'youtube', 'tiktok'];
+    console.log('Using all 7 default platforms for NewsJack generation:', platforms);
 
     // Track processing time
     const processingStartTime = Date.now();

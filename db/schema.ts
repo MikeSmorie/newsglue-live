@@ -806,12 +806,11 @@ export const campaignChannels = pgTable("campaign_channels", {
 });
 
 // Campaigns relations
-export const campaignsRelations = relations(campaigns, ({ one, many }) => ({
+export const campaignsRelations = relations(campaigns, ({ one }) => ({
   user: one(users, {
     fields: [campaigns.userId],
     references: [users.id],
   }),
-  channels: many(campaignChannels),
 }));
 
 // Campaign channels relations
