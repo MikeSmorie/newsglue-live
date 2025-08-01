@@ -39,38 +39,8 @@ const campaignUpdateSchema = z.object({
 // GET /api/campaigns - List all campaigns for authenticated user with search and filter
 router.get('/', requireAuth, async (req, res) => {
   try {
-    const { search, status, sort = 'newest' } = req.query;
-    
-    // Build where conditions
-    const conditions = [eq(campaigns.userId, req.user!.id)];
-    if (search) {
-      conditions.push(like(campaigns.campaignName, `%${search}%`));
-    }
-    if (status) {
-      conditions.push(eq(campaigns.status, status as string));
-    }
-
-    // Determine sort order
-    let orderBy;
-    switch (sort) {
-      case 'oldest':
-        orderBy = [asc(campaigns.createdAt)];
-        break;
-      case 'a-z':
-        orderBy = [asc(campaigns.campaignName)];
-        break;
-      case 'z-a':
-        orderBy = [desc(campaigns.campaignName)];
-        break;
-      default: // newest
-        orderBy = [desc(campaigns.createdAt)];
-    }
-
-    const userCampaigns = await db.query.campaigns.findMany({
-      where: and(...conditions),
-      orderBy,
-    });
-
+    // Simple direct query without complex where conditions first
+    const userCampaigns = await db.select().from(campaigns).where(eq(campaigns.userId, req.user!.id));
     res.json(userCampaigns);
   } catch (error) {
     console.error('Error fetching campaigns:', error);
