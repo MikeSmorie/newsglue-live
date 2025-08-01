@@ -69,9 +69,6 @@ router.get('/', requireAuth, async (req, res) => {
     const userCampaigns = await db.query.campaigns.findMany({
       where: and(...conditions),
       orderBy,
-      with: {
-        channels: true,
-      },
     });
 
     res.json(userCampaigns);
@@ -89,9 +86,6 @@ router.get('/:id', requireAuth, async (req, res) => {
         eq(campaigns.id, req.params.id),
         eq(campaigns.userId, req.user!.id)
       ),
-      with: {
-        channels: true,
-      },
     });
 
     if (!campaign) {
